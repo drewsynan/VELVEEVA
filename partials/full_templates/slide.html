@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title><%= @title %></title>
+<%- @partial('_fileLinks.html') %>
+</head>
+<body>
+<%- @partial('_header.html') %>
+<div class="slideExtent">
+	<div class="frame-contents"><%- @contents %></div>
+	<div class="frame-logo"><img src="img/frame-logo.png"></div>
+	<div class="frame-navigation">
+	</div>
+	<div class="copyright"><%- @copyright_notice %></div>
+</div>
+<%- @partial('_footer.html') %>
+</body>
+</html>
