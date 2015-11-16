@@ -2,7 +2,7 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import os
-import glob
+import fnmatch
 import re
 import sys
 
@@ -66,7 +66,12 @@ def fixRelativePath(path):
 	return re.sub("(\.\.\/)*", "", path)
 
 def parseFolder(path):
-	for filename in glob.iglob(path + "/**/*.htm*"):
+	matches = []
+	for root, dirnames, filenames in os.walk(rootDir):
+		for filename in fnmatch.filter(filenames, "*.htm*"):
+			matches.append(os.path.join(root, filename))
+
+	for filename in matches:
 		print("Re-linking %s" % filename)
 		clean = parseHTML(open(filename, 'rb'))
 		with open(filename, 'wb') as f:
