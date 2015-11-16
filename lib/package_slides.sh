@@ -1,4 +1,4 @@
 #!/bin/bash
 for i in */; do zip -r "${i%/}.zip" "$i"; done
-zip build.zip ./0*.zip 
+#zip build.zip ./0*.zip 
 exit
