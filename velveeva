@@ -8,6 +8,8 @@ function Velveeva(configRecipe) {
 
   this.config = CONFIG;
 
+  var VERBOSE = false;
+
   var Metalsmith = require('metalsmith'),
     collections = require('metalsmith-collections'),
     ignore  = require('metalsmith-ignore'),
@@ -155,6 +157,11 @@ function Velveeva(configRecipe) {
             .use(sass());
         return ms.buildPromise();
       })
+      //re-link
+      .then(function () {
+      	console.log(chalk.blue("⤷ Whipping up assets and hyperlinks "));
+      	return relink();
+      })
       //take screenshots
       .then(function () {
         console.log(chalk.blue("⤷ Sprinkling with screenshots "));
@@ -181,6 +188,35 @@ function Velveeva(configRecipe) {
       });
 
       return deferred.promise;
+  }
+
+  function relink() {
+  	var deferred = Q.defer();
+
+    var spawn = require('child_process').spawn;
+    
+    
+    var shell = spawn('python3', [path.join(__dirname, './lib/re-link.py'), path.join(__dirname, CONFIG.MAIN.DEST)]);
+
+
+    shell.stdout.on('data', function(data) {
+	   if (VERBOSE) console.log(chalk.blue('stdout: ' + data));
+	});
+
+	shell.stderr.on('data', function (data) {
+	  console.log(chalk.red.bold('stderr: ' + data));
+	});
+
+    shell.on('exit', function (status) {
+      if (status === 0) {
+        deferred.resolve();
+      } else {
+        deferred.reject('Linking script exited with status ' + status);
+      }
+    });
+
+    return deferred.promise;
+
   }
 
   function screenshots() {
@@ -296,6 +332,14 @@ function Velveeva(configRecipe) {
     var shell = spawn('sh', [path.join(__dirname, './lib/package_slides.sh')], {
       cwd: path.join(__dirname, CONFIG.MAIN.DEST)
     });
+
+    shell.stdout.on('data', function(data) {
+    	if (VERBOSE) console.log(chalk.blue('stdout: ' + data));
+	});
+
+	shell.stderr.on('data', function (data) {
+	  console.log(chalk.red.bold('stderr: ' + data));
+	});
 
     shell.on('exit', function (status) {
       if (status === 0) {
