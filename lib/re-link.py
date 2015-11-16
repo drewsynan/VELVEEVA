@@ -67,7 +67,7 @@ def fixRelativePath(path):
 
 def parseFolder(path):
 	matches = []
-	for root, dirnames, filenames in os.walk(rootDir):
+	for root, dirnames, filenames in os.walk(path):
 		for filename in fnmatch.filter(filenames, "*.htm*"):
 			matches.append(os.path.join(root, filename))
 
