@@ -306,7 +306,7 @@ function Velveeva(configRecipe) {
 
     function takeScreenshot (basePath, dir, matchingFile) {
 
-    	  if(OPTIONS.FLAGS.VERBOSE) stdOut("Screenshotting " + matchingFile);
+    	  if(CONFIG.FLAGS.VERBOSE) stdOut("Screenshotting " + matchingFile);
 
           var deferred = Q.defer();
 
@@ -468,8 +468,8 @@ if (options.screenshots) V.config.FLAGS.SCREENSHOTS = true;
 if (options.verbose) V.config.FLAGS.VERBOSE = true;
 if (options.watch) V.config.FLAGS.WATCH = true;
 
-if (Object.keys(options).length === 0) {
-  // default case
+if (Object.keys(options).length === 0 || (Object.keys(options.length === 1) && options.verbose)) {
+  // default case, also allows for default options with the verbose flag
   V.config.FLAGS.PACKAGE = true;
   V.config.FLAGS.RELINK = false;
   V.config.FLAGS.SCREENSHOTS = true;
