@@ -1,3 +1,5 @@
 #!/bin/bash
 brew install imagemagick
+pip3 install pymonad
+pip3 install lxml
 npm install

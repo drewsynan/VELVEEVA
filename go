@@ -3,7 +3,8 @@ module.exports = Velveeva;
 
 function Velveeva(configRecipe) {
   var CONFIG = {
-    MAIN: {}
+    MAIN: {},
+    ROOT_DIR: process.cwd()
   };
 
   this.config = CONFIG;
@@ -15,7 +16,8 @@ function Velveeva(configRecipe) {
     WATCH: false,
     PACKAGE: false,
     SCREENSHOTS: false,
-    CLEAN: false
+    CLEAN: false,
+    VEEV2REL: false
   };
 
   var Metalsmith = require('metalsmith'),
@@ -128,18 +130,32 @@ function Velveeva(configRecipe) {
 
   function note(msg) { console.log(chalk.blue(msg)); }
   function error(msg) { console.log(chalk.red.bold("✗ 💩 ") + msg); }
-  function success(msg) { console.log(chalk.green.bold("✔︎ " + msg)); }
+  function success(msg) { console.log(chalk.yellow.bold("✔︎ " + msg)); }
   function stdOut(msg) { console.log(chalk.gray(msg)); }
+
+  function executeWhen(condition, func, successMsg, failureMsg) {
+  	if(Array.isArray(condition)) {
+  		condition = condition.reduce(function(acc, val) { return acc && val;}, true);
+  	}
+
+  	if(condition) {
+  		if (successMsg) note(successMsg);
+  		return func();
+  	} else {
+  		if (failureMsg) note (failureMsg);
+  		return function() {  d = Q.Defer(); d.resolve("Short circuit"); return d.promise; }
+  	}
+  }
 
   function bake() {
     var deferred = Q.defer();
     note("⤷ Baking ");
 
     // make a temp directory
-    mkdir(path.join(__dirname, CONFIG.MAIN.TEMP))
+    mkdir(path.join(CONFIG.ROOT_DIR, CONFIG.MAIN.TEMP))
     // inline all partials, and insert globals
       .then(function () {
-        var ms = new Metalsmith(__dirname)
+        var ms = new Metalsmith(CONFIG.ROOT_DIR)
           .source(CONFIG.MAIN.SOURCE)
           .destination(CONFIG.MAIN.TEMP)
           .use(partial({
@@ -160,7 +176,7 @@ function Velveeva(configRecipe) {
       // compile sass
       .then(function () {
         note("⤷ Mixing in SASS ");
-        var ms = new Metalsmith(__dirname)
+        var ms = new Metalsmith(CONFIG.ROOT_DIR)
             .source(CONFIG.MAIN.TEMP)
             .destination(CONFIG.MAIN.DEST)
             .use(sass());
@@ -168,49 +184,22 @@ function Velveeva(configRecipe) {
       })
       //re-link
       .then(function () {
-        if (!CONFIG.FLAGS.RELINK) {
-          return function() { d = Q.Defer(); d.resolve("Short circuit"); return d.promise; };
-        } else {
-          note("⤷ Whipping up assets and hyperlinks ");
-          return relink();
-        }
+      	executeWhen(CONFIG.FLAGS.RELINK, relink, "⤷ Whipping up assets and hyperlinks ");
+      })
+      .then(function () {
+      	executeWhen(CONFIG.FLAGS.VEEV2REL, veev2rel, "⤷ VEEV2REL ");
       })
       //take screenshots
       .then(function () {
-        if (CONFIG.FLAGS.SCREENSHOTS) {
-          if (CONFIG.FLAGS.DEV) {
-            console.log(chalk.blue("— Skipping screenshots (dev)"));
-            return function() { d = Q.Defer(); d.resolve("Dev short circuit"); return d.promise; };
-          } else {
-            note("⤷ Sprinkling with screenshots ");
-            return screenshots();
-          }
-        } else {
-          return function() { d = Q.Defer(); d.resolve("Short circuit"); return d.promise; };
-        }
+      	executeWhen(CONFIG.FLAGS.SCREENSHOTS, screenshots, "⤷ Sprinkling with screenshots ");
       })
       // zip it all up
       .then(function () {
-        if (CONFIG.FLAGS.PACKAGE) {
-          if (CONFIG.FLAGS.DEV) {
-            note("— Skipping packaging (dev)");
-            return function() { d = Q.Defer(); d.resolve("Dev short circuit"); return d.promise; };
-          } else {
-            note("⤷ Bagging it up ");
-            return pkg();
-          }
-        } else {
-          return function() { d = Q.Defer(); d.resolve("Short circuit"); return d.promise; };
-        }
+      	executeWhen(CONFIG.FLAGS.PACKAGE, pkg, "⤷ Bagging it up");
       })
       // clean up temp folder
       .then(function (err) {
-        if (CONFIG.FLAGS.CLEAN) {
-          note("⤷ Washing ");
-          return rmdir(path.join(__dirname, CONFIG.MAIN.TEMP));
-        } else {
-          return function() { d = Q.Defer(); d.resolve("Short circuit"); return d.promise; };
-        }
+      	executeWhen(CONFIG.FLAGS.CLEAN, function() { rmdir(path.join(CONFIG.ROOT_DIR, CONFIG.MAIN.TEMP), "⤷ Washing "); });
       })
       //.catch(function (err) { console.log(err); })
       .done(function () {
@@ -225,14 +214,11 @@ function Velveeva(configRecipe) {
       return deferred.promise;
   }
 
-  function relink() {
+  function runShellScript(cmd, args, name, shellOpts) {
+  	var shellOpts = shellOpts || {};
   	var deferred = Q.defer();
-
-    var spawn = require('child_process').spawn;
-    
-    
-    var shell = spawn('python3', [path.join(__dirname, './lib/re_link.py'), path.join(__dirname, CONFIG.MAIN.DEST)]);
-
+  	var spawn = require('child_process').spawn;
+  	shell = spawn(cmd, args, shellOpts);
 
     shell.stdout.on('data', function(data) {
 	   if (CONFIG.FLAGS.VERBOSE) stdOut('stdout: ' + data);
@@ -246,19 +232,26 @@ function Velveeva(configRecipe) {
       if (status === 0) {
         deferred.resolve();
       } else {
-        deferred.reject('Linking script exited with status ' + status);
+        deferred.reject(name + ' script exited with status ' + status);
       }
     });
 
     return deferred.promise;
+  }
 
+  function relink() {
+  	return runShellScript('python3', [path.join(__dirname, './lib/re_link.py'), path.join(CONFIG.ROOT_DIR, CONFIG.MAIN.DEST)], "Linking");
+  }
+
+  function veev2rel() {
+  	return runShellScript('python3', [path.join(__dirname, './lib/re_link.py'), '--veev2rel', path.join(CONFIG.ROOT_DIR, CONFIG.MAIN.DEST)], "veev2rel");
   }
 
   function screenshots() {
     var d = Q.defer();
 
     var baseDir = CONFIG.MAIN.DEST,
-      basePath = path.join(__dirname, baseDir);
+      basePath = path.join(CONFIG.ROOT_DIR, baseDir);
     var phantom = require('phantom'),
         im = require('imagemagick');
 
@@ -362,31 +355,7 @@ function Velveeva(configRecipe) {
   } // end screenshots
 
   function pkg() {
-    var deferred = Q.defer();
-
-    var spawn = require('child_process').spawn;
-    var shell = spawn('sh', [path.join(__dirname, './lib/package_slides.sh')], {
-      cwd: path.join(__dirname, CONFIG.MAIN.DEST)
-    });
-
-    shell.stdout.on('data', function(data) {
-      	if (CONFIG.FLAGS.VERBOSE) stdOut('stdout: ' + data);
-  	});
-
-  	shell.stderr.on('data', function (data) {
-  	  error('stderr: ' + data);
-  	});
-
-    shell.on('exit', function (status) {
-      if (status === 0) {
-        deferred.resolve();
-      } else {
-        deferred.reject('Packaging script exited with status ' + status);
-      }
-    });
-
-    return deferred.promise;
-
+  	return runShellScript('sh', [path.join(__dirname, './lib/package_slides.sh')], 'Packaging', { cwd: path.join(CONFIG.ROOT_DIR, CONFIG.MAIN.DEST) });
   }
 
   function watch() {
@@ -408,11 +377,11 @@ function Velveeva(configRecipe) {
         .done(function() {
         
         if(CONFIG.FLAGS.VERBOSE) {
-        note("build: " + DEST);
-        note("source: " + SOURCE);
-        console.log(chalk.blue("partials: ") + PARTIALS);
-        console.log(chalk.blue("global assets: ") + ASSETS);
-        console.log(chalk.blue("templates: ") + TEMPLATES);
+			note("build: " + DEST);
+			note("source: " + SOURCE);
+			console.log(chalk.blue("partials: ") + PARTIALS);
+			console.log(chalk.blue("global assets: ") + ASSETS);
+			console.log(chalk.blue("templates: ") + TEMPLATES);
         }
 
         require('chokidar')
@@ -430,7 +399,11 @@ function Velveeva(configRecipe) {
   }
 
   function run() {
-    console.log(chalk.blue.bold("VELVEEVA"));
+    console.log(chalk.yellow.bold("  _   ________ _   ___________   _____ "));
+    console.log(chalk.yellow.bold(" | | / / __/ /| | / / __/ __| | / / _ |"));
+	console.log(chalk.yellow.bold(" | |/ / _// /_| |/ / _// _/ | |/ / __ |"));
+	console.log(chalk.yellow.bold(" |___/___/____|___/___/___/ |___/_/ |_|"));
+	console.log(chalk.yellow.bold(""));
 
     if (CONFIG.FLAGS.WATCH) {
       watch(bake)();
@@ -444,45 +417,53 @@ function Velveeva(configRecipe) {
 
 }
 
+(function init() {
+	var cliArgs = require("command-line-args");
+	var path = require("path");
 
-var configFile = require('./config.json');
-var cliArgs = require("command-line-args");
-var cli = cliArgs([
-  { name: "clean", type: Boolean, alias: "c", description: "Clean up the mess (mom would be proud!) [Selected when no options are given]"},
-  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using velveeva --clean --watch"},
-  { name: "help", type: Boolean, alias: "h", description: "Display this message"},
-  { name: "package", type: Boolean, alias: "p", description: "Wrap it up [Selected when no options are given]"},
-  { name: "relink", type: Boolean, alias: "r", description: "Make some href saussage (replace relative links with global and convert to veeva: protocol)"},
-  { name: "screenshots", type: Boolean, alias: "s", description: "Include Screenshots [Selected when no options are given]"},
-  { name: "verbose", type: Boolean, alias: "v", description: "Chatty Cathy"},
-  { name: "watch", type: Boolean, alias: "w", description: "Watch for changes and re-bake on change" } 
-]);
+	var configFile = require(path.join(process.cwd(),'config.json'));
 
-var options = cli.parse();
-var V = new Velveeva(configFile);
+	var cli = cliArgs([
+	  { name: "clean", type: Boolean, alias: "c", description: "Clean up the mess (mom would be proud!) [Selected when no options are given]"},
+	  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using velveeva --clean --watch"},
+	  { name: "help", type: Boolean, alias: "h", description: "Display this message"},
+	  { name: "package", type: Boolean, alias: "p", description: "Wrap it up [Selected when no options are given]"},
+	  { name: "relink", type: Boolean, alias: "r", description: "Make some href saussage (replace relative links with global and convert to veeva: protocol)"},
+	  { name: "screenshots", type: Boolean, alias: "s", description: "Include Screenshots [Selected when no options are given]"},
+	  { name: "veev2rel", type: Boolean, alias: "2", description: "Convert veeva: hrefs to relative links"},
+	  { name: "verbose", type: Boolean, alias: "v", description: "Chatty Cathy"},
+	  { name: "watch", type: Boolean, alias: "w", description: "Watch for changes and re-bake on change" } 
+	]);
 
-if (options.clean) V.config.FLAGS.CLEAN = true;
-if (options.dev) {
-	V.config.FLAGS.DEV = true;
-	V.config.FLAGS.WATCH = true;
-}
-if (options.package) V.config.FLAGS.PACKAGE = true;
-if (options.relink) V.config.FLAGS.RELINK = true;
-if (options.screenshots) V.config.FLAGS.SCREENSHOTS = true;
-if (options.verbose) V.config.FLAGS.VERBOSE = true;
-if (options.watch) V.config.FLAGS.WATCH = true;
+	var options = cli.parse();
+	var V = new Velveeva(configFile);
 
-if (Object.keys(options).length === 0 || (Object.keys(options.length === 1) && options.verbose)) {
-  // default case, also allows for default options with the verbose flag
-  V.config.FLAGS.PACKAGE = true;
-  V.config.FLAGS.RELINK = false;
-  V.config.FLAGS.SCREENSHOTS = true;
-  V.config.FLAGS.CLEAN = true;
+	if (options.clean) V.config.FLAGS.CLEAN = true;
+	if (options.dev) {
+		V.config.FLAGS.PACKAGE = false;
+		V.config.FLAGS.SCREENSHOTS = false;
+		V.config.FLAGS.DEV = true;
+		V.config.FLAGS.WATCH = true;
+	}
+	if (options.package) V.config.FLAGS.PACKAGE = true;
+	if (options.relink) V.config.FLAGS.RELINK = true;
+	if (options.screenshots) V.config.FLAGS.SCREENSHOTS = true;
+	if (options.verbose) V.config.FLAGS.VERBOSE = true;
+	if (options.veev2rel) V.config.FLAGS.VEEV2REL = true;
+	if (options.watch) V.config.FLAGS.WATCH = true;
 
-}
+	if (Object.keys(options).length === 0 || (Object.keys(options).length === 1) && options.verbose) {
+	  // default case, also allows for default options with the verbose flag
+	  V.config.FLAGS.PACKAGE = true;
+	  V.config.FLAGS.RELINK = false;
+	  V.config.FLAGS.SCREENSHOTS = true;
+	  V.config.FLAGS.CLEAN = true;
 
-if (options.help) {
-	console.log(cli.getUsage());
-} else {
-    V.run();
-}
+	}
+
+	if (options.help) {
+		console.log(cli.getUsage());
+	} else {
+	    V.run();
+	}
+})();
