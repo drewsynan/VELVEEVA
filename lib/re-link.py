@@ -107,7 +107,7 @@ def runScript():
 		if not exists: print("%s does not exist!" % arg)
 		return exists
 
-	if not reduce (lambda acc, arg: acc and doesFileExist(arg), sys.argv[1:], True):
+	if not reduce(lambda acc, arg: acc and doesFileExist(arg), sys.argv[1:], True):
 		return
 
 	for folder in sys.argv[1:]: parseFolder(folder)
