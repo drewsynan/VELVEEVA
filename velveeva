@@ -406,13 +406,15 @@ function Velveeva(configRecipe) {
           stdOut("⤷ Watching for changes (^C to quit)...");
         })
         .done(function() {
-        /*
-        console.log(chalk.blue("build: ") + DEST);
-        console.log(chalk.blue("source: ") + SOURCE);
+        
+        if(CONFIG.FLAGS.VERBOSE) {
+        note("build: " + DEST);
+        note("source: " + SOURCE);
         console.log(chalk.blue("partials: ") + PARTIALS);
         console.log(chalk.blue("global assets: ") + ASSETS);
         console.log(chalk.blue("templates: ") + TEMPLATES);
-        */
+        }
+
         require('chokidar')
           .watch([SOURCE, PARTIALS, ASSETS, TEMPLATES], {ignored: /[\/\\]\./, ignoreInitial: true})
           .on('all', function (event, path) {
@@ -446,13 +448,12 @@ function Velveeva(configRecipe) {
 var configFile = require('./config.json');
 var cliArgs = require("command-line-args");
 var cli = cliArgs([
-  { name: "bake", type: Boolean, alias: "b", descriptions: "Bake the Velveeva project"},
-  { name: "clean", type: Boolean, alias: "c", description: "Clean up the mess (mom would be proud!)"},
-  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment"},
-  { name: "help", type: Boolean, alias: "h", description: "--bake Bake it once \n --watch Bake and watch \n --dev Quick and easy bake in the test kitchen"},
-  { name: "package", type: Boolean, alias: "p", description: "Wrap it up"},
-  { name: "relink", type: Boolean, alias: "r", description: "Make some href saussage..."},
-  { name: "screenshots", type: Boolean, alias: "s", description: "Include Screenshots"},
+  { name: "clean", type: Boolean, alias: "c", description: "Clean up the mess (mom would be proud!) [Selected when no options are given]"},
+  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using velveeva --clean --watch"},
+  { name: "help", type: Boolean, alias: "h", description: "Display this message"},
+  { name: "package", type: Boolean, alias: "p", description: "Wrap it up [Selected when no options are given]"},
+  { name: "relink", type: Boolean, alias: "r", description: "Make some href saussage (replace relative links with global and convert to veeva: protocol)"},
+  { name: "screenshots", type: Boolean, alias: "s", description: "Include Screenshots [Selected when no options are given]"},
   { name: "verbose", type: Boolean, alias: "v", description: "Chatty Cathy"},
   { name: "watch", type: Boolean, alias: "w", description: "Watch for changes and re-bake on change" } 
 ]);
@@ -461,7 +462,10 @@ var options = cli.parse();
 var V = new Velveeva(configFile);
 
 if (options.clean) V.config.FLAGS.CLEAN = true;
-if (options.dev) V.config.FLAGS.DEV = true;
+if (options.dev) {
+	V.config.FLAGS.DEV = true;
+	V.config.FLAGS.WATCH = true;
+}
 if (options.package) V.config.FLAGS.PACKAGE = true;
 if (options.relink) V.config.FLAGS.RELINK = true;
 if (options.screenshots) V.config.FLAGS.SCREENSHOTS = true;
@@ -477,6 +481,8 @@ if (Object.keys(options).length === 0 || (Object.keys(options.length === 1) && o
 
 }
 
-if (!options.help) {
+if (options.help) {
+	console.log(cli.getUsage());
+} else {
     V.run();
 }
