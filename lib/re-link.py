@@ -102,14 +102,15 @@ def runScript():
 		print("Please specify a folder")
 		return
 
-	valid = True
-	for arg in sys.argv[1:]:
-		valid = valid and os.path.exists(arg)
-		if not valid:
-			print("%s does not exist!" % arg)
+	def doesFileExist(fname):
+		exists = os.path.exists(fname)
+		if not exists: print("%s does not exist!" % arg)
+		return exists
 
-	if not valid: return
+	if not reduce (lambda acc, arg: acc and doesFileExist(arg), sys.argv[1:], True):
+		return
 
 	for folder in sys.argv[1:]: parseFolder(folder)
 
 if __name__ == "__main__": runScript()
+
