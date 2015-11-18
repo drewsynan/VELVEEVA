@@ -1,69 +1,89 @@
-#!/usr/env/python3
-from bs4 import BeautifulSoup
+#!/usr/bin/env python3
+from bs4 import BeautifulSoup # also requires lxml
+from functools import reduce
+from pymonad import *
 from urllib.parse import urlparse
 import os
-import fnmatch
 import re
 import sys
 
-def parseHTML(src):
-	b = BeautifulSoup(src, 'lxml')
-	replacements = []
+@curry
+def action(name, selector, action, source):
 
-	replacements.append({
-		"name": "stylesheets", 
-		"items": b.find_all("link", {"rel": "stylesheet"}),
-		"attribute": "href"
-	})
+	@State
+	def closure(old_state):
+		b = BeautifulSoup(source, "lxml")
+		transformer_(b, selector, action)
+		
+		return (b.prettify(), old_state + 1)
+	return closure
 
-	replacements.append({
-		"name": "scripts", 
-		"items": b.find_all("script"),
-		"attribute": "src"
-	})
+def transformer_(soup, selector, transform):
+	items = selector(soup)
+	transform(items, soup)
 
-	replacements.append({
-		"name": "hyperlinks",
-		"items": b.find_all("a", href=True),
-		"attribute": "href"
-	})
+def attributeTransform(attribute, transform):
+	def transformed(items, soup):
+		for item in items:
+			item[attribute] = transform(item[attribute])
+	return transformed
 
-	replacements.append({
-		"name": "images", 
-		"items": b.find_all("img"),
-		"attribute": "src"
-	})
+def addMeta(**kwargs):
+	def transformed(items, soup):
+		nonlocal kwargs
 
-	parseTagsets(replacements)
-	parseHyperlinks([item["items"] for item in replacements if item["name"] == "hyperlinks"][0])
-	fixUtf8(b)
+		if items == []:
+			meta = soup.new_tag("meta")
+			for key in kwargs:
+				meta.attrs[key] = kwargs[key]
+			
+			if soup.head is None: soup.html.append(soup.new_tag("head"))
+
+			soup.head.append(meta)
+	return transformed
+
+def fixRelativePath(path):
+	return re.sub("(\.\.\/)*", "", path)
+
+def fixHyperlinkProtocol(href):
+	if urlparse(href).netloc != '': return href
 	
-	return b.prettify()
-
-def parseTagsets(tagsetList):
-	for tagset in tagsetList: parseTagset(tagset)
-
-def parseHyperlinks(linkList):
-	for hyperlink in linkList: 
-		hyperlink["href"] = parseHyperlink(hyperlink["href"])
-
-def parseHyperlink(link):
-	if urlparse(link).netloc != '': return link
-	
-	match = re.search("(?P<slide_name>[^/]+)\/(?P=slide_name)\.htm(l)?", link)
+	match = re.search("(?P<slide_name>[^/]+)\/(?P=slide_name)\.htm(l)?", href)
 	if match is None:
-		return link
+		return href
 	else:
 		slide_name = match.group(1)
 		return "veeva:gotoSlide(%s.zip)" % slide_name
 
+def parseHTML(src):
+	actions = [
+		action(
+			"stylesheets",
+			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
+			attributeTransform("href", fixRelativePath)),
+		action(
+			"scripts",
+			lambda soup: soup.find_all("script"),
+			attributeTransform("src", fixRelativePath)),
+		action(
+			"images",
+			lambda soup: soup.find_all("img"),
+			attributeTransform("src", fixRelativePath)),
+		action(
+			"hyperlink_paths",
+			lambda soup: soup.find_all("a", href=True),
+			attributeTransform("href", fixRelativePath)),
+		action(
+			"hyperlink_protocols",
+			lambda soup: soup.find_all("a", href=True),
+			attributeTransform("href", fixHyperlinkProtocol)),
+		action(
+			"utf",
+			lambda soup: soup.find_all("meta", charset=True),
+			addMeta(charset="utf-8"))
+	]
 
-def parseTagset(tagset):
-	for item in tagset["items"]:
-		item[tagset["attribute"]] = fixRelativePath(item[tagset["attribute"]])
-
-def fixRelativePath(path):
-	return re.sub("(\.\.\/)*", "", path)
+	return reduce(lambda prev, new: prev >> new, actions, unit(State, src)).getResult(-1)
 
 def parseFolder(path):
 	matches = []
@@ -76,12 +96,6 @@ def parseFolder(path):
 		clean = parseHTML(open(filename, 'rb'))
 		with open(filename, 'wb') as f:
 			f.write(clean.encode('utf-8'))
-
-def fixUtf8(soup):
-	if soup.find_all("meta", charset=True) == []:
-		meta = soup.new_tag("meta")
-		meta.attrs['charset'] = 'utf-8'
-		soup.head.append(meta)
 
 def runScript():
 	if len(sys.argv) < 2:
