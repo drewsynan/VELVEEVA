@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
 from pymonad import *
 from urllib.parse import urlparse
+import fnmatch
 import os
 import re
 import sys
@@ -24,6 +25,8 @@ def transformer_(soup, selector, transform):
 
 def attributeTransform(attribute, transform):
 	def transformed(items, soup):
+		if items == []: return
+
 		for item in items:
 			item[attribute] = transform(item[attribute])
 	return transformed
@@ -32,14 +35,17 @@ def addMeta(**kwargs):
 	def transformed(items, soup):
 		nonlocal kwargs
 
+		if soup.html is None: return #empty dom
+
 		if items == []:
 			meta = soup.new_tag("meta")
 			for key in kwargs:
 				meta.attrs[key] = kwargs[key]
 			
 			if soup.head is None: soup.html.append(soup.new_tag("head"))
-
+			
 			soup.head.append(meta)
+
 	return transformed
 
 def fixRelativePath(path):
@@ -57,26 +63,26 @@ def fixHyperlinkProtocol(href):
 
 def parseHTML(src):
 	actions = [
-		action(
-			"stylesheets",
-			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
-			attributeTransform("href", fixRelativePath)),
-		action(
-			"scripts",
-			lambda soup: soup.find_all("script"),
-			attributeTransform("src", fixRelativePath)),
-		action(
-			"images",
-			lambda soup: soup.find_all("img"),
-			attributeTransform("src", fixRelativePath)),
-		action(
-			"hyperlink_paths",
-			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixRelativePath)),
-		action(
-			"hyperlink_protocols",
-			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixHyperlinkProtocol)),
+		# action(
+		# 	"stylesheets",
+		# 	lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
+		# 	attributeTransform("href", fixRelativePath)),
+		# action(
+		# 	"scripts",
+		# 	lambda soup: soup.find_all("script", src=True),
+		# 	attributeTransform("src", fixRelativePath)),
+		# action(
+		# 	"images",
+		# 	lambda soup: soup.find_all("img"),
+		# 	attributeTransform("src", fixRelativePath)),
+		# action(
+		# 	"hyperlink_paths",
+		# 	lambda soup: soup.find_all("a", href=True),
+		# 	attributeTransform("href", fixRelativePath)),
+		# action(
+		# 	"hyperlink_protocols",
+		# 	lambda soup: soup.find_all("a", href=True),
+		# 	attributeTransform("href", fixHyperlinkProtocol)),
 		action(
 			"utf",
 			lambda soup: soup.find_all("meta", charset=True),
