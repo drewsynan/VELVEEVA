@@ -306,6 +306,8 @@ function Velveeva(configRecipe) {
 
     function takeScreenshot (basePath, dir, matchingFile) {
 
+    	  if(OPTIONS.FLAGS.VERBOSE) stdOut("Screenshotting " + matchingFile);
+
           var deferred = Q.defer();
 
           var full = dir, //+ "-full",
@@ -444,26 +446,27 @@ function Velveeva(configRecipe) {
 var configFile = require('./config.json');
 var cliArgs = require("command-line-args");
 var cli = cliArgs([
-  { name: "watch", type: Boolean, alias: "w", description: "Watch for changes and re-bake on change" },
-  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment"},
   { name: "bake", type: Boolean, alias: "b", descriptions: "Bake the Velveeva project"},
-  { name: "package", type: Boolean, alias: "p", description: "Wrap it up"},
+  { name: "clean", type: Boolean, alias: "c", description: "Clean up the mess (mom would be proud!)"},
+  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment"},
   { name: "help", type: Boolean, alias: "h", description: "--bake Bake it once \n --watch Bake and watch \n --dev Quick and easy bake in the test kitchen"},
-  { name: "verbose", type: Boolean, alias: "v", description: "Chatty Cathy"},
+  { name: "package", type: Boolean, alias: "p", description: "Wrap it up"},
   { name: "relink", type: Boolean, alias: "r", description: "Make some href saussage..."},
   { name: "screenshots", type: Boolean, alias: "s", description: "Include Screenshots"},
-  { name: "clean", type: Boolean, alias: "c", description: "Clean up the mess (mom would be proud!)"}
+  { name: "verbose", type: Boolean, alias: "v", description: "Chatty Cathy"},
+  { name: "watch", type: Boolean, alias: "w", description: "Watch for changes and re-bake on change" } 
 ]);
 
 var options = cli.parse();
 var V = new Velveeva(configFile);
 
-if (options.dev) V.config.FLAGS.DEV = true;
-if (options.verbose) V.config.FLAGS.VERBOSE = true;
-if (options.relink) V.config.FLAGS.RELINK = true;
-if (options.watch) V.config.FLAGS.WATCH = true;
 if (options.clean) V.config.FLAGS.CLEAN = true;
+if (options.dev) V.config.FLAGS.DEV = true;
 if (options.package) V.config.FLAGS.PACKAGE = true;
+if (options.relink) V.config.FLAGS.RELINK = true;
+if (options.screenshots) V.config.FLAGS.SCREENSHOTS = true;
+if (options.verbose) V.config.FLAGS.VERBOSE = true;
+if (options.watch) V.config.FLAGS.WATCH = true;
 
 if (Object.keys(options).length === 0) {
   // default case
