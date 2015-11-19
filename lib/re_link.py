@@ -67,6 +67,18 @@ def fixVeev2Rel(href):
 		return href
 	else:
 		return "../" + match.group(1) + "/" + match.group(1) + ".html"
+@curry
+def mvRel(old_slide_name, new_slide_name, href):
+	if urlparse(href).netloc == '':
+		oldSlide = re.compile("((?:[^/]*\/)*)(?P<slide_name>" + old_slide_name + ")\/(?P=slide_name)(\.htm(?:l)?)")
+		return oldSlide.sub(r"\g<1>" + new_slide_name + "/" + new_slide_name + r"\g<3>", href)
+	else:
+		return href
+
+@curry
+def mvVeev(old_slide_name, new_slide_name, href):
+	oldSlide = re.compile("veeva:([^(]+)\(" + old_slide_name + ".zip\)")
+	return oldSlide.sub(r"veeva:\g<1>" + "(" + new_slide_name + ".zip)", href)
 
 def runActions(actions, src):
 	return reduce(lambda prev, new: prev >> new, actions, unit(State, src)).getResult(-1)
@@ -110,6 +122,21 @@ def veev2rel(src):
 	]
 	return runActions(actions, src)
 
+@curry
+def mvRefs(old_slide_name, new_slide_name, src):
+	actions = [
+		action(
+			"old rel to old rel",
+			lambda soup: soup.find_all("a", href=True),
+			attributeTransform("href", mvRel(old_slide_name, new_slide_name) )),
+		action(
+			"old veeva to new veeva",
+			lambda soup: soup.find_all("a", href=True),
+			attributeTransform("href", mvVeev(old_slide_name, new_slide_name) ))
+	]
+
+	return runActions(actions, src)
+
 def parseFolder(path, **kwargs):
 	actions = kwargs.get("actions", [])
 
@@ -124,6 +151,9 @@ def parseFolder(path, **kwargs):
 			clean = action(open(filename, 'rb'))
 			with open(filename, 'wb') as f:
 				f.write(clean.encode('utf-8'))
+
+def mvSlideRefs(path, old_slide_name, new_slide_name):
+	parseFolder(path, actions=[mvRefs(old_slide_name, new_slide_name)])
 
 def runScript():
 	def doesFileExist(fname):

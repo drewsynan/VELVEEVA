@@ -29,3 +29,7 @@ node_modules
 **/.DS_Store
 build/**
 temp/**
+
+**/__pycache__
+**/__pycache__/**
+
