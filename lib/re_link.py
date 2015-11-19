@@ -61,12 +61,12 @@ def fixHyperlinkProtocol(href):
 		slide_name = match.group(1)
 		return "veeva:gotoSlide(%s.zip)" % slide_name
 
-def fixVeeva2Rel(href):
-	match = re.search("veeva:gotoSlide\((.+)\.zip\)")
+def fixVeev2Rel(href):
+	match = re.search("veeva:gotoSlide\((.+)\.zip\)", href)
 	if match is None:
 		return href
 	else:
-		return "../" + match.group(1) + ".html"
+		return "../" + match.group(1) + "/" + match.group(1) + ".html"
 
 def runActions(actions, src):
 	return reduce(lambda prev, new: prev >> new, actions, unit(State, src)).getResult(-1)
@@ -110,7 +110,9 @@ def veev2rel(src):
 	]
 	return runActions(actions, src)
 
-def parseFolder(path):
+def parseFolder(path, **kwargs):
+	actions = kwargs.get("actions", [])
+
 	matches = []
 	for root, dirnames, filenames in os.walk(path):
 		for filename in fnmatch.filter(filenames, "*.htm*"):
@@ -118,15 +120,19 @@ def parseFolder(path):
 
 	for filename in matches:
 		print("Re-linking %s" % filename)
-		clean = parseHTML(open(filename, 'rb'))
-		with open(filename, 'wb') as f:
-			f.write(clean.encode('utf-8'))
+		for action in actions:
+			clean = action(open(filename, 'rb'))
+			with open(filename, 'wb') as f:
+				f.write(clean.encode('utf-8'))
 
 def runScript():
 	def doesFileExist(fname):
 		exists = os.path.exists(fname)
 		if not exists: print("%s does not exist!" % fname)
 		return exists
+
+	def allExists(folders):
+		return reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True)
 
 	folders = []
 
@@ -146,13 +152,19 @@ def runScript():
 			print("Please specify a folder")
 			return 1
 		folders = sys.argv[2:]
+		if not allExists(folders):
+			return 1
+		else:
+			for folder in folders: parseFolder(folder, actions=[veev2rel])
+			return
 	else:
 		folders = sys.argv[1:]
 
-	if not reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True):
+	if not allExists(folders):
 		return 1
-
-	for folder in folders: parseFolder(folder)
+	else:
+		for folder in folders: parseFolder(folder, actions=[parseHTML])
+		return
 
 if __name__ == "__main__": runScript()
 
