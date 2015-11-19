@@ -11,7 +11,7 @@
 
 	var cli = cliArgs([
 	  { name: "clean", type: Boolean, alias: "c", description: "Clean up the mess (mom would be proud!) [Selected when no options are given]"},
-	  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using velveeva --clean --watch"},
+	  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using go --clean --watch --veev2rel"},
 	  { name: "help", type: Boolean, alias: "h", description: "Display this message"},
 	  { name: "package", type: Boolean, alias: "p", description: "Wrap it up [Selected when no options are given]"},
 	  { name: "packageonly", type: Boolean, alias: "P", description: "Just wrap it up (you gotta already have something baked)"},
@@ -27,6 +27,7 @@
 
 	if (options.clean) V.config.FLAGS.CLEAN = true;
 	if (options.dev) {
+		V.config.VEEV2REL = true;
 		V.config.FLAGS.PACKAGE = false;
 		V.config.FLAGS.SCREENSHOTS = false;
 		V.config.FLAGS.DEV = true;
