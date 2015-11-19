@@ -89,7 +89,7 @@ def mvVeev(old_slide_name, new_slide_name, href):
 def runActions(actions, src):
 	return reduce(lambda prev, new: prev >> new, actions, unit(State, src)).getResult(-1)
 
-def parseHTML(src):
+def integrateAll(src):
 	actions = [
 		action(
 			"stylesheets",
@@ -190,6 +190,7 @@ def runScript():
 	parser.add_argument("--mv", nargs=3, help="recursively rename slide refs", metavar=("OLD_NAME", "NEW_NAME", "FOLDER"))
 	parser.add_argument("--veev2rel", nargs="+", help="recursively replace veeva links with relative links", metavar="FOLDER")
 	parser.add_argument("--rel2veev", nargs="+", help="recursively replace relative links with veeva links", metavar="FOLDER")
+	parser.add_argument("--integrate_all", nargs="+", help="recursively resolve relative links and replace hrefs with veeva", metavar="FOLDER")
 	
 	args = parser.parse_args()
 
@@ -218,34 +219,14 @@ def runScript():
 				parseFolder(folder, actions=[rel2veev])
 			return
 
-	# folders = []
-
-	# if len(sys.argv) < 2:
-
-	# 	print("Usage:")
-	# 	print(sys.argv[0] + " --mv old_slide_name new_slide_name folder [folders...]")
-	# 	print(sys.argv[0] + " --veev2rel folder [folders...]")
-	# 	print(sys.argv[0] + " --rel2veev folder [folders...]")
-	# 	return
-
-	# if sys.argv[1] == "--veev2rel":
-	# 	if len(sys.argv) == 2:
-	# 		print("Please specify a folder")
-	# 		return 1
-	# 	folders = sys.argv[2:]
-	# 	if not allExists(folders):
-	# 		return 1
-	# 	else:
-	# 		for folder in folders: parseFolder(folder, actions=[veev2rel])
-	# 		return
-	# else:
-	# 	folders = sys.argv[1:]
-
-	# if not allExists(folders):
-	# 	return 1
-	# else:
-	# 	for folder in folders: parseFolder(folder, actions=[parseHTML])
-	# 	return
+	if args.integrate_all is not None:
+		folders = args.integrate_all
+		if not allExists(folders):
+			return
+		else:
+			for folder in folders:
+				parseFolder(folder, actions=[integrateAll])
+			return
 
 if __name__ == "__main__": runScript()
 
