@@ -3,10 +3,12 @@ from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
 from pymonad import *
 from urllib.parse import urlparse
+import argparse
 import fnmatch
 import os
 import re
 import sys
+import textwrap
 
 @curry
 def action(name, selector, action, source):
@@ -67,6 +69,10 @@ def fixVeev2Rel(href):
 		return href
 	else:
 		return "../" + match.group(1) + "/" + match.group(1) + ".html"
+
+def fixRel2Veev(href):
+	return fixHyperlinkProtocol(fixRelativePath(href))
+
 @curry
 def mvRel(old_slide_name, new_slide_name, href):
 	if urlparse(href).netloc == '':
@@ -122,6 +128,15 @@ def veev2rel(src):
 	]
 	return runActions(actions, src)
 
+def rel2veev(src):
+	actions = [
+		action(
+			"relative to veeva",
+			lambda soup: soup.find_all("a", href=True),
+			attributeTransform("href", fixRel2Veev))
+	]
+	return runActions(actions, src)
+
 @curry
 def mvRefs(old_slide_name, new_slide_name, src):
 	actions = [
@@ -152,9 +167,6 @@ def parseFolder(path, **kwargs):
 			with open(filename, 'wb') as f:
 				f.write(clean.encode('utf-8'))
 
-def mvSlideRefs(path, old_slide_name, new_slide_name):
-	parseFolder(path, actions=[mvRefs(old_slide_name, new_slide_name)])
-
 def runScript():
 	def doesFileExist(fname):
 		exists = os.path.exists(fname)
@@ -164,37 +176,76 @@ def runScript():
 	def allExists(folders):
 		return reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True)
 
-	folders = []
 
-	if len(sys.argv) < 2:
-		print(" _   ________ _   ___________   _____ ")
-		print("| | / / __/ /| | / / __/ __| | / / _ |")
-		print("| |/ / _// /_| |/ / _// _/ | |/ / __ |")
-		print("|___/___/____|___/___/___/ |___/_/ |_|")
-		print("                                      ")
-		print("~~~~~~~~~~~~ RE - LINKER ~~~~~~~~~~~~~")
-		print("Usage:")
-		print(sys.argv[0] + " [--veeva2rel] folder [folders...]")
-		return
+	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+		description = textwrap.dedent('''\
+			 _   ________ _   ___________   _____ 
+			| | / / __/ /| | / / __/ __| | / / _ |
+			| |/ / _// /_| |/ / _// _/ | |/ / __ |
+			|___/___/____|___/___/___/ |___/_/ |_|
+			                                      
+			~~~~~~~~~~~~ RE - LINKER ~~~~~~~~~~~~~
+			'''))
 
-	if sys.argv[1] == "--veev2rel":
-		if len(sys.argv) == 2:
-			print("Please specify a folder")
-			return 1
-		folders = sys.argv[2:]
-		if not allExists(folders):
-			return 1
-		else:
-			for folder in folders: parseFolder(folder, actions=[veev2rel])
+	parser.add_argument("--mv", nargs=3, help="recursively rename slide refs", metavar=("OLD_NAME", "NEW_NAME", "FOLDER"))
+	parser.add_argument("--veev2rel", nargs="+", help="recursively replace veeva links with relative links", metavar="FOLDER")
+	parser.add_argument("--rel2veev", nargs="+", help="recursively replace relative links with veeva links", metavar="FOLDER")
+	
+	args = parser.parse_args()
+
+	if args.mv is not None:
+		old, new, folder = args.mv
+		if not allExists([folder]): 
 			return
-	else:
-		folders = sys.argv[1:]
+		else:
+			return parseFolder(folder, actions=[mvRefs(old, new)])
 
-	if not allExists(folders):
-		return 1
-	else:
-		for folder in folders: parseFolder(folder, actions=[parseHTML])
-		return
+	if args.veev2rel is not None:
+		folders = args.veev2rel
+		if not allExists(folders):
+			return
+		else:
+			for folder in folders:
+				parseFolder(folder, actions=[veev2rel])
+			return
+
+	if args.rel2veev is not None:
+		folders = args.rel2veev
+		if not allExists(folders):
+			return
+		else:
+			for folder in folders:
+				parseFolder(folder, actions=[rel2veev])
+			return
+
+	# folders = []
+
+	# if len(sys.argv) < 2:
+
+	# 	print("Usage:")
+	# 	print(sys.argv[0] + " --mv old_slide_name new_slide_name folder [folders...]")
+	# 	print(sys.argv[0] + " --veev2rel folder [folders...]")
+	# 	print(sys.argv[0] + " --rel2veev folder [folders...]")
+	# 	return
+
+	# if sys.argv[1] == "--veev2rel":
+	# 	if len(sys.argv) == 2:
+	# 		print("Please specify a folder")
+	# 		return 1
+	# 	folders = sys.argv[2:]
+	# 	if not allExists(folders):
+	# 		return 1
+	# 	else:
+	# 		for folder in folders: parseFolder(folder, actions=[veev2rel])
+	# 		return
+	# else:
+	# 	folders = sys.argv[1:]
+
+	# if not allExists(folders):
+	# 	return 1
+	# else:
+	# 	for folder in folders: parseFolder(folder, actions=[parseHTML])
+	# 	return
 
 if __name__ == "__main__": runScript()
 
