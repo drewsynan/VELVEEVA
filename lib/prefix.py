@@ -52,9 +52,6 @@ def prefix_folder(prefix, path):
 	for filepath in filepaths:
 		parent_folder = filepath[0]
 		filename = filepath[1]
-		#print("prefix is: %s" % prefix)
-		#print("parent folder is: %s" % parent_folder)
-		#print("filename is: %s" % filename)
 
 		old_file = os.path.join(parent_folder, filename)
 		new_filename = prefix + filename
@@ -70,6 +67,7 @@ def prefix_folder(prefix, path):
 
 def prefix_refs(prefix, slidelist, root):
 	for slide in slidelist:
+		print("Changing all references to slide %s" % slide)
 		parseFolder(root, actions=[mvRefs(slide, prefix + slide)], cutoff=1)
 
 def runScript():
