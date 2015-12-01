@@ -121,8 +121,7 @@ def runScript():
 
 	for folder in folders:
 		prefix_folder(the_prefix, folder)
-
-	prefix_refs(the_prefix, find_slides(path))
+		prefix_refs(the_prefix, find_slides(folder))
 
 if __name__ == "__main__":
 	runScript()
