@@ -68,9 +68,9 @@ def prefix_folder(prefix, path):
 		print("Renaming container %s to %s" % (parentdir, new_folder))
 		os.rename(parentdir, new_folder)
 
-def prefix_refs(prefix, slidelist):
+def prefix_refs(prefix, slidelist, root):
 	for slide in slidelist:
-		parseFolder(path, actions=[mvRefs(slide, prefix + slide)], cutoff=1)
+		parseFolder(root, actions=[mvRefs(slide, prefix + slide)], cutoff=1)
 
 def runScript():
 	def doesFileExist(fname):
@@ -121,7 +121,7 @@ def runScript():
 
 	for folder in folders:
 		prefix_folder(the_prefix, folder)
-		prefix_refs(the_prefix, find_slides(folder))
+		prefix_refs(the_prefix, find_slides(folder), folder)
 
 if __name__ == "__main__":
 	runScript()
