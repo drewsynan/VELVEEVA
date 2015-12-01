@@ -192,7 +192,11 @@ def runScript():
 	parser.add_argument("--rel2veev", nargs="+", help="recursively replace relative links with veeva links", metavar="FOLDER")
 	parser.add_argument("--integrate_all", nargs="+", help="recursively resolve relative links and replace hrefs with veeva", metavar="FOLDER")
 	
-	args = parser.parse_args()
+	if len(sys.argv) == 1:
+		parser.print_help()
+		return
+	else:
+		args = parser.parse_args()
 
 	if args.mv is not None:
 		old, new, folder = args.mv
