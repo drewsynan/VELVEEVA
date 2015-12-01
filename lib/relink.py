@@ -154,11 +154,13 @@ def mvRefs(old_slide_name, new_slide_name, src):
 
 def parseFolder(path, **kwargs):
 	actions = kwargs.get("actions", [])
+	CUTOFF = kwargs.get("cutoff", float("inf"))
 
 	matches = []
 	for root, dirnames, filenames in os.walk(path):
-		for filename in fnmatch.filter(filenames, "*.htm*"):
-			matches.append(os.path.join(root, filename))
+		if root.count(os.sep) <= CUTOFF:
+			for filename in fnmatch.filter(filenames, "*.htm*"):
+				matches.append(os.path.join(root, filename))
 
 	for filename in matches:
 		print("Re-linking %s" % filename)
