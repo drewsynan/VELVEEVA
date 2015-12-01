@@ -43,12 +43,6 @@ def parse_slide_folders(path):
 	return filepaths, list(dirs)
 
 def prefix_folder(prefix, path):
-	# matches = []
-	# for root, dirnames, filenames in os.walk(path):
-	# 	for filename in fnmatch.filter(filenames, "*.htm*"):
-	# 		matches.append(os.path.join(root, filename))
-
-	slidelist = find_slides(path)
 	filepaths, parentdirs = parse_slide_folders(path)
 
 	if len(filepaths) == 0:
@@ -74,6 +68,7 @@ def prefix_folder(prefix, path):
 		print("Renaming container %s to %s" % (parentdir, new_folder))
 		os.rename(parentdir, new_folder)
 
+def prefix_refs(prefix, slidelist):
 	for slide in slidelist:
 		parseFolder(path, actions=[mvRefs(slide, prefix + slide)], cutoff=1)
 
@@ -126,6 +121,8 @@ def runScript():
 
 	for folder in folders:
 		prefix_folder(the_prefix, folder)
+
+	prefix_refs(the_prefix, find_slides(path))
 
 if __name__ == "__main__":
 	runScript()
