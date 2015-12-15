@@ -2,12 +2,19 @@
 
 
 (function init() {
-	var path = require("path");
-	var cliArgs = require("command-line-args");
+	var path, cliArgs, Veelveeva, configfile;
 
-	var Velveeva = require(path.join(__dirname, "lib/velveeva.js"));
+	try {
+		path = require("path");
+		cliArgs = require("command-line-args");
 
-	var configFile = require(path.join(process.cwd(),'VELVEEVA-config.json'));
+		Velveeva = require(path.join(__dirname, "lib/velveeva.js"));
+
+		configFile = require(path.join(process.cwd(),'VELVEEVA-config.json'));
+	} catch (e) {
+		console.log(e.message);
+		return;
+	}
 
 	var cli = cliArgs([
 	  { name: "clean", type: Boolean, alias: "c", description: "Clean up the mess (mom would be proud!) [Selected when no options are given]"},
@@ -26,7 +33,7 @@
 	try {
 		options = cli.parse();
 	} catch (e) { //was there an error with the command line flags?
-		console.log(e);
+		console.log(e.message);
 		return;
 	}
 	
