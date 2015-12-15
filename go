@@ -22,8 +22,15 @@
 	  { name: "watch", type: Boolean, alias: "w", description: "Watch for changes and re-bake on change" } 
 	]);
 
-	var options = cli.parse();
-	var V = new Velveeva(configFile);
+	var options, V;
+	try {
+		options = cli.parse();
+	} catch (e) { //was there an error with the command line flags?
+		console.log(e);
+		return;
+	}
+	
+	V = new Velveeva(configFile);
 
 	if (options.clean) V.config.FLAGS.CLEAN = true;
 	if (options.dev) {
