@@ -18,12 +18,14 @@
 
 	var cli = cliArgs([
 	  { name: "clean", type: Boolean, alias: "c", description: "Clean up the mess (mom would be proud!) [Selected when no options are given]"},
-	  { name: "controls", type: Boolean, alias: "l", description: "Only generate the control files (gonna have something already baked)"},
+	  { name: "controls", type: Boolean, alias: "l", description: "Generate slide control files (gonna have something already baked)"},
+	  { name: "controlsonly", type: Boolean, alias: "L", description: "Only generate control files"},
 	  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using go --clean --watch --veev2rel"},
 	  { name: "help", type: Boolean, alias: "h", description: "Display this message"},
 	  { name: "package", type: Boolean, alias: "p", description: "Wrap it up [Selected when no options are given]"},
 	  { name: "packageonly", type: Boolean, alias: "P", description: "Just wrap it up (you gotta already have something baked)"},
 	  { name: "publish", type: Boolean, alias: "h", description: "Ship it off to market"},
+	  { name: "publishonly", type: Boolean, alias: "H", description: "(Only) ship it off to market (you gotta already have something baked, and control files generated)"},
 	  { name: "relink", type: Boolean, alias: "r", description: "Make some href saussage (replace relative links with global and convert to veeva: protocol)"},
 	  { name: "screenshots", type: Boolean, alias: "s", description: "Include Screenshots [Selected when no options are given]"},
 	  { name: "veev2rel", type: Boolean, alias: "2", description: "Convert veeva: hrefs to relative links"},
@@ -43,6 +45,10 @@
 
 	if (options.clean) V.config.FLAGS.CLEAN = true;
 	if (options.controls) V.config.FLAGS.CONTROLS = true;
+	if (options.controlsonly) {
+		V.config.FLAGS.BAKE = false;
+		V.config.FLAGS.CONTROLS = true;
+	}
 	if (options.dev) {
 		V.config.VEEV2REL = true;
 		V.config.FLAGS.PACKAGE = false;
@@ -58,6 +64,10 @@
 	}
 	if (options.publish) {
 		V.config.FLAGS.CONTROLS = true;
+		V.config.FLAGS.PUBLISH = true;
+	}
+	if (options.publishonly) {
+		V.config.FLAGS.BAKE = false;
 		V.config.FLAGS.PUBLISH = true;
 	}
 	if (options.relink) V.config.FLAGS.RELINK = true;

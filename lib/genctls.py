@@ -34,7 +34,7 @@ def parseMeta(filename):
 
 	with ZipFile(filename, 'r') as z:
 		with(z.open(slideFile)) as f:
-			soup = BeautifulSoup(f.read())
+			soup = BeautifulSoup(f.read(), "lxml")
 			title_string = None
 			description_string = None
 
