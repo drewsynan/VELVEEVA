@@ -63,7 +63,11 @@
 		V.config.FLAGS.PACKAGE = true;
 	}
 	if (options.publish) {
+		V.config.FLAGS.BAKE = true;
+		V.config.FLAGS.CLEAN = true;
 		V.config.FLAGS.CONTROLS = true;
+		V.config.FLAGS.SCREENSHOTS = true;
+		V.config.FLAGS.PACKAGE = true;
 		V.config.FLAGS.PUBLISH = true;
 	}
 	if (options.publishonly) {
