@@ -44,10 +44,15 @@
 	V = new Velveeva(configFile);
 
 	if (options.clean) V.config.FLAGS.CLEAN = true;
-	if (options.controls) V.config.FLAGS.CONTROLS = true;
 	if (options.controlsonly) {
 		V.config.FLAGS.BAKE = false;
 		V.config.FLAGS.CONTROLS = true;
+	}
+	if (options.controls) {
+		V.config.FLAGS.BAKE = true;
+		V.config.FLAGS.CLEAN = true;
+		V.config.FLAGS.CONTROLS = true;
+		V.config.FLAGS.PACKAGE = true;
 	}
 	if (options.dev) {
 		V.config.VEEV2REL = true;
