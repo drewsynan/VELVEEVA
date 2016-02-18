@@ -19,7 +19,7 @@ def isSlide(filename):
 
 def parseSlide(filename):
 	baseName = os.path.split(os.path.splitext(filename)[0])[-1]
-	matcher = re.compile("(?:" + baseName + "/)(" + baseName + "(.htm(?:l)?|.pdf))$")
+	matcher = re.compile("(?:" + baseName + "/)(" + baseName + "(.htm(?:l)?|.pdf|.jpg|.jpeg))$")
 
 	with ZipFile(filename, 'r') as z:
 		results = [x for x in z.namelist() if matcher.match(x) is not None]
