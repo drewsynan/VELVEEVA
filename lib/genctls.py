@@ -3,6 +3,9 @@ from zipfile import ZipFile
 from functools import reduce
 from bs4 import BeautifulSoup
 from git import Repo
+from pdfminer.pdfparser import PDFDocument
+from pdfminer.pdfparser import PDFParser
+
 import re
 import os
 import time
@@ -16,13 +19,13 @@ def isSlide(filename):
 
 def parseSlide(filename):
 	baseName = os.path.split(os.path.splitext(filename)[0])[-1]
-	matcher = re.compile("(?:" + baseName + "/)(" + baseName + ".htm(?:l)?)")
+	matcher = re.compile("(?:" + baseName + "/)(" + baseName + "(.htm(?:l)?|.pdf))$")
 
 	with ZipFile(filename, 'r') as z:
 		results = [x for x in z.namelist() if matcher.match(x) is not None]
 
 		if len(results) > 0:
-			slideNames = [matcher.match(x).group(0) for x in results]
+			slideNames = [(matcher.match(x).group(0), matcher.match(x).group(2)) for x in results]
 			return slideNames[0]
 
 	return None
@@ -33,18 +36,39 @@ def parseMeta(filename):
 
 
 	with ZipFile(filename, 'r') as z:
-		with(z.open(slideFile)) as f:
-			soup = BeautifulSoup(f.read(), "lxml")
+		with(z.open(slideFile[0])) as f:
+			slideType = slideFile[1]
+
 			title_string = None
 			description_string = None
 
-			title = soup.find('meta', {'name':'veeva_title'})
-			if title is not None:
-				title_string = title.get('content', None)
+			if slideType == ".htm" or slideType == ".html":
+				soup = BeautifulSoup(f.read(), "lxml")
 
-			description = soup.find('meta', {'name':'veeva_description'})
-			if description is not None:
-				description_string = description.get('content', None)
+				title = soup.find('meta', {'name':'veeva_title'})
+				if title is not None:
+					title_string = title.get('content', None)
+
+				description = soup.find('meta', {'name':'veeva_description'})
+				if description is not None:
+					description_string = description.get('content', None)
+
+			if slideType == ".pdf":
+				doc = PDFDocument()
+				parser = PDFParser(f)
+
+				# omfg this is so janky, there needs to be a better library
+				parser.set_document(doc)
+				doc.set_parser(parser)
+
+				metadata = doc.info
+				if len(metadata) > 0:
+					latest = metadata[-1]
+					try:
+						if latest['Title'] != '': title_string = latest['Title']
+						if latest['Subject'] != '': description_string = latest['Subject']
+					except KeyError:
+						pass
 
 	return {"filename": filename, "veeva_title": title_string, "veeva_description": description_string}
 
