@@ -57,17 +57,23 @@ def prefix_folder(prefix, path):
 		new_filename = prefix + filename
 		new_file = os.path.join(parent_folder, new_filename)
 		print("Renaming slide %s to %s" % (old_file, new_file))
+		sys.stdout.flush()
+
 		os.rename(old_file, new_file)
 
 	for parentdir in parentdirs:
 		parent_pieces = os.path.split(parentdir)
 		new_folder = os.path.join(parent_pieces[0], prefix + parent_pieces[1])
 		print("Renaming container %s to %s" % (parentdir, new_folder))
+		sys.stdout.flush()
+
 		os.rename(parentdir, new_folder)
 
 def prefix_refs(prefix, slidelist, root):
 	for slide in slidelist:
 		print("Changing all references to slide %s" % slide)
+		sys.stdout.flush()
+
 		parseFolder(root, actions=[mvRefs(slide, prefix + slide)], cutoff=1)
 
 def runScript():
