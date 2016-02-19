@@ -78,7 +78,7 @@ def runScript():
 			{
 				'key' : 'temp_dir',
 				'prompt' : 'temp directory',
-				'default' :'./tmp',
+				'default' :'./temp',
 				'parser': string_parser
 			},
 			{
@@ -106,7 +106,7 @@ def runScript():
 		'key' : 'full',
 		'subkeys' : [
 			{
-				'key' : 'with',
+				'key' : 'width',
 				'prompt' : 'width',
 				'default': 1024, 
 				'parser': int_parser
@@ -130,7 +130,7 @@ def runScript():
 		'key' : 'thumb',
 		'subkeys' : [
 			{
-				'key' : 'with',
+				'key' : 'width',
 				'prompt' : 'width',
 				'default': 200, 
 				'parser': int_parser

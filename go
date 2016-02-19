@@ -9,8 +9,6 @@
 		cliArgs = require("command-line-args");
 
 		Velveeva = require(path.join(__dirname, "lib/velveeva.js"));
-
-		configFile = require(path.join(process.cwd(),'VELVEEVA-config.json'));
 	} catch (e) {
 		console.log(e.message);
 		return;
@@ -22,6 +20,7 @@
 	  { name: "controlsonly", type: Boolean, alias: "L", description: "Only generate control files"},
 	  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using go --clean --watch --veev2rel"},
 	  { name: "help", type: Boolean, alias: "h", description: "Display this message"},
+	  { name: "init", type: Boolean, alias: "i", description: "Initialize a new VELVEEVA project"},
 	  { name: "package", type: Boolean, alias: "p", description: "Wrap it up [Selected when no options are given]"},
 	  { name: "packageonly", type: Boolean, alias: "P", description: "Just wrap it up (you gotta already have something baked)"},
 	  { name: "publish", type: Boolean, alias: "h", description: "Ship it off to market"},
@@ -40,7 +39,25 @@
 		console.log(e.message);
 		return;
 	}
-	
+
+
+	function init() {
+		
+		console.log("To initialize a new project, run");
+		console.log("\nVELVEEVA/lib/init.py\n");
+	}
+
+
+	if (options.init) init();
+
+	try {
+		configFile = require(path.join(process.cwd(),'VELVEEVA-config.json'));
+	} catch (e) {
+		console.log("Couln't load VELVEEVA-config.json");
+		init();
+		return; // ugly
+	}
+
 	V = new Velveeva(configFile);
 
 	if (options.clean) V.config.FLAGS.CLEAN = true;
