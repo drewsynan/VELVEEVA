@@ -39,6 +39,14 @@ def promptRuleset(ruleset, configState):
 
 	return configState
 
+def confirm(prompt, default="y"):
+	if default != '':
+		default = " [%s]" % default
+
+	confirm = input("\n%s%s? " % (prompt, default))
+
+	return not (confirm.upper() == 'N' or confirm.upper == 'NO')
+
 def write_config(config, filename="VELVEEVA-config.json"):
 	with open(filename, 'w') as f:
 		f.write(json.dumps(config))
@@ -57,35 +65,41 @@ def runScript():
 				'key' : 'source_dir',
 				'prompt':'source directory',
 				'default': './src',
-				'parser': string_parser
+				'parser': string_parser,
+				'generate': True
 			},
 			{	'key' : 'output_dir', 
 				'prompt':'build directory',
 				'default': './build',
-				'parser': string_parser
+				'parser': string_parser,
+				'generate': True
 			},
 			{
 				'key' : 'globals_dir',
 				'prompt':'globals directory', 
 				'default': './global', 
-				'parser': string_parser},
+				'parser': string_parser,
+				'generate': True
+			},
 			{
 				'key' : 'templates_dir', 
 				'prompt':'templates directory', 
 				'default': './templates', 
-				'parser': string_parser
+				'parser': string_parser,
+				'generate': True
 			},
 			{
 				'key' : 'temp_dir',
 				'prompt' : 'temp directory',
 				'default' :'./temp',
-				'parser': string_parser
+				'parser': string_parser,
 			},
 			{
 				'key' : 'partials_dir',
 				'prompt': 'partials directory',
 				'default': './partials',
-				'parser': string_parser
+				'parser': string_parser,
+				'generate': True
 			},
 			{
 				'key' : 'zips_dir',
@@ -215,10 +229,18 @@ def runScript():
 	print("----------------")
 	promptRuleset(veeva, config)
 
-	confirm = input("\nWrite config file [y]? ")
-	if not (confirm.upper() == 'N' or confirm.upper == 'NO'):
+	
+	if confirm("Write config file"):
 		print("\nWriting VELVEEVA-config.json file...")
 		write_config(config)
+
+	if confirm("Create directories"):
+		print("\nCreating directory structure...")
+		for k in main['subkeys']:
+			if k.get('generate', False):
+				print(config['MAIN'][k['key']])
+				os.makedirs(config['MAIN'][k['key']], exist_ok=True)
+		
 
 	print("Bye!")
 
