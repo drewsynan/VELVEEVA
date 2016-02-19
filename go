@@ -44,7 +44,7 @@
 	function init() {
 		
 		console.log("To initialize a new project, run");
-		console.log("\nVELVEEVA/lib/init.py\n");
+		console.log("\nVELVEEVA/init\n");
 	}
 
 
