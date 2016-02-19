@@ -20,7 +20,9 @@ def match_zips_to_ctls(zip_path, ctl_path):
 
 	def doesFileExist(fname):
 		exists = os.path.exists(fname)
-		if not exists: print("%s does not exist!" % fname)
+		if not exists: 
+			print("%s does not exist!" % fname)
+			sys.stdout.flush()
 		return exists
 
 	def allExists(folders):
@@ -52,20 +54,26 @@ def ftp_publish(**kwargs):
 	with FTP(server) as f:
 		print("Connecting to %s..." % server)
 		print("Logging in as %s..." % username)
+		sys.stdout.flush()
+
 		f.login(username, password)
 		
 		# per documentation, always upload zip files first
 		# try to cwd into content directory (if there isn't one, then upload to the home directory)
 		print("ZIP FILES")
+		sys.stdout.flush()
+
 		try:
 			f.cwd(ZIP_LOCATION)
 		except Exception:
-			pass
+			pass # ignore cd into non-existant folder -> upload to home
 
 		try:
 			for zip in zips:
 				with open(zip, 'rb') as zipfile:
 					print("Uploading %s..." % zip)
+					sys.stdout.flush()
+
 					filename = os.path.split(zip)[-1]
 
 					f.storbinary("STOR " + filename, zipfile)
@@ -75,6 +83,8 @@ def ftp_publish(**kwargs):
 
 
 		print("CONTROL FILES")
+		sys.stdout.flush()
+
 		try:
 			f.cwd(CTL_LOCATION)
 		except Exception as e:
@@ -84,6 +94,8 @@ def ftp_publish(**kwargs):
 			for ctl in ctls:
 				with open(ctl, 'rb') as ctlfile:
 					print("Uploading %s..." % ctl)
+					sys.stdout.flush()
+
 					filename = os.path.split(ctl)[-1]
 
 					f.storbinary("STOR " + filename, ctlfile)
@@ -123,6 +135,7 @@ def runScript():
 		ftp_publish(zips=zips, ctls=ctls, username=args.u[0], password=args.pwd[0], server=args.host[0])
 	except Exception as e:
 		print(e)
+		sys.stdout.flush()
 		return
 
 if __name__ == "__main__":
