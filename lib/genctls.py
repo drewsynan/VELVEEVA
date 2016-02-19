@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 from git import Repo
 from pdfminer.pdfparser import PDFDocument
 from pdfminer.pdfparser import PDFParser
+from libxmp import consts
+from libxmp import XMPFiles
 
 import re
 import os
@@ -13,6 +15,7 @@ import sys
 import argparse
 import textwrap
 import fnmatch
+import uuid
 
 def isSlide(filename):
 	return parseSlide(filename) is not None
@@ -66,9 +69,34 @@ def parseMeta(filename):
 					latest = metadata[-1]
 					try:
 						if latest['Title'] != '': title_string = latest['Title']
+					except KeyError:
+						title_string = None
+
+					try:
 						if latest['Subject'] != '': description_string = latest['Subject']
 					except KeyError:
-						pass
+						description_string = None
+
+			if slideType == ".jpg" or slideType == ".jpeg":
+				tmp_file_name = str(uuid.uuid1()) + ".jpg"
+				with open(tmp_file_name, 'wb') as tf:
+					tf.write(f.read())
+
+				xmpfile = XMPFiles(file_path=tmp_file_name)
+				xmp = xmpfile.get_xmp()
+				xmpfile.close_file()
+
+				try:
+					title_string = xmp.get_localized_text(consts.XMP_NS_DC, 'title', None, 'x-default')
+				except XMPError:
+					title_string = None
+
+				try:
+					description_string = xmp.get_localized_text(consts.XMP_NS_DC, 'description', None, 'x-default')
+				except XMPError:
+					description_string = None
+
+				os.remove(tmp_file_name)
 
 	return {"filename": filename, "veeva_title": title_string, "veeva_description": description_string}
 
