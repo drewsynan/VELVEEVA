@@ -1,5 +1,13 @@
 #!/bin/bash
-brew install imagemagick
-pip3 install pymonad
-pip3 install lxml
+# imagemagick
+# libxmp
+# phantomjs
+# libxml2-dev and libxslt-dev headers
+# venv
+virtualenv -p /usr/bin/python3 velvenv
+
+source velvenv/bin/activate
+pip3 install -r requirements.txt
+deactivate
+
 npm install
