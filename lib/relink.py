@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import activate_venv
+
 from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
 from pymonad import *

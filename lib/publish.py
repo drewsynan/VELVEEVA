@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import activate_venv
+
 from ftplib import FTP
 from genctls import isSlide
 from functools import reduce

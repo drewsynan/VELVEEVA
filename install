@@ -4,9 +4,9 @@
 # phantomjs
 # libxml2-dev and libxslt-dev headers
 # venv
-virtualenv -p /usr/bin/python3 velvenv
+virtualenv -p /usr/bin/python3 lib/velvenv
 
-source velvenv/bin/activate
+source lib/velvenv/bin/activate
 pip3 install -r requirements.txt
 deactivate
 

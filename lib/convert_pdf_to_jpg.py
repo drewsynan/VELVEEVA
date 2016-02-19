@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import activate_venv
+
 import os
 import sys
 import glob

@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import activate_venv
+
 from zipfile import ZipFile
 from functools import reduce
 from bs4 import BeautifulSoup

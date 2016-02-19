@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import activate_venv
+
 from functools import reduce
 from relink import parseFolder, mvRefs
 import os
