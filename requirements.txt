@@ -1,4 +1,5 @@
 GitPython==1.0.2
+Pillow==3.1.1
 PyMonad==1.3
 beautifulsoup4==4.4.1
 gitdb==0.6.4
@@ -9,4 +10,5 @@ py==1.4.31
 pytest==2.8.7
 python-xmp-toolkit==2.0.1
 pytz==2015.7
+selenium==2.52.0
 smmap==0.9.0

@@ -21,6 +21,7 @@
 	  { name: "dev", type: Boolean, alias: "dev", description: "Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using go --clean --watch --veev2rel"},
 	  { name: "help", type: Boolean, alias: "h", description: "Display this message"},
 	  { name: "init", type: Boolean, alias: "i", description: "Initialize a new VELVEEVA project"},
+	  { name: "nobake", type: Boolean, alias: "n", description: "Don't bake it..."},
 	  { name: "package", type: Boolean, alias: "p", description: "Wrap it up [Selected when no options are given]"},
 	  { name: "packageonly", type: Boolean, alias: "P", description: "Just wrap it up (you gotta already have something baked)"},
 	  { name: "publish", type: Boolean, alias: "h", description: "Ship it off to market"},
@@ -78,6 +79,7 @@
 		V.config.FLAGS.DEV = true;
 		V.config.FLAGS.WATCH = true;
 	}
+	if (options.nobake) V.config.FLAGS.BAKE = false;
 	if (options.package) V.config.FLAGS.PACKAGE = true;
 	if (options.packageonly) {
 		V.config.FLAGS.BAKE = false;
