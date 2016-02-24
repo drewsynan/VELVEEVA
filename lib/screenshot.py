@@ -53,6 +53,8 @@ def ss_q(q):
 	with closing(webdriver.PhantomJS()) as driver:
 		while True:
 			job = q.get()
+			if job is None: break
+
 			ss_(job[0], job[1], job[2], job[3], driver)
 			q.task_done()
 
@@ -163,15 +165,22 @@ def runScript():
 	shots = list(gen_configs(urls, dests, sizes, local_slide_name))
 
 	q = mp.JoinableQueue()
-	
+	procs = []
+
 	for i in range(mp.cpu_count()*2):
-		p = mp.Process(target=ss_q, args=(q,), daemon=True)
+		p = mp.Process(target=ss_q, args=(q,))
+		procs.append(p)
 		p.start()
 
 	for item in shots:
 		q.put(tuple(item))
 
 	q.join()
+
+	for i in range(mp.cpu_count()*2):
+		q.put(None)
+
+	for proc in procs: proc.join()
 
 if __name__ == "__main__":
 	VERBOSE = True
