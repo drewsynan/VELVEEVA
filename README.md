@@ -2,10 +2,10 @@
 An easier way to manage, maintain, and build Veeva iRep presentations
 
 ## Features
-* Automatic screenshot and zip file generation
+* Automatic screenshot, thumbnail, and zip file generation
 * Support for static asset inlining
 * Template and partial system (Embedded CoffeeScript)
-* SASS support baked in
+* SASS compilation
 * Dev environment with re-build on change watcher
 * Convert relative links to veeva: protocol links on the fly (both during dev and for a final build)
 * Convert veeva: links back to relative links on the fly
