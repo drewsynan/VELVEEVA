@@ -14,6 +14,13 @@ An easier way to manage, maintain, and build Veeva iRep presentations
 * Smart metadata extraction from HTML (using meta tags, or eco template fields) or XMP data from PDF and JPEG files to easily maintain slide titles and descriptions within source files
 * Integrated slide uploading to iRep FTP server
 
+## Quick Start: Creating a new project
+In an empty folder (or empty git repo), run
+```bash
+git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install && VELVEEVA/init
+```
+This will install the required components for VELVEEVA, and launch a wizard to create a new project.
+
 ## Requirements
 * [ImageMagick](http://www.imagemagick.org/script/download.php)
 * [Node.js (12+)](https://nodejs.org/en/download/) **IMPORTANT: don't use homebrew-installed node.js on OS-X**
@@ -28,13 +35,6 @@ If installing on **Linux**
 * gcc toolchain and headers (ubuntu: `sudo apt-get install build-essential`)
 * libxml2 headers (ubuntu: `sudo apt-get install libxml2-dev`)
 * libxslt headers (ubuntu: `sudo apt-get install libsxlt-dev`)
-
-## Creating a new project
-In an empty folder (or empty git repo), run
-```bash
-git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install && VELVEEVA/init
-```
-This will install the required components for VELVEEVA, and launch a wizard to create a new project.
 
 ## Directories
 * |-`src` **source files for each slide**. Create a new subdirectory for each Veeva slide. There must be one file inside the slide that has the same name as its enclosing folder (for example a slide named 01_intro must have a file called 01_intro.html or 01_intro.jpg (for image slides) to be a valid Veeva slide)
