@@ -25,8 +25,9 @@ If installing on **OS-X**
 * Xcode command line tools
 
 If installing on **Linux**
-* libxml2-dev headers
-* libxslt-dev headers
+* gcc toolchain and headers (ubuntu: `sudo apt-get install build-essential`)
+* libxml2 headers (ubuntu: `sudo apt-get install libxml2-dev`)
+* libxslt headers (ubuntu: `sudo apt-get install libsxlt-dev`)
 
 ## Creating a new project
 In an empty folder (or empty git repo), run
