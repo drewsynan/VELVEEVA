@@ -38,6 +38,9 @@ Needed before running the install command given above
 * libxml2 headers (ubuntu: `sudo apt-get install libxml2-dev`)
 * libxslt headers (ubuntu: `sudo apt-get install libsxlt-dev`)
 
+💣 If installing on **Windows**
+* good luck! Let me know how it goes? Definitly possible, but I haven't looked into it at all.
+
 ## Directories
 * |-`src` **source files for each slide**. Create a new subdirectory for each Veeva slide. There must be one file inside the slide that has the same name as its enclosing folder (for example a slide named 01_intro must have a file called 01_intro.html or 01_intro.jpg (for image slides) to be a valid Veeva slide)
 * |-`globals` **static assets to be included in all slides**. Files and folders here will be copied to the built slide folders. If a folder already exists in the local slide folder, its contents will be merged with the global folder.
