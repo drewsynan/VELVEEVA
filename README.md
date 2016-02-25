@@ -11,7 +11,7 @@ An easier way to manage, maintain, and build Veeva iRep presentations
 * Convert veeva: links back to relative links on the fly
 * Tooling rename slides and automatically change all internal references
 * Automatic iRep control file generator
-* Smart metadata extraction from HTML (using <meta content="veeva_title"> etc tags) or XMP data from PDF and JPEG files to easily maintain slide titles and descriptions within the source files
+* Smart metadata extraction from HTML (using meta tags, or eco template fields) or XMP data from PDF and JPEG files to easily maintain slide titles and descriptions within source files
 * Integrated slide uploading to iRep FTP server
 
 ## Requirements
