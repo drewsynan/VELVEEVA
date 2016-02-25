@@ -50,18 +50,22 @@ def ss_(url, dest, sizes, filename, driver):
 	[__snap(driver, x['width'], x['height'], filename, x.get('suffix', None)) for x in sizes]
 
 def ss_q(q):
-	with closing(webdriver.PhantomJS()) as driver:
-		while True:
-			job = q.get()
-			if job is None: break
+	driver = webdriver.PhantomJS()
 
-			ss_(job[0], job[1], job[2], job[3], driver)
-			q.task_done()
+	while True:
+		job = q.get()
+		if job is None: break
+
+		ss_(job[0], job[1], job[2], job[3], driver)
+		q.task_done()
+
+	driver.quit()
 
 
 def ss(url, dest, sizes, filename):
-	with closing(webdriver.PhantomJS()) as driver:
-		ss_(url, dest, sizes, filename, driver)
+	driver = webdriver.PhantomJS()
+	ss_(url, dest, sizes, filename, driver)
+	driver.quit()
 
 def ss_conc(configs, executor):
 	procs = []
