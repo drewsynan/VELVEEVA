@@ -20,18 +20,20 @@ In an empty folder (or empty git repo), run
 git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install && VELVEEVA/init
 ```
 This will install the required components for VELVEEVA, and launch a wizard to create a new project.
+🍕yum!
 
 ## Requirements
+Needed before running the install command given above
 * [ImageMagick](http://www.imagemagick.org/script/download.php)
 * [Node.js (12+)](https://nodejs.org/en/download/) **IMPORTANT: don't use homebrew-installed node.js on OS-X**
 * [Phantomjs](http://phantomjs.org/download.html)
 * [Python (3.4+) with pip](https://www.python.org/downloads/)
 * virtualenv (install using `pip install virtualenv`)
 
-If installing on **OS-X**
+ If installing on **OS-X**
 * Xcode command line tools (for [Mavericks](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2.dmg), for [El Capitan](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2.dmg). Requires free Apple Developer ID and sign-in to Apple Developer Center.)
 
-If installing on **Linux**
+🐧 If installing on **Linux**
 * gcc toolchain and headers (ubuntu: `sudo apt-get install build-essential`)
 * libxml2 headers (ubuntu: `sudo apt-get install libxml2-dev`)
 * libxslt headers (ubuntu: `sudo apt-get install libsxlt-dev`)
