@@ -22,7 +22,7 @@ An easier way to manage, maintain, and build Veeva iRep presentations
 * virtualenv (install using `pip install virtualenv`)
 
 If installing on **OS-X**
-* Xcode command line tools
+* Xcode command line tools (for [Mavericks](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2.dmg), for [El Capitan](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2.dmg))
 
 If installing on **Linux**
 * gcc toolchain and headers (ubuntu: `sudo apt-get install build-essential`)
