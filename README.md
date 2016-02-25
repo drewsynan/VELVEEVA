@@ -54,11 +54,9 @@ To build a project (including rendering any templates, compiling SASS, taking sc
 ```bash
 project-root$ VELVEEVA/go
 ```
-from the project root directory. By default, the built files are created in `build/_zips`. Under most circumstances, this is sufficient. However, for more advanced building options run 
-```bash
-project-root$ VELVEEVA/go --help
-```
-to see a list of configuration options.
+from the project root directory. By default, the built files are created in `build/_zips`. Under most circumstances, this is sufficient. 
+
+👴 For more advanced building options run `VELVEEVA/go --help` to see a list of configuration options.
 
 ## Publishing slides
 If you have configured your iRep FTP server login information, either in the setup phase, or by later editing the `VELVEEVA-config.json` file in the project's root directory, VELVEEVA can automatically generate any necessary control files and upload them to the server for you. To publish files, first run 
@@ -92,7 +90,7 @@ project-root$ VELVEEVA/lib/prefix.py my_specific_prefix_ build
 project-root$ VELVEEVA/go --packageonly
 (etc)
 ```
-For further information, run `VELVEEVA/lib/prefix.py --help`.
+👴 For further information, run `VELVEEVA/lib/prefix.py --help`.
 
 ## Renaming slides, and relinking slide references
 For more fine-grained control over the renaming process, VELVEEVA provides a re-linking utility (`relink.py`). This utility allows you to rename one slide at a time (and change all references from the old name to the new name in a folder specified). For example, to rename the source files of slide `01_something_stupid` to `index` (and change all references within `src` to point to `index` and not `01_something_stupid`) the command would look something like
@@ -101,7 +99,7 @@ project-root$ VELVEEVA/lib/relink.py --mv 01_something_stupid index src
 ```
 To change references in only the built version of the presentation, first build without packaging (since the utility can't read zip files), and point it at the `build` directory.
 
-For further information, run `VELVEEVA/lib/relink.py --help`
+👴 For further information, run `VELVEEVA/lib/relink.py --help`
 ## Generating enclosing slide folders
 Sometimes it's useful to be able to create the surrounding folder around the slide file (in the case of JPEG or PDF slides). VELVEEVA has a utility (`make_enclosing_folders.py`) to quickly do this.
 
