@@ -18,7 +18,7 @@ An easier way to manage, maintain, and build Veeva iRep presentations
 * [ImageMagick](http://www.imagemagick.org/script/download.php)
 * [Node.js (12+)](https://nodejs.org/en/download/) **IMPORTANT: don't use homebrew-installed node.js on OS-X**
 * [Phantomjs](http://phantomjs.org/download.html)
-* [Python (3.5+) with pip](https://www.python.org/downloads/)
+* [Python (3.4+) with pip](https://www.python.org/downloads/)
 * virtualenv (install using `pip install virtualenv`)
 
 If installing on **OS-X**
