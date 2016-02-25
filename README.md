@@ -24,7 +24,7 @@ This will install the required components for VELVEEVA, and launch a wizard to c
 
 ## Requirements
 Needed before running the install command given above
-* [ImageMagick](http://www.imagemagick.org/script/download.php)
+* [ImageMagick](http://www.imagemagick.org/script/binary-releases.php)
 * [Node.js (12+)](https://nodejs.org/en/download/) **IMPORTANT: don't use homebrew-installed node.js on OS-X**
 * [Phantomjs](http://phantomjs.org/download.html)
 * [Python (3.4+) with pip](https://www.python.org/downloads/)
