@@ -1,4 +1,4 @@
-![VELVEEVA logo](https://raw.githubusercontent.com/gacomm/VELVEEVA/master/velveeva_logo.svg)
+![VELVEEVA logo](https://raw.githubusercontent.com/gacomm/VELVEEVA/master/velveeva_logo.png)
 # VELVEEVA
 An easier way to manage, maintain, and build Veeva iRep presentations
 
