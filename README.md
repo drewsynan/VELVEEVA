@@ -8,6 +8,7 @@ An easier way to manage, maintain, and build Veeva iRep presentations
 * ☕️ Template and partial system (Embedded CoffeeScript)
 * 💅 SASS compilation
 * 👀 Dev environment with re-build on change watcher
+* 🍻 Automatic project scaffolding
 * 🔀 Convert relative links to veeva protocol links on the fly (both during dev and for a final build)
 * 🔁 Convert veeva protocol links back to relative links on the fly
 * 📝 Tooling to rename slides and automatically change all internal references
