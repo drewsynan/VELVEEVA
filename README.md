@@ -3,17 +3,17 @@
 An easier way to manage, maintain, and build Veeva iRep presentations
 
 ## Features
-* Automatic screenshot, thumbnail, and zip file generation
-* Support for static asset inlining
-* Template and partial system (Embedded CoffeeScript)
-* SASS compilation
-* Dev environment with re-build on change watcher
-* Convert relative links to veeva: protocol links on the fly (both during dev and for a final build)
-* Convert veeva: links back to relative links on the fly
-* Tooling rename slides and automatically change all internal references
-* Automatic iRep control file generator
-* Smart metadata extraction from HTML (using meta tags, or eco template fields) or XMP data from PDF and JPEG files to easily maintain slide titles and descriptions within source files
-* Integrated slide uploading to iRep FTP server
+* 📷 Automatic screenshot, thumbnail, and zip file generation
+* 💉 Support for static asset inlining
+* ☕️ Template and partial system (Embedded CoffeeScript)
+* 💅 SASS compilation
+* 👀 Dev environment with re-build on change watcher
+* 🔀 Convert relative links to veeva: protocol links on the fly (both during dev and for a final build)
+* 🔁 Convert veeva: links back to relative links on the fly
+* 📝 Tooling to rename slides and automatically change all internal references
+* 💩 Automatic iRep control file generator
+* 🔎 Smart metadata extraction from HTML (using meta tags, or eco template fields) or XMP data from PDF and JPEG files to easily maintain slide titles and descriptions within source files
+* 🚀 Integrated slide uploading to iRep FTP server
 
 ## Quick Start: Creating a new project
 In an empty folder (or empty git repo), run
