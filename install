@@ -83,7 +83,7 @@ command -v convert >/dev/null 2>&1 || { printf "💩 ImageMagick (convert) not f
 command -v mogrify >/dev/null 2>&1 || { printf "💩 ImageMagick (mogrify) not found\n👉 try $pkgman imagemagick\n\n" >&2; exitstatus=1; }
 
 # check python, node versions
-if [[ ! -z `command -v python3 >/dev/null 2>&1` ]]
+if [[ -z `command -v python3 >/dev/null 2>&1` ]]
 then
 	PYPASS=`python3 -c 'import sys; print(int(sys.version_info[0]==3 and sys.version_info[1] >= 4))'`
 	if [ $PYPASS != 1 ]
@@ -92,7 +92,7 @@ then
 	fi
 fi
 
-if [[ ! -z `command -v node >/dev/null 2>&1` ]]
+if [[ -z `command -v node >/dev/null 2>&1` ]]
 then
 	NODEPASS=`node --version | cut -c2- | awk -F. '{print (($1 == 0 && $2>=12) || ($1 >= 4))}'`
 	if [ $NODEPASS != 1 ]
