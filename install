@@ -143,7 +143,7 @@ then
 		fi
 	fi
 
-	#exitstatus=1 #for testing
+	exitstatus=1
 fi
 
 if [ $exitstatus != 0 ]
