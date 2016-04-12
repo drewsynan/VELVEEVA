@@ -59,12 +59,12 @@ command -v node >/dev/null 2>&1 || {
 command -v npm >/dev/null 2>&1 || {
 	if [[ "$platform" == 'OSX' ]]
 	then
-		echo "💩 npm not found\n👉 try installing the nodejs package from nodejs.org/en/download" >&2 
+		printf "💩 npm not found\n👉 try installing the nodejs package from nodejs.org/en/download" >&2 
 	elif [[ "$platform" == 'Ubuntu' ]]
 	then
-		echo "💩 npm not found\n👉 try $pkgman npm" >&2 
+		printf "💩 npm not found\n👉 try $pkgman npm" >&2 
 	else
-		echo "💩 npm not found\n👉 try $pkgman npm" >&2
+		printf "💩 npm not found\n👉 try $pkgman npm" >&2
 	fi
 
 	exitstatus=1
