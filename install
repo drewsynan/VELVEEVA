@@ -58,7 +58,7 @@ then
 	{ echo "💩 unsupported python3 version found. Please upgrade your python >= 3.4" >&2; exitstatus=1; }
 fi
 
-NODEPASS=`node --version | awk -F. '{print ($1 == "v0" && $2>=12)}'`
+NODEPASS=`node --version | cut -c2- | awk -F. '{print (($1 == 0 && $2>=12) || ($1 >= 4))}'`
 if [ $NODEPASS != 1 ]
 then
 	{ echo "💩 unsupported nodejs version found. Please upgrade to >= 0.12" >&2; exitstatus=1; }
