@@ -38,6 +38,7 @@ Needed before running the install command given above
 
 🐧 If installing on **Linux**
 * gcc toolchain and headers (ubuntu: `sudo apt-get install build-essential`)
+* libjpeg headers (ubuntu: `sudo apt-get install libjpeg-dev`)
 * libxml2 headers (ubuntu: `sudo apt-get install libxml2-dev`)
 * libxslt headers (ubuntu: `sudo apt-get install libsxlt-dev`)
 
