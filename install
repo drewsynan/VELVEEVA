@@ -48,8 +48,8 @@ command -v pip3 >/dev/null 2>&1 || { echo "💩 pip3 not found: 👉 try $pkgman
 command -v virtualenv >/dev/null 2>&1 || { echo "💩 virtualenv not found: 👉 try pip3 install virtualenv" >&2; exitstatus=1; }
 command -v phantomjs >/dev/null 2>&1 || { echo "💩 phantomjs not found:👉 try $pkgman phantomjs" >&2; exitstatus=1; }
 
-command -v convert >/dev/null 2>&1 || { echo "💩 ImageMagick not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
-command -v mogrify >/dev/null 2>&1 || { echo "💩 ImageMagick not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
+command -v convert >/dev/null 2>&1 || { echo "💩 ImageMagick (convert) not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
+command -v mogrify >/dev/null 2>&1 || { echo "💩 ImageMagick (mogrify) not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
 
 # check python, node versions
 PYPASS=`python3 -c 'import sys; print(int(sys.version_info[0]==3 and sys.version_info[1] >= 4))'`
