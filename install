@@ -93,10 +93,13 @@ then
 	{ echo "💩 unsupported python3 version found. Please upgrade your python >= 3.4" >&2; exitstatus=1; }
 fi
 
-NODEPASS=`node --version | cut -c2- | awk -F. '{print (($1 == 0 && $2>=12) || ($1 >= 4))}'`
-if [ $NODEPASS != 1 ]
+if [[ ! -z command -v phantomjs >/dev/null 2>&1 ]]
 then
-	{ echo "💩 unsupported nodejs version found. Please upgrade to >= 0.12" >&2; exitstatus=1; }
+	NODEPASS=`node --version | cut -c2- | awk -F. '{print (($1 == 0 && $2>=12) || ($1 >= 4))}'`
+	if [ $NODEPASS != 1 ]
+	then
+		{ echo "💩 unsupported nodejs version found. Please upgrade to >= 0.12" >&2; exitstatus=1; }
+	fi
 fi
 
 # check for libxml2 and libxslt
