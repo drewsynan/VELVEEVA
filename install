@@ -173,14 +173,14 @@ echo "+----------------------------+"
 
 virtualenv -p $(which python3) lib/velvenv
 source lib/velvenv/bin/activate
-pip3 install -r requirements.txt || { echo "💣 Error installing python packages! Aborting. 💣"; deactivate; exit 1 }
+pip3 install -r requirements.txt || { deactivate; echo "💣 Error installing python packages! Aborting. 💣" >&2; exit 1; }
 deactivate
 
 echo "+-------------------------+"
 echo "| Installing Node modules |"
 echo "+-------------------------+"
 
-npm install || { echo "💣 Error installing node modules! Aborting. 💣"; exit 1 }
+npm install || { echo "💣 Error installing node modules! Aborting. 💣" >&2; exit 1; }
 
 echo "🍕 yum!"
 
