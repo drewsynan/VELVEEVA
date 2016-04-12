@@ -94,10 +94,10 @@ fi
 
 if [[ -z `command -v node >/dev/null 2>&1` ]]
 then
-	NODEPASS=`node --version | cut -c2- | awk -F. '{print (($1 == 0 && $2>=12) || ($1 >= 4))}'`
+	NODEPASS=`node --version | cut -c2- | awk -F. '{print (($1 == 0 && $2>=10) || ($1 >= 4))}'`
 	if [ $NODEPASS != 1 ]
 	then
-		{ printf "💩 unsupported nodejs version found.\n👉 Please upgrade to >= 0.12\n\n" >&2; exitstatus=1; }
+		{ printf "💩 unsupported nodejs version found.\n👉 Please upgrade to >= 0.10\n\n" >&2; exitstatus=1; }
 	fi
 fi
 
