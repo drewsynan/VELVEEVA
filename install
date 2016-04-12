@@ -41,7 +41,7 @@ command -v gcc >/dev/null 2>&1 || {
 	exitstatus=1
 }
 
-command -v python3 >/dev/null 2>&1 || { echo "💩 python 3 not found: 👉 try $pkgman python3" >&2; exitstatus=1; }
+command -v python3 >/dev/null 2>&1 || { echo "💩 python 3 not found\n👉 try $pkgman python3" >&2; exitstatus=1; }
 command -v node >/dev/null 2>&1 || {
 	if [[ "$platform" == 'OSX' ]]
 	then
@@ -59,7 +59,7 @@ command -v node >/dev/null 2>&1 || {
 command -v npm >/dev/null 2>&1 || {
 	if [[ "$platform" == 'OSX' ]]
 	then
-		echo "💩 npm not found: 👉 try installing the nodejs package from nodejs.org/en/download" >&2 
+		echo "💩 npm not found\n👉 try installing the nodejs package from nodejs.org/en/download" >&2 
 	elif [[ "$platform" == 'Ubuntu' ]]
 	then
 		echo "💩 nodejs not found: 👉 try $pkgman npm" >&2 
