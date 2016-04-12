@@ -1,11 +1,11 @@
 #!/bin/bash
 
-printf "                 WELCOME TO\n"
+printf "                     WELCOME TO           \n"
 printf "	 _   ________ _   ___________   _____ \n"
 printf "	| | / / __/ /| | / / __/ __| | / / _ |\n"
 printf "	| |/ / _// /_| |/ / _// _/ | |/ / __ |\n"
 printf "	|___/___/____|___/___/___/ |___/_/ |_|\n"
-printf "----------------------------------------------\n\n"
+printf "----------------------------------------------\n\n\n"
 echo "💃 INSTALLING..."
 echo "🔎 CHECKING DEPENDENCIES..."
 exitstatus=0
