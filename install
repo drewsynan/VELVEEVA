@@ -153,10 +153,10 @@ fi
 
 if [ $exitstatus != 0 ]
 then
-	echo "+💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀+"
-	echo "🍖   Some dependencies could not be met. 🍖"
-	echo "🍖    Please install and try again       🍖"
-	echo "+💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀💀+"
+	echo "                  💀  💀  💀"
+	echo "    Some dependencies could not be met."
+	echo "       Please install and try again."
+	echo " "
 	exit $exitstatus
 else
 	echo "🎉 DEPENDENCIES MET!"
