@@ -146,9 +146,9 @@ then
 		else
 			printf "💩 libjpeg not found\n👉 try $pkgman libjpeg\n\n"
 		fi
-	fi
 
-	exitstatus=1
+		exitstatus=1
+	fi
 fi
 
 if [ $exitstatus != 0 ]
