@@ -87,10 +87,13 @@ command -v convert >/dev/null 2>&1 || { echo "💩 ImageMagick (convert) not fou
 command -v mogrify >/dev/null 2>&1 || { echo "💩 ImageMagick (mogrify) not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
 
 # check python, node versions
-PYPASS=`python3 -c 'import sys; print(int(sys.version_info[0]==3 and sys.version_info[1] >= 4))'`
-if [ $PYPASS != 1 ]
+if [[ ! -z `command -v python3 >/dev/null 2>&1` ]]
 then
-	{ echo "💩 unsupported python3 version found. Please upgrade your python >= 3.4" >&2; exitstatus=1; }
+	PYPASS=`python3 -c 'import sys; print(int(sys.version_info[0]==3 and sys.version_info[1] >= 4))'`
+	if [ $PYPASS != 1 ]
+	then
+		{ echo "💩 unsupported python3 version found. Please upgrade your python >= 3.4" >&2; exitstatus=1; }
+	fi
 fi
 
 if [[ ! -z `command -v phantomjs >/dev/null 2>&1` ]]
