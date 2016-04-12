@@ -1,9 +1,5 @@
 #!/bin/bash
-# imagemagick
-# libxmp
-# phantomjs
-# libxml2-dev and libxslt-dev headers
-# venv
+
 echo "+-----------------------+"
 echo "| CHECKING DEPENDENCIES |"
 echo "+-----------------------+"
@@ -30,27 +26,27 @@ fi
 command -v gcc >/dev/null 2>&1 || { 
 	if [[ "$platform" == 'OSX' ]]
 	then
-		echo "💩 gcc not found: 👉 try installing the XCode command line tools"
+		printf "💩 gcc not found\n👉 try installing the XCode command line tools\n\n"
 	elif [[ "$platform" == 'Ubuntu' ]]
 	then
-		echo "💩 gcc not found: 👉 try $pgkman build-essential"
+		printf "💩 gcc not found\n👉 try $pgkman build-essential\n\n"
 	else
-		echo "💩 gcc not found: 👉 try $pkgman gcc" >&2
+		printf "💩 gcc not found\n👉 try $pkgman gcc\n\n" >&2
 	fi
 
 	exitstatus=1
 }
 
-command -v python3 >/dev/null 2>&1 || { echo "💩 python 3 not found\n👉 try $pkgman python3" >&2; exitstatus=1; }
+command -v python3 >/dev/null 2>&1 || { printf "💩 python 3 not found\n👉 try $pkgman python3\n\n" >&2; exitstatus=1; }
 command -v node >/dev/null 2>&1 || {
 	if [[ "$platform" == 'OSX' ]]
 	then
-		echo "💩 nodejs not found: 👉 try installing the package from nodejs.org/en/download" >&2 
+		printf "💩 nodejs not found\n👉 try installing the package from nodejs.org/en/download\n\n" >&2 
 	elif [[ "$platform" == 'Ubuntu' ]]
 	then
-		echo "💩 nodejs not found: 👉 try $pkgman nodejs-legacy" >&2 
+		printf "💩 nodejs not found\n👉 try $pkgman nodejs-legacy\n\n" >&2 
 	else
-		echo "💩 nodejs not found: 👉 try $pkgman node" >&2
+		printf "💩 nodejs not found\n👉 try $pkgman node\n\n" >&2
 	fi
 
 	exitstatus=1
@@ -59,32 +55,32 @@ command -v node >/dev/null 2>&1 || {
 command -v npm >/dev/null 2>&1 || {
 	if [[ "$platform" == 'OSX' ]]
 	then
-		printf "💩 npm not found\n👉 try installing the nodejs package from nodejs.org/en/download" >&2 
+		printf "💩 npm not found\n👉 try installing the nodejs package from nodejs.org/en/download\n\n" >&2 
 	elif [[ "$platform" == 'Ubuntu' ]]
 	then
-		printf "💩 npm not found\n👉 try $pkgman npm" >&2 
+		printf "💩 npm not found\n👉 try $pkgman npm\n\n" >&2 
 	else
-		printf "💩 npm not found\n👉 try $pkgman npm" >&2
+		printf "💩 npm not found\n👉 try $pkgman npm\n\n" >&2
 	fi
 
 	exitstatus=1
 }
 
-command -v pip3 >/dev/null 2>&1 || { echo "💩 pip3 not found: 👉 try $pkgman python3-pip" >&2; exitstatus=1; }
+command -v pip3 >/dev/null 2>&1 || { printf "💩 pip3 not found: 👉 try $pkgman python3-pip" >&2; exitstatus=1; }
 command -v virtualenv >/dev/null 2>&1 || { 
 	if [[ "$platform" == 'Ubuntu' ]]
 	then
-		echo "💩 virtualenv not found: 👉 try $pkgman virtualenv" >&2
+		printf "💩 virtualenv not found\n👉 try $pkgman virtualenv\n\n" >&2
 	else
-		echo "💩 virtualenv not found: 👉 try pip3 install virtualenv" >&2
+		printf "💩 virtualenv not found\n👉 try pip3 install virtualenv\n\n" >&2
 	fi
 
 	exitstatus=1
 }
-command -v phantomjs >/dev/null 2>&1 || { echo "💩 phantomjs not found:👉 try $pkgman phantomjs" >&2; exitstatus=1; }
+command -v phantomjs >/dev/null 2>&1 || { printf "💩 phantomjs not found\n👉 try $pkgman phantomjs\n\n" >&2; exitstatus=1; }
 
-command -v convert >/dev/null 2>&1 || { echo "💩 ImageMagick (convert) not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
-command -v mogrify >/dev/null 2>&1 || { echo "💩 ImageMagick (mogrify) not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
+command -v convert >/dev/null 2>&1 || { printf "💩 ImageMagick (convert) not found\n👉 try $pkgman imagemagick\n\n" >&2; exitstatus=1; }
+command -v mogrify >/dev/null 2>&1 || { printf "💩 ImageMagick (mogrify) not found\n👉 try $pkgman imagemagick\n\n" >&2; exitstatus=1; }
 
 # check python, node versions
 if [[ ! -z `command -v python3 >/dev/null 2>&1` ]]
@@ -92,7 +88,7 @@ then
 	PYPASS=`python3 -c 'import sys; print(int(sys.version_info[0]==3 and sys.version_info[1] >= 4))'`
 	if [ $PYPASS != 1 ]
 	then
-		{ echo "💩 unsupported python3 version found. Please upgrade your python >= 3.4" >&2; exitstatus=1; }
+		{ printf "💩 unsupported python3 version found.\n👉 Please upgrade your python >= 3.4\n\n" >&2; exitstatus=1; }
 	fi
 fi
 
@@ -101,20 +97,20 @@ then
 	NODEPASS=`node --version | cut -c2- | awk -F. '{print (($1 == 0 && $2>=12) || ($1 >= 4))}'`
 	if [ $NODEPASS != 1 ]
 	then
-		{ echo "💩 unsupported nodejs version found. Please upgrade to >= 0.12" >&2; exitstatus=1; }
+		{ printf "💩 unsupported nodejs version found.\n👉 Please upgrade to >= 0.12\n\n" >&2; exitstatus=1; }
 	fi
 fi
 
 # check for libxml2 and libxslt
 if [ -z `find /usr/include -name libxml2 2>/dev/null` ]
 then
-	echo "💩 libxml2 not found" >&2
+	printf "💩 libxml2 not found\n" >&2
 	if [[ "$platform" == 'OSX' ]]
 	then
-		echo "👉 try $pkgman libxml2"
+		printf "👉 try $pkgman libxml2\n\n"
 	elif [[ "$platform" == 'Ubuntu' ]]
 	then
-		echo "👉 try $pkgman libxml2-dev"
+		printf "👉 try $pkgman libxml2-dev\n\n"
 	fi
 
 	exitstatus=1
@@ -122,13 +118,13 @@ fi
 
 if [ -z `find /usr/include -name libxslt 2>/dev/null` ]
 then
-	echo "💩 libxslt not found" >&2
+	printf "💩 libxslt not found\n" >&2
 	if [[ "$platform" == 'OSX' ]]
 	then
-		echo "👉 try $pkgman libxslt"
+		printf "👉 try $pkgman libxslt\n\n"
 	elif [[ "$platform" == 'Ubuntu' ]]
 	then
-		echo "👉 try $pkgman libxslt-dev"
+		printf "👉 try $pkgman libxslt-dev\n\n"
 	fi
 
 	exitstatus=1
@@ -141,9 +137,9 @@ then
 	then
 		if [[ "$platform" == 'Ubuntu' ]]
 		then
-			echo "💩 libjpeg not found 👉 try $pkgman libjpeg-dev"
+			printf "💩 libjpeg not found\n👉 try $pkgman libjpeg-dev\n\n"
 		else
-			echo "💩 libjpeg not found 👉 try $pkgman libjpeg"
+			printf "💩 libjpeg not found\n👉 try $pkgman libjpeg\n\n"
 		fi
 	fi
 fi
@@ -156,7 +152,7 @@ then
 	echo "+-------------------------------------+"
 	exit $exitstatus
 else
-	echo "Dependencies met!"
+	printf "Dependencies met!"
 fi
 
 SOURCE="${BASH_SOURCE[0]}"
