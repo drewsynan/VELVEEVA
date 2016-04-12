@@ -42,10 +42,45 @@ command -v gcc >/dev/null 2>&1 || {
 }
 
 command -v python3 >/dev/null 2>&1 || { echo "💩 python 3 not found: 👉 try $pkgman python3" >&2; exitstatus=1; }
-command -v node >/dev/null 2>&1 || { echo "💩 nodejs not found: 👉 try $pkgman node" >&2; exitstatus=1; }
+command -v node >/dev/null 2>&1 || {
+	if [[ "$platform" == 'OSX' ]]
+	then
+		echo "💩 nodejs not found: 👉 try installing the package from nodejs.org/en/download" >&2 
+	elif [[ "$platform" == 'Ubuntu' ]]
+	then
+		echo "💩 nodejs not found: 👉 try $pkgman nodejs-legacy" >&2 
+	else
+		echo "💩 nodejs not found: 👉 try $pkgman node" >&2
+	fi
+
+	exitstatus=1
+}
+
+command -v npm >/dev/null 2>&1 || {
+	if [[ "$platform" == 'OSX' ]]
+	then
+		echo "💩 npm not found: 👉 try installing the nodejs package from nodejs.org/en/download" >&2 
+	elif [[ "$platform" == 'Ubuntu' ]]
+	then
+		echo "💩 nodejs not found: 👉 try $pkgman npm" >&2 
+	else
+		echo "💩 nodejs not found: 👉 try $pkgman npm" >&2
+	fi
+
+	exitstatus=1
+}
 
 command -v pip3 >/dev/null 2>&1 || { echo "💩 pip3 not found: 👉 try $pkgman python3-pip" >&2; exitstatus=1; }
-command -v virtualenv >/dev/null 2>&1 || { echo "💩 virtualenv not found: 👉 try pip3 install virtualenv" >&2; exitstatus=1; }
+command -v virtualenv >/dev/null 2>&1 || { 
+	if [[ "$platform" == 'Ubuntu' ]]
+	then
+		echo "💩 virtualenv not found: 👉 try $pkgman virtualenv" >&2
+	else
+		echo "💩 virtualenv not found: 👉 try pip3 install virtualenv" >&2
+	fi
+
+	exitstatus=1
+}
 command -v phantomjs >/dev/null 2>&1 || { echo "💩 phantomjs not found:👉 try $pkgman phantomjs" >&2; exitstatus=1; }
 
 command -v convert >/dev/null 2>&1 || { echo "💩 ImageMagick (convert) not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
@@ -91,6 +126,20 @@ then
 	fi
 
 	exitstatus=1
+fi
+
+# check for libjpeg on linux
+if [[ "$unamestring" == 'Linux' ]]
+then
+	if [ -z `find /usr/include -name jpeglib.h 2>/dev/null` ]
+	then
+		if [[ "$platform" == 'Ubuntu' ]]
+		then
+			echo "💩 libjpeg not found 👉 try $pkgman libjpeg-dev"
+		else
+			echo "💩 libjpeg not found 👉 try $pkgman libjpeg"
+		fi
+	fi
 fi
 
 if [ $exitstatus != 0 ]
