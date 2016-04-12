@@ -92,7 +92,7 @@ then
 	fi
 fi
 
-if [[ ! -z `command -v phantomjs >/dev/null 2>&1` ]]
+if [[ ! -z `command -v node >/dev/null 2>&1` ]]
 then
 	NODEPASS=`node --version | cut -c2- | awk -F. '{print (($1 == 0 && $2>=12) || ($1 >= 4))}'`
 	if [ $NODEPASS != 1 ]
