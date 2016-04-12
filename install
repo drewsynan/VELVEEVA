@@ -66,7 +66,7 @@ command -v npm >/dev/null 2>&1 || {
 	exitstatus=1
 }
 
-command -v pip3 >/dev/null 2>&1 || { printf "💩 pip3 not found: 👉 try $pkgman python3-pip" >&2; exitstatus=1; }
+command -v pip3 >/dev/null 2>&1 || { printf "💩 pip3 not found\n👉 try $pkgman python3-pip\n\n" >&2; exitstatus=1; }
 command -v virtualenv >/dev/null 2>&1 || { 
 	if [[ "$platform" == 'Ubuntu' ]]
 	then
@@ -152,7 +152,7 @@ then
 	echo "+-------------------------------------+"
 	exit $exitstatus
 else
-	printf "Dependencies met!"
+	echo "Dependencies met!"
 fi
 
 SOURCE="${BASH_SOURCE[0]}"
