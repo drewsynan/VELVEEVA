@@ -4,6 +4,105 @@
 # phantomjs
 # libxml2-dev and libxslt-dev headers
 # venv
+echo "+-----------------------+"
+echo "| CHECKING DEPENDENCIES |"
+echo "+-----------------------+"
+exitstatus=0
+
+unamestring=`uname`
+platform='unknown'
+pkgman='installing '
+
+if [[ "$unamestring" == 'Darwin' ]]; then
+	platform="OSX"
+	pkgman="brew install"
+elif [[ "$unamestring" == 'Linux' ]]; then
+	platform="Linux-generic"
+	linuxname=`lsb_release -si`
+	if [[ "$linuxname" == 'Ubuntu' ]]; then
+		platform="Ubuntu"
+		pkgman="sudo apt-get install"
+	else 
+		pkgman="sudo yum install"
+	fi
+fi
+
+command -v gc >/dev/null 2>&1 || { 
+	if [[ "$platform" == 'OSX' ]]
+	then
+		echo "💩 gcc not found: 👉 try installing the XCode command line tools"
+	elif [[ "$platform" == 'Ubuntu' ]]
+	then
+		echo "💩 gcc not found: 👉 try $pgkman build-essential"
+	else
+		echo "💩 gcc not found: 👉 try $pkgman gcc" >&2
+	fi
+
+	exitstatus=1
+}
+
+command -v python3 >/dev/null 2>&1 || { echo "💩 python 3 not found: 👉 try $pkgman python3" >&2; exitstatus=1; }
+command -v node >/dev/null 2>&1 || { echo "💩 nodejs not found: 👉 try $pkgman node" >&2; exitstatus=1; }
+
+command -v pip3 >/dev/null 2>&1 || { echo "💩 pip3 not found: 👉 try $pkgman python3-pip" >&2; exitstatus=1; }
+command -v virtualenv >/dev/null 2>&1 || { echo "💩 virtualenv not found: 👉 try pip3 install virtualenv" >&2; exitstatus=1; }
+command -v phantomjs >/dev/null 2>&1 || { echo "💩 phantomjs not found:👉 try $pkgman phantomjs" >&2; exitstatus=1; }
+
+command -v convert >/dev/null 2>&1 || { echo "💩 ImageMagick not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
+command -v mogrify >/dev/null 2>&1 || { echo "💩 ImageMagick not found: 👉 try $pkgman imagemagick" >&2; exitstatus=1; }
+
+# check python, node versions
+PYPASS=`python3 -c 'import sys; print(int(sys.version_info[0]==3 and sys.version_info[1] >= 4))'`
+if [ $PYPASS != 1 ]
+then
+	{ echo "💩 unsupported python3 version found. Please upgrade your python >= 3.4" >&2; exitstatus=1; }
+fi
+
+NODEPASS=`node --version | awk -F. '{print ($1 == "v0" && $2>=12)}'`
+if [ $NODEPASS != 1 ]
+then
+	{ echo "💩 unsupported nodejs version found. Please upgrade to >= 0.12" >&2; exitstatus=1; }
+fi
+
+# check for libxml2 and libxslt
+if [ -z `find /usr/include -name libxml2 2>/dev/null` ]
+then
+	echo "💩 libxml2 not found" >&2
+	if [[ "$platform" == 'OSX' ]]
+	then
+		echo "👉 try $pkgman libxml2"
+	elif [[ "$platform" == 'Ubuntu' ]]
+	then
+		echo "👉 try $pkgman libxml2-dev"
+	fi
+
+	exitstatus=1
+fi
+
+if [ -z `find /usr/include -name libxslt 2>/dev/null` ]
+then
+	echo "💩 libxslt not found" >&2
+	if [[ "$platform" == 'OSX' ]]
+	then
+		echo "👉 try $pkgman libxslt"
+	elif [[ "$platform" == 'Ubuntu' ]]
+	then
+		echo "👉 try $pkgman libxslt-dev"
+	fi
+
+	exitstatus=1
+fi
+
+if [ $exitstatus != 0 ]
+then
+	echo "+-------------------------------------+"
+	echo "| Some dependencies could not be met. |"
+	echo "|   Please install and try again      |"
+	echo "+-------------------------------------+"
+	exit $exitstatus
+else
+	echo "Dependencies met!"
+fi
 
 SOURCE="${BASH_SOURCE[0]}"
 while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
@@ -15,11 +114,18 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 cd $DIR
 
-virtualenv -p $(which python3) lib/velvenv
+echo "+----------------------------+"
+echo "| Creating Python Virtualenv |"
+echo "+----------------------------+"
 
+virtualenv -p $(which python3) lib/velvenv
 source lib/velvenv/bin/activate
 pip3 install -r requirements.txt
 deactivate
+
+echo "+-------------------------+"
+echo "| Installing Node modules |"
+echo "+-------------------------+"
 
 npm install
 
