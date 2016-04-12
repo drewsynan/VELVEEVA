@@ -106,6 +106,10 @@ def integrateAll(src):
 			lambda soup: soup.find_all("img"),
 			attributeTransform("src", fixRelativePath)),
 		action(
+			"iframes",
+			lambda soup: soup.find_all("iframe"),
+			attributeTransform("src", fixRelativePath)),
+		action(
 			"hyperlink_paths",
 			lambda soup: soup.find_all("a", href=True),
 			attributeTransform("href", fixRelativePath)),
