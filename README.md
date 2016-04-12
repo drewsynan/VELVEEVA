@@ -34,7 +34,7 @@ Needed before running the install command given above
 
  If installing on **OS-X**
 * Xcode command line tools (for [Mavericks](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2.dmg), for [El Capitan](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2.dmg). Requires free Apple Developer ID and sign-in to Apple Developer Center.)
-* libxml2 (`$ brew install libxml2`)
+* libxml2 (`brew install libxml2`)
 
 🐧 If installing on **Linux**
 * gcc toolchain and headers (ubuntu: `sudo apt-get install build-essential`)
