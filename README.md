@@ -85,7 +85,7 @@ The development environment automatically resolves veeva:() urls to their relati
 
 If you would prefer to develop using relative urls, and only later convert them to veeva: protocol links, omit the `--veev2rel` flag when developing, and build using the `--relink` flag.
 
-# Advanced Topics
+# Other Topics
 ## Prefixing slide names
 Since each slide must have a unique name on the Veeva server, it is often necessary to rename slides with a prefix or suffix to ensure uniqueness if two versions of a key message must exist simeltaneously. VELVEEVA provides tooling (`prefix.py`) to make this process eaiser. The tool works by renaming slide folders, and the internal slide file, and then changing any internal references in any of the slides in the folder specified to reflect the new name. Because the prefixing tool only works on built (but not zipped files) first run the build command (making sure to have resolved any relative links to veeva: links). For example, to prefix a presentation with **my_specific_prefix_**, it would look something like this
 ```bash
