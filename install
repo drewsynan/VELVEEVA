@@ -27,7 +27,7 @@ elif [[ "$unamestring" == 'Linux' ]]; then
 	fi
 fi
 
-command -v gc >/dev/null 2>&1 || { 
+command -v gcc >/dev/null 2>&1 || { 
 	if [[ "$platform" == 'OSX' ]]
 	then
 		echo "💩 gcc not found: 👉 try installing the XCode command line tools"
