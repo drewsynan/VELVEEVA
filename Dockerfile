@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y \
 	imagemagick \
 	libxml2-dev \
 	libxslt-dev \
-	libjpeg-dev
+	libjpeg-dev \
+	libexempi-dev
 
 RUN git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install
 
