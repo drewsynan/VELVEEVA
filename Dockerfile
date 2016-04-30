@@ -2,6 +2,7 @@ FROM ubuntu:15.10
 MAINTAINER Drew Synan "dsynan@sandboxww.com"
 
 RUN apt-get update && apt-get install -y \
+	zip \
 	build-essential \
 	git \
 	nodejs-legacy \
