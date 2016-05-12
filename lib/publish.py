@@ -79,8 +79,9 @@ def ftp_publish(**kwargs):
 		try:
 			for zip in zips:
 				with open(zip, 'rb') as zipfile:
-					print("Uploading %s..." % zip)
-					sys.stdout.flush()
+					if verbose:
+						print("Uploading %s..." % zip)
+						sys.stdout.flush()
 
 					filename = os.path.split(zip)[-1]
 

@@ -132,38 +132,40 @@ def doScript():
 	print("👉  %s 👈\n" % paint.bold.yellow(PROJECT_NAME))
 
 	try:
-		with ProgressBar(max_value=10, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
+		with ProgressBar(max_value=11, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
 			#0. nuke
 			print("🔥  %s" % paint.gray("Nuking old builds..."))
-			nuke(ROOT_DIR, config)
 			progress.update(1)
+			nuke(ROOT_DIR, config)
 
 			#1. scaffold needed folders 🗄
 			print("🗄  %s" % paint.gray("Creating directories..."))
-			scaffold(ROOT_DIR, config)
 			progress.update(2)
+			scaffold(ROOT_DIR, config)
 
 			#2. inline local (non-html) files, and create build folders 💉
 			print("💉  %s " % paint.gray("Inlining partials and globals..."))
-			copy_locals(ROOT_DIR, SOURCE_DIR, DEST_DIR)
 			progress.update(3)
+			copy_locals(ROOT_DIR, SOURCE_DIR, DEST_DIR)
 
 			#3. inline partials and globals 
+			progress.update(4)
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "inject.py")
 			for out in execute(["python3", cmd, ROOT_DIR, GLOBALS_DIR, DEST_DIR]):
 				print(out)
-			progress.update(4)
 
 			#4. render sass 💅
 			print("💅  %s " % paint.gray("Compiling SASS..."))
+			progress.update(5)
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "compile_sass.py")
 
 			for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR)]):
 				print(out)
-			progress.update(5)
+			
 
 			#5. render templates 📝
 			print("📝  %s " % paint.gray("Rendering templates..."))
+			progress.update(6)
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "render_templates.py")
 
 			for out in execute(["python3", cmd, 
@@ -172,10 +174,10 @@ def doScript():
 				os.path.join(ROOT_DIR, PARTIALS_DIR)]):
 				print(out)
 
-			progress.update(6)
 
 			#6. take screenshots 📸
 			print("📸  %s " % paint.gray("Taking screenshots..."))
+			progress.update(7)
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "screenshot.py")
 			src = os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR))
 			cfg = os.path.abspath(os.path.join(ROOT_DIR,CONFIG_FILE_NAME))
@@ -183,17 +185,17 @@ def doScript():
 			for out in execute(["python3", cmd, src, cfg]):
 				print(out)
 
-			progress.update(7)
 
 			#7. package slides 📬
+			progress.update(8)
 			print("📬  %s " % paint.gray("Packaging slides..."))
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "package_slides.py")
 			for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR), os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR)]):
 				print(out)
-			progress.update(8)
 
 			#8. generate control files ⚒
 			print("⚒  %s " % paint.gray("Generating .ctl files..."))
+			progress.update(9)
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "genctls.py")
 
 			flags = ["python3"
@@ -208,10 +210,11 @@ def doScript():
 
 			for out in execute(flags):
 				print(out)
-			progress.update(9)
 
 			#9. ftp 🚀
 			print("🚀  %s " % paint.gray("Publishing to Veeva FTP server..."))
+			progress.update(10)
+			
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "publish.py")
 			for out in execute(["python3", cmd
 				, "--zip", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR))
@@ -221,8 +224,9 @@ def doScript():
 				, "--pwd", VEEVA_PASSWORD]):
 				print(out)
 
-			progress.update(10)
 
+			#done!
+			progress.update(11)
 
 			# relinking
 			# don't use subprocess -> import directly
