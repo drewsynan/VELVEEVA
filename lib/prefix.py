@@ -101,8 +101,8 @@ def runScript():
 			         Use on built files, thx.
 			'''))
 
-	parser.add_argument("prefix", nargs=1, help="prefix string")
-	parser.add_argument("folder", nargs="+", help="folder(s) to process")
+	parser.add_argument("prefix", nargs=1, help="prefix string", required=True)
+	parser.add_argument("folder", nargs="+", help="folder(s) to process", required=True)
 
 	if len(sys.argv) == 1:
 		parser.print_help()

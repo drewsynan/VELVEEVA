@@ -55,17 +55,21 @@ def ftp_publish(**kwargs):
 	zips = kwargs['zips']
 	ctls = kwargs['ctls']
 
+	verbose = kwargs.get('verbose', False)
+
 	with FTP(server) as f:
-		print("Connecting to %s..." % server)
-		print("Logging in as %s..." % username)
-		sys.stdout.flush()
+		if verbose:
+			print("Connecting to %s..." % server)
+			print("Logging in as %s..." % username)
+			sys.stdout.flush()
 
 		f.login(username, password)
 		
 		# per documentation, always upload zip files first
 		# try to cwd into content directory (if there isn't one, then upload to the home directory)
-		print("ZIP FILES")
-		sys.stdout.flush()
+		if verbose:
+			print("ZIP FILES")
+			sys.stdout.flush()
 
 		try:
 			f.cwd(ZIP_LOCATION)
@@ -85,9 +89,9 @@ def ftp_publish(**kwargs):
 			# bail on any ftp errors (TODO FIX THIS LOL)
 			raise Exception('Error in uploading zip files: ' + str(e))
 
-
-		print("CONTROL FILES")
-		sys.stdout.flush()
+		if verbose:
+			print("CONTROL FILES")
+			sys.stdout.flush()
 
 		try:
 			f.cwd(CTL_LOCATION)
@@ -97,8 +101,9 @@ def ftp_publish(**kwargs):
 		try:
 			for ctl in ctls:
 				with open(ctl, 'rb') as ctlfile:
-					print("Uploading %s..." % ctl)
-					sys.stdout.flush()
+					if verbose:
+						print("Uploading %s..." % ctl)
+						sys.stdout.flush()
 
 					filename = os.path.split(ctl)[-1]
 
@@ -108,15 +113,16 @@ def ftp_publish(**kwargs):
 			raise Exception('Error in uploading control files: ' + str(e))
 
 
-def runScript():
+def runScript(verbose=False):
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
 		description = banner(subtitle="Publisher"))
 
-	parser.add_argument("--zip", nargs=1, help="path to zip files")
-	parser.add_argument("--ctl", nargs=1, help="path to ctl files")
-	parser.add_argument("--host", nargs=1, help="server name")
-	parser.add_argument("--u", nargs=1, help="Veeva username")
-	parser.add_argument("--pwd", nargs=1, help="Veeva password")
+	parser.add_argument("--zip", nargs=1, help="path to zip files", required=True)
+	parser.add_argument("--ctl", nargs=1, help="path to ctl files", required=True)
+	parser.add_argument("--host", nargs=1, help="server name", required=True)
+	parser.add_argument("--u", nargs=1, help="Veeva username", required=True)
+	parser.add_argument("--pwd", nargs=1, help="Veeva password", required=True)
+	parser.add_argument("--verbose", action="store_true", help="verbose output")
 
 	if len(sys.argv) == 1:
 		parser.print_help()
@@ -127,7 +133,7 @@ def runScript():
 	zips, ctls = match_zips_to_ctls(args.zip[0], args.ctl[0])
 
 	try:
-		ftp_publish(zips=zips, ctls=ctls, username=args.u[0], password=args.pwd[0], server=args.host[0])
+		ftp_publish(zips=zips, ctls=ctls, username=args.u[0], password=args.pwd[0], server=args.host[0], verbose=args.verbose)
 	except Exception as e:
 		print(e)
 		sys.stdout.flush()

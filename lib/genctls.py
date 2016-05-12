@@ -171,11 +171,11 @@ def runScript():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
 		description = banner(subtitle=".ctl File Generator"))
 
-	parser.add_argument("--src", nargs=1, help="path to folder containing zip files to process")
-	parser.add_argument("--out", nargs=1, help="path for output ctl files (will be created if it does not exist)")
-	parser.add_argument("--root", nargs=1, help="root directory for the project (used for versioning)")
-	parser.add_argument("--u", nargs=1, help="Veeva username")
-	parser.add_argument("--pwd", nargs=1, help="Veeva password")
+	parser.add_argument("--src", nargs=1, help="path to folder containing zip files to process", required=True)
+	parser.add_argument("--out", nargs=1, help="path for output ctl files (will be created if it does not exist)", required=True)
+	parser.add_argument("--root", nargs=1, help="root directory for the project (used for versioning)", required=True)
+	parser.add_argument("--u", nargs=1, help="Veeva username", required=True)
+	parser.add_argument("--pwd", nargs=1, help="Veeva password", required=True)
 	parser.add_argument("--email", nargs=1, help="Optional email for errors")
 
 	if len(sys.argv) == 1:
