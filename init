@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-import json
+import lib.activate_venv
 
+from lib.veevutils import banner
+from painter import paint
+
+import json
 import os
 import sys
 import textwrap
+import pprint
 
 def string_parser(input, default):
 	converted = str(input)
@@ -27,7 +32,7 @@ def promptRuleset(ruleset, configState):
 
 	def makequery(name, default):
 		if str(default) != '':
-			default = " [%s]" % str(default)
+			default = " [%s]" % paint.bold.yellow(str(default))
 
 		return ("What is the %s%s? " % (name, default))
 
@@ -41,7 +46,7 @@ def promptRuleset(ruleset, configState):
 
 def confirm(prompt, default="y"):
 	if default != '':
-		default = " [%s]" % default
+		default = " [%s]" % paint.bold.yellow(default)
 
 	confirm = input("\n%s%s? " % (prompt, default))
 
@@ -199,37 +204,30 @@ def runScript():
 		]
 	}
 	
-	banner = textwrap.dedent('''\
-	 _   ________ _   ___________   _____ 
-	| | / / __/ /| | / / __/ __| | / / _ |
-	| |/ / _// /_| |/ / _// _/ | |/ / __ |
-	|___/___/____|___/___/___/ |___/_/ |_|
-	                                      
-	~~~~~~~ New Project Generator ~~~~~~~~
-	''')
-
+	
 	config = {}
 
-	print(banner)
+	print(banner(subtitle="New Project Generator"))
 	
-	print("\nGENERAL CONFIGURATION")
-	print("---------------------")
+	print(paint.bold.yellow("GENERAL CONFIGURATION"))
 	promptRuleset(main, config)
 
-	print("\nSCREENSHOTS")
-	print("-----------")
+	print("\n" + paint.bold.yellow("SCREENSHOTS"))
 	ss = {}
-	print("\nFull-Size Screenshots")
+	print(paint.bold.yellow("Full-Size Screenshots"))
 	promptRuleset(ss_full, ss)
-	print("\nSlide Thumbnails")
+	print("\n" + paint.bold.yellow("Slide Thumbnails"))
 	promptRuleset(ss_thumb, ss)
 	config['SS'] = ss
 
-	print("\nVEEVA DEPLOYMENT")
-	print("----------------")
+	print("\n" + paint.bold.yellow("VEEVA DEPLOYMENT"))
 	promptRuleset(veeva, config)
 
 	
+	print("\n" + paint.bold.yellow("SUMAMRY"))
+	print(paint.bold.yellow("VELVEEVA-config.json"))
+	pprint.pprint(config)
+
 	if confirm("Write config file"):
 		print("\nWriting VELVEEVA-config.json file...")
 		write_config(config)
@@ -242,6 +240,6 @@ def runScript():
 				os.makedirs(config['MAIN'][k['key']], exist_ok=True)
 		
 
-	print("Bye!")
+	print("\n👋  " + paint.bold.yellow("Bye!"))
 
 if __name__ == "__main__": runScript()
