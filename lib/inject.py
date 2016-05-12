@@ -7,6 +7,7 @@ import os
 import shutil
 import sys
 import textwrap
+import concurrent.futures
 
 def inject1(root_dir, src_dir, dest_dir, merge=True, filter="*", verbose=False):
 	s_walk = os.walk(os.path.abspath(os.path.join(root_dir,src_dir)))
@@ -51,7 +52,22 @@ def inject(root, srcs, dests, verbose=False):
 			if verbose: print("Injecting %s to %s" % (src,dest))
 			inject1(root, src, dest, verbose=verbose)
 
-def runScript():
+def inject_async(root, srcs, dests, verbose=False):
+	if not type(srcs) == list: srcs = [srcs]
+	if not type(dests) == list: dests = [dests]
+
+	with concurrent.futures.ProcessPoolExecutor() as executor:
+		futures = {}
+		for dest in dests:
+			for src in srcs:
+				futures[executor.submit(inject1, root, src, dest, verbose=verbose)] = src+dest
+		for future in concurrent.futures.as_completed(futures):
+			try:
+				data = future.result()
+			except Exception as e:
+				raise e
+
+def runScript(ASYNC=False):
 	VERBOSE = False
 	ROOT_ONLY = False
 
@@ -95,9 +111,12 @@ def runScript():
 		inject(root, src, dest, verbose=VERBOSE)
 	else:
 		subdirs = [os.path.join(dest,sd) for sd in next(os.walk(os.path.join(root,dest)))[1]]
-		inject(root, src, subdirs, verbose=VERBOSE)
+		if ASYNC:
+			inject_async(root, src, subdirs, verbose=VERBOSE)
+		else:
+			inject(root, src, subdirs, verbose=VERBOSE)
 
 if __name__ == '__main__':
-	runScript()
+	runScript(ASYNC=True)
 
 

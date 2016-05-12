@@ -154,16 +154,16 @@ def parseFolder(path, **kwargs):
 
 	matches = []
 	for root, dirnames, filenames in os.walk(path):
-		if root.count(os.sep) <= CUTOFF:
+		if root.count(os.sep) - path.count(os.sep) <= CUTOFF:
 			for filename in fnmatch.filter(filenames, "*.zip"):
 				if isSlide(os.path.join(root,filename)): matches.append(os.path.join(root, filename))
+
 
 	control_files = [createRecordString(m, version=version, username=username, password=password, email=email) for m in matches]
 
 	for control in control_files:
 		with open(os.path.join(out, control['filename']), 'w') as f:
 			f.write(control['record'])
-
 
 def runScript():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,

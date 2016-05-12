@@ -29,11 +29,12 @@ def parse_slide_folders(path):
 	# filter all file paths for only folders that contain a file with the same name directly inside
 	filepaths = []
 	dirs = set([])
+	base_depth = path.count(os.sep)
 
 	CUTOFF = 1 # only go one directory deep
 
 	for root, dirnames, filenames in os.walk(path):
-		if root.count(os.sep) <= CUTOFF:
+		if root.count(os.sep) - base_depth <= CUTOFF:
 			for filename in filenames:
 				parentPath, parent_name = os.path.split(root)
 

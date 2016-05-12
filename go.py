@@ -2,6 +2,7 @@
 from lib import activate_venv
 
 from painter import paint
+from progressbar import ProgressBar, Percentage, Bar
 
 import argparse
 import textwrap
@@ -11,6 +12,8 @@ import shutil
 import subprocess
 import os
 import inspect
+import concurrent.futures
+
 
 
 def banner(type="normal"):
@@ -67,17 +70,25 @@ def nuke(root, config, verbose=False):
 def copy_locals(root_dir, src, dest, verbose=False):
 	slides = next(os.walk(os.path.join(root_dir,src)))[1] # (root, dirs, files)
 	
-	for slide in slides:
-		# copy everything except for html files that match the parent folder name
-		for root, dirs, files in os.walk(os.path.join(root_dir,src,slide)):
-			for file in files:
-				if not os.path.splitext(os.path.basename(file))[0] == slide:
-					s = os.path.abspath(os.path.join(root,file))
-					dest_dir = os.path.abspath(os.path.join(root_dir,dest,slide))
-					d = os.path.abspath(os.path.join(root_dir,dest,slide,file))
+	with concurrent.futures.ProcessPoolExecutor() as executor:
+		futures = {}
 
-					if not os.path.exists(dest_dir): os.makedirs(dest_dir)
-					shutil.copy(s,d)
+		for slide in slides:
+			# copy everything except for html files that match the parent folder name
+			for root, dirs, files in os.walk(os.path.join(root_dir,src,slide)):
+				for file in files:
+					if not os.path.splitext(os.path.basename(file))[0] == slide:
+						s = os.path.abspath(os.path.join(root,file))
+						dest_dir = os.path.abspath(os.path.join(root_dir,dest,slide))
+						d = os.path.abspath(os.path.join(root_dir,dest,slide,file))
+
+						if not os.path.exists(dest_dir): os.makedirs(dest_dir)
+						futures[executor.submit(shutil.copy,s,d)] = s+d
+		for future in concurrent.futures.as_completed(futures):
+			try:
+				data = future.result()
+			except Exception as e:
+				raise e
 
 def doScript():
 	VERBOSE = False
@@ -91,6 +102,7 @@ def doScript():
 	parser.add_argument("--controlsonly", 	action="store_true", help="Only generate control files")
 	parser.add_argument("--dev",			action="store_true", help="Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using go --clean --watch --veev2rel")
 	parser.add_argument("--init",			action="store_true", help="Initialize a new VELVEEVA project")
+	parser.add_argument("--nuke", 			action="store_true", help="Nuke old builds and temp files")
 	parser.add_argument("--nobake",			action="store_true", help="Don't bake it...")
 	parser.add_argument("--package",		action="store_true", help="Wrap it up [Selected when no options are given]")
 	parser.add_argument("--packageonly",	action="store_true", help="Just wrap it up (you gotta already have something baked)")
@@ -116,72 +128,111 @@ def doScript():
 	TEMPLATES_DIR = config['MAIN']['templates_dir']
 	ZIPS_DIR = config['MAIN']['zips_dir']
 
+	### CTL File Info ###
+	CTLS_DIR = config['MAIN']['ctls_dir']
+	VEEVA_USERNAME = config['VEEVA']['username']
+	VEEVA_PWD = config['VEEVA']['password']
+	VEEVA_SERVER = config['VEEVA']['server']
+	VEEVA_EMAIL = config['VEEVA'].get('email', None)
+
 	ROOT_DIR = os.getcwd()
 	CONFIG_FILE_NAME = "VELVEEVA-config.json"
+	PROJECT_NAME = config['MAIN']['name']
 
 	VELVEEVA_DIR = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
 
 	#💩🍕
 
 	print(banner())
+	print("👉  %s 👈\n" % paint.bold.yellow(PROJECT_NAME))
 
-	#0. nuke
-	print("🔥  %s" % paint.green("Nuking old builds..."))
-	nuke(ROOT_DIR, config)
+	with ProgressBar(max_value=8, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
+		#0. nuke
+		progress.update(0)
+		print("🔥  %s" % paint.gray("Nuking old builds..."))
+		nuke(ROOT_DIR, config)
 
-	#1. scaffold needed folders 🗄
-	print("🗄  %s" % paint.green("Creating directories..."))
-	scaffold(ROOT_DIR, config)
+		#1. scaffold needed folders 🗄
+		progress.update(1)
+		print("🗄  %s" % paint.gray("Creating directories..."))
+		scaffold(ROOT_DIR, config)
 
-	#2. inline local (non-html) files, and create build folders 💉
-	print("💉  %s " % paint.green("Inlining partials and globals..."))
-	copy_locals(ROOT_DIR, SOURCE_DIR, DEST_DIR)
+		#2. inline local (non-html) files, and create build folders 💉
+		progress.update(2)
+		print("💉  %s " % paint.gray("Inlining partials and globals..."))
+		copy_locals(ROOT_DIR, SOURCE_DIR, DEST_DIR)
 
-	#3. inline partials and globals 
-	cmd = os.path.join(VELVEEVA_DIR, "lib", "inject.py")
-	for out in execute(["python3", cmd, ROOT_DIR, GLOBALS_DIR, DEST_DIR]):
-		print(out)
+		#3. inline partials and globals 
+		progress.update(3)
+		cmd = os.path.join(VELVEEVA_DIR, "lib", "inject.py")
+		for out in execute(["python3", cmd, ROOT_DIR, GLOBALS_DIR, DEST_DIR]):
+			print(out)
 
-	#4. render sass 💅
-	print("💅  %s " % paint.green("Compiling SASS..."))
-	cmd = os.path.join(VELVEEVA_DIR, "lib", "compile_sass.py")
+		#4. render sass 💅
+		progress.update(4)
+		print("💅  %s " % paint.gray("Compiling SASS..."))
+		cmd = os.path.join(VELVEEVA_DIR, "lib", "compile_sass.py")
 
-	for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR)]):
-		print(out)
+		for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR)]):
+			print(out)
 
-	#5. render templates 📝
-	print("📝  %s " % paint.green("Rendering templates..."))
-	cmd = os.path.join(VELVEEVA_DIR, "lib", "render_templates.py")
+		#5. render templates 📝
+		progress.update(5)
+		print("📝  %s " % paint.gray("Rendering templates..."))
+		cmd = os.path.join(VELVEEVA_DIR, "lib", "render_templates.py")
 
-	for out in execute(["python3", cmd, 
-		os.path.join(ROOT_DIR, SOURCE_DIR), os.path.join(ROOT_DIR,DEST_DIR),
-		os.path.join(ROOT_DIR, TEMPLATES_DIR),
-		os.path.join(ROOT_DIR, PARTIALS_DIR)]):
-		print(out)
+		for out in execute(["python3", cmd, 
+			os.path.join(ROOT_DIR, SOURCE_DIR), os.path.join(ROOT_DIR,DEST_DIR),
+			os.path.join(ROOT_DIR, TEMPLATES_DIR),
+			os.path.join(ROOT_DIR, PARTIALS_DIR)]):
+			print(out)
 
-	#6. take screenshots 📸
-	## todo, make it work with abs paths (or use a root argument like the other utils)
-	print("📸  %s " % paint.green("Taking screenshots..."))
-	cmd = os.path.join(VELVEEVA_DIR, "lib", "screenshot.py")
-	src = os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR))
-	cfg = os.path.abspath(os.path.join(ROOT_DIR,CONFIG_FILE_NAME))
-	print(src)
-	print(cfg)
+		#6. take screenshots 📸
+		progress.update(6)
+		print("📸  %s " % paint.gray("Taking screenshots..."))
+		cmd = os.path.join(VELVEEVA_DIR, "lib", "screenshot.py")
+		src = os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR))
+		cfg = os.path.abspath(os.path.join(ROOT_DIR,CONFIG_FILE_NAME))
 
-	for out in execute(["python3", cmd, src, cfg]):
-		print(out)
+		for out in execute(["python3", cmd, src, cfg]):
+			print(out)
 
-	#7. package slides 📬
-	print("📬  %s " % paint.green("Packaging slides..."))
-	for out in execute(["python3", "lib/package_slides.py", os.path.join(ROOT_DIR,DEST_DIR), os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR)]):
-		print(out)
+		#7. package slides 📬
+		progress.update(7)
+		print("📬  %s " % paint.gray("Packaging slides..."))
+		cmd = os.path.join(VELVEEVA_DIR, "lib", "package_slides.py")
+		for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR), os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR)]):
+			print(out)
 
-	#8. generate control files ⚒
-	print("⚒  %s " % paint.green("Generating .ctl files..."))
-	#9. ftp 🚀
-	# relinking
-	# file watcher architecture
-	
+		#8. generate control files ⚒
+		progress.update(8)
+		print("⚒  %s " % paint.gray("Generating .ctl files..."))
+		cmd = os.path.join(VELVEEVA_DIR, "lib", "genctls.py")
+
+		flags = ["python3"
+			, cmd
+			, "--root", ROOT_DIR
+			, "--src", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR))
+			, "--out", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,CTLS_DIR))
+			, "--u", VEEVA_USERNAME
+			, "--pwd", VEEVA_PWD]
+
+		if VEEVA_EMAIL is not None: flags = flags + ["--email", VEEVA_EMAIL]
+
+		for out in execute(flags):
+			print(out)
+
+		#9. ftp 🚀
+		# relinking
+		# concurrent build
+		# not as shitty exception handling
+		# file watcher architecture
+		# all utils should use python argparse and --src SRC (e.g.) flags not strictly positional arguments
+		# make flags required (so fails if not present)
+		# unified banner printer
+
+	print(paint.bold.green("\n🍕  Yum!"))
+	print(paint.bold.red("\n💩  there was an error:"))
 
 if __name__ == '__main__':
 	doScript()

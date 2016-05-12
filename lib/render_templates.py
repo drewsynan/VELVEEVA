@@ -89,7 +89,7 @@ def render_one(src, slide, dest, templates, partials, verbose=False):
 		with open(html_path, 'w') as f:
 			f.write(rendered)
 
-def render_slides_sync(src, dest, templates_dir, partials_dir, verbose=True):
+def render_slides(src, dest, templates_dir, partials_dir, verbose=True):
 	if verbose: print("Loading templates...")
 	templates = load_html_files(templates_dir)
 
@@ -115,11 +115,11 @@ def render_slides_async(src, dest, templates_dir, partials_dir, verbose=True):
 		for future in concurrent.futures.as_completed(futures):
 			try:
 				data = future.result()
-			except Exception as exec:
-				raise exe
+			except Exception as e:
+				raise e
 		
 
-def runScript():
+def runScript(ASYNC=False):
 	VERBOSE = False
 	args = sys.argv
 
@@ -142,6 +142,9 @@ def runScript():
 		sys.exit(0)
 
 	else:
-		render_slides_sync(args[1], args[2], args[3], args[4], VERBOSE)
+		if ASYNC:
+			render_slides_async(args[1], args[2], args[3], args[4], VERBOSE)
+		else:
+			render_slides(args[1], args[2], args[3], args[4], VERBOSE)
 
-if __name__ == '__main__': runScript()
+if __name__ == '__main__': runScript(ASYNC=True)

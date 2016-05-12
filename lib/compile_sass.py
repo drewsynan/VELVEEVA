@@ -6,18 +6,34 @@ import os
 import sys
 import textwrap
 import fnmatch
+import concurrent.futures
 
 from sassutils import builder
 
-def compileSass(dir, remove_source=False):
-	builder.build_directory(dir, dir)
-	compiled = glob.glob(os.path.join(dir,"*.scss.css"))
-	for file in compiled:
-		scss_name = os.path.splitext(file)[0]
-		no_ext = os.path.splitext(scss_name)[0]
-		renamed = no_ext + ".css"
+def rename_one(file):
+	scss_name = os.path.splitext(file)[0]
+	no_ext = os.path.splitext(scss_name)[0]
+	renamed = no_ext + ".css"
 
-		os.rename(file, renamed)
+	os.rename(file, renamed)
+
+def compileSass(dir, remove_source=False, async=False):
+	builder.build_directory(dir, dir)
+	#compiled = glob.glob(os.path.join(dir,"*.scss.css"))
+	compiled = []
+	w = os.walk(dir)
+	for root, dirs, files in w:
+		for file in files:
+			if fnmatch.fnmatch(file, "*.scss.css"):
+				compiled.append(os.path.join(root,file))
+
+	if async:
+		with concurrent.futures.ProcessPoolExecutor() as e:
+			for file in compiled:
+				e.submit(rename_one, file)
+	else:
+		for file in compiled:
+			rename_one(file)
 
 	if remove_source:
 		for root, dirs, files in os.walk(dir):
@@ -25,11 +41,12 @@ def compileSass(dir, remove_source=False):
 				if fnmatch.fnmatch(file, "*.scss"):
 					os.remove(os.path.join(root,file))
 
-
-
-
-def runScript():
+def runScript(ASYNC=False):
+	REMOVE = False
 	args = sys.argv
+
+	if "--remove" in args:
+		args.remove("--remove")
 
 	if len(args) < 2:
 		banner = textwrap.dedent('''\
@@ -45,6 +62,6 @@ def runScript():
 		print("   %s source_folder" % args[0])
 		sys.exit(0)
 
-	compileSass(args[1], remove_source=False)
+	compileSass(args[1], remove_source=REMOVE, async=ASYNC)
 
-if __name__ == '__main__': runScript()
+if __name__ == '__main__': runScript(ASYNC=True)
