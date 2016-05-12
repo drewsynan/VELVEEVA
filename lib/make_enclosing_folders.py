@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import activate_venv
 
+from veevutils import banner
+
 import glob
 import os
 import sys
@@ -37,15 +39,7 @@ def runScript():
 	args = sys.argv
 
 	if len(args) < 2:
-		banner = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~~~ FOLDER GENERATOR ~~~~~~~~~~
-			''')
-		print(banner)
+		print(banner(subtitle="Folder Generator"))
 		print("USAGE: ")
 		print("   %s path [\"glob-filter\"]" % args[0])
 		return

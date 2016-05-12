@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import activate_venv
 
+from veevutils import banner
+
 import os
 import sys
 import glob
@@ -28,15 +30,7 @@ def runScript():
 	args = sys.argv
 
 	if len(args) < 3:
-		banner = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~~~~ PDF Rasterizer ~~~~~~~~~~~
-			''')
-		print(banner)
+		print(banner(subtitle="PDF Rasterizer"))
 		print("USAGE: ")
 		print("   %s source_folder dest_folder" % args[0])
 		return

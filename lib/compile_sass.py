@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import activate_venv
+from veevutils import banner
 
 import glob
 import os
@@ -46,18 +47,11 @@ def runScript(ASYNC=False):
 	args = sys.argv
 
 	if "--remove" in args:
+		REMOVE = True
 		args.remove("--remove")
 
 	if len(args) < 2:
-		banner = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~~~~~ SASS Compiler ~~~~~~~~~~~
-			''')
-		print(banner)
+		print(banner(subtitle="SASS Compiler"))
 		print("USAGE: ")
 		print("   %s source_folder" % args[0])
 		sys.exit(0)

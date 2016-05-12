@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 import activate_venv
+from veevutils import banner
 
 import fnmatch
 import os
@@ -82,15 +83,7 @@ def runScript(ASYNC=False):
 		args.remove("--root-only")
 
 	if len(args) < 4:
-		banner = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~~~~ Asset Injector ~~~~~~~~~~~
-			''')
-		print(banner)
+		print(banner(subtitle="Asset Injector"))
 		print("USAGE: ")
 		print("      %s root source dest [--root-only] [--verbose]" % args[0])
 		sys.exit(0)

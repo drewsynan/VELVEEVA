@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from lib import activate_venv
+from lib.veevutils import banner
 
 from painter import paint
 from progressbar import ProgressBar, Percentage, Bar
@@ -14,22 +15,6 @@ import os
 import inspect
 import concurrent.futures
 
-
-
-def banner(type="normal"):
-	MSG = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|                                      
-			''')
-
-	types = {
-		"normal": paint.yellow.bold,
-		"error": paint.red.bold
-	}
-
-	return types[type](MSG)
 
 def execute(command):
 	popen = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
@@ -146,93 +131,98 @@ def doScript():
 	print(banner())
 	print("👉  %s 👈\n" % paint.bold.yellow(PROJECT_NAME))
 
-	with ProgressBar(max_value=8, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
-		#0. nuke
-		progress.update(0)
-		print("🔥  %s" % paint.gray("Nuking old builds..."))
-		nuke(ROOT_DIR, config)
+	try:
+		with ProgressBar(max_value=8, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
+			#0. nuke
+			progress.update(0)
+			print("🔥  %s" % paint.gray("Nuking old builds..."))
+			nuke(ROOT_DIR, config)
 
-		#1. scaffold needed folders 🗄
-		progress.update(1)
-		print("🗄  %s" % paint.gray("Creating directories..."))
-		scaffold(ROOT_DIR, config)
+			#1. scaffold needed folders 🗄
+			progress.update(1)
+			print("🗄  %s" % paint.gray("Creating directories..."))
+			scaffold(ROOT_DIR, config)
 
-		#2. inline local (non-html) files, and create build folders 💉
-		progress.update(2)
-		print("💉  %s " % paint.gray("Inlining partials and globals..."))
-		copy_locals(ROOT_DIR, SOURCE_DIR, DEST_DIR)
+			#2. inline local (non-html) files, and create build folders 💉
+			progress.update(2)
+			print("💉  %s " % paint.gray("Inlining partials and globals..."))
+			copy_locals(ROOT_DIR, SOURCE_DIR, DEST_DIR)
 
-		#3. inline partials and globals 
-		progress.update(3)
-		cmd = os.path.join(VELVEEVA_DIR, "lib", "inject.py")
-		for out in execute(["python3", cmd, ROOT_DIR, GLOBALS_DIR, DEST_DIR]):
-			print(out)
+			#3. inline partials and globals 
+			progress.update(3)
+			cmd = os.path.join(VELVEEVA_DIR, "lib", "inject.py")
+			for out in execute(["python3", cmd, ROOT_DIR, GLOBALS_DIR, DEST_DIR]):
+				print(out)
 
-		#4. render sass 💅
-		progress.update(4)
-		print("💅  %s " % paint.gray("Compiling SASS..."))
-		cmd = os.path.join(VELVEEVA_DIR, "lib", "compile_sass.py")
+			#4. render sass 💅
+			progress.update(4)
+			print("💅  %s " % paint.gray("Compiling SASS..."))
+			cmd = os.path.join(VELVEEVA_DIR, "lib", "compile_sass.py")
 
-		for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR)]):
-			print(out)
+			for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR)]):
+				print(out)
 
-		#5. render templates 📝
-		progress.update(5)
-		print("📝  %s " % paint.gray("Rendering templates..."))
-		cmd = os.path.join(VELVEEVA_DIR, "lib", "render_templates.py")
+			#5. render templates 📝
+			progress.update(5)
+			print("📝  %s " % paint.gray("Rendering templates..."))
+			cmd = os.path.join(VELVEEVA_DIR, "lib", "render_templates.py")
 
-		for out in execute(["python3", cmd, 
-			os.path.join(ROOT_DIR, SOURCE_DIR), os.path.join(ROOT_DIR,DEST_DIR),
-			os.path.join(ROOT_DIR, TEMPLATES_DIR),
-			os.path.join(ROOT_DIR, PARTIALS_DIR)]):
-			print(out)
+			for out in execute(["python3", cmd, 
+				os.path.join(ROOT_DIR, SOURCE_DIR), os.path.join(ROOT_DIR,DEST_DIR),
+				os.path.join(ROOT_DIR, TEMPLATES_DIR),
+				os.path.join(ROOT_DIR, PARTIALS_DIR)]):
+				print(out)
 
-		#6. take screenshots 📸
-		progress.update(6)
-		print("📸  %s " % paint.gray("Taking screenshots..."))
-		cmd = os.path.join(VELVEEVA_DIR, "lib", "screenshot.py")
-		src = os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR))
-		cfg = os.path.abspath(os.path.join(ROOT_DIR,CONFIG_FILE_NAME))
+			#6. take screenshots 📸
+			progress.update(6)
+			print("📸  %s " % paint.gray("Taking screenshots..."))
+			cmd = os.path.join(VELVEEVA_DIR, "lib", "screenshot.py")
+			src = os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR))
+			cfg = os.path.abspath(os.path.join(ROOT_DIR,CONFIG_FILE_NAME))
 
-		for out in execute(["python3", cmd, src, cfg]):
-			print(out)
+			for out in execute(["python3", cmd, src, cfg]):
+				print(out)
 
-		#7. package slides 📬
-		progress.update(7)
-		print("📬  %s " % paint.gray("Packaging slides..."))
-		cmd = os.path.join(VELVEEVA_DIR, "lib", "package_slides.py")
-		for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR), os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR)]):
-			print(out)
+			#7. package slides 📬
+			progress.update(7)
+			print("📬  %s " % paint.gray("Packaging slides..."))
+			cmd = os.path.join(VELVEEVA_DIR, "lib", "package_slides.py")
+			for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR), os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR)]):
+				print(out)
 
-		#8. generate control files ⚒
-		progress.update(8)
-		print("⚒  %s " % paint.gray("Generating .ctl files..."))
-		cmd = os.path.join(VELVEEVA_DIR, "lib", "genctls.py")
+			#8. generate control files ⚒
+			progress.update(8)
+			print("⚒  %s " % paint.gray("Generating .ctl files..."))
+			cmd = os.path.join(VELVEEVA_DIR, "lib", "genctls.py")
 
-		flags = ["python3"
-			, cmd
-			, "--root", ROOT_DIR
-			, "--src", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR))
-			, "--out", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,CTLS_DIR))
-			, "--u", VEEVA_USERNAME
-			, "--pwd", VEEVA_PWD]
+			flags = ["python3"
+				, cmd
+				, "--root", ROOT_DIR
+				, "--src", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR))
+				, "--out", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,CTLS_DIR))
+				, "--u", VEEVA_USERNAME
+				, "--pwd", VEEVA_PWD]
 
-		if VEEVA_EMAIL is not None: flags = flags + ["--email", VEEVA_EMAIL]
+			if VEEVA_EMAIL is not None: flags = flags + ["--email", VEEVA_EMAIL]
 
-		for out in execute(flags):
-			print(out)
+			for out in execute(flags):
+				print(out)
 
-		#9. ftp 🚀
-		# relinking
-		# concurrent build
-		# not as shitty exception handling
-		# file watcher architecture
-		# all utils should use python argparse and --src SRC (e.g.) flags not strictly positional arguments
-		# make flags required (so fails if not present)
-		# unified banner printer
+			#9. ftp 🚀
+			# relinking
+			# concurrent build
+			# not as shitty exception handling
+			# file watcher architecture
+			# all utils should use python argparse and --src SRC (e.g.) flags not strictly positional arguments
+			# make flags required (so fails if not present)
+			# unified banner printer
+	except Exception as e:
+		print(paint.bold.red("\n💩  there was an error:"))
+		print(e)
+		sys.exit(1)
 
 	print(paint.bold.green("\n🍕  Yum!"))
-	print(paint.bold.red("\n💩  there was an error:"))
+	
 
 if __name__ == '__main__':
 	doScript()

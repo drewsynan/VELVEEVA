@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import activate_venv
 
+from veevutils import banner
+
 from ftplib import FTP
 from genctls import isSlide
 from functools import reduce
@@ -108,16 +110,7 @@ def ftp_publish(**kwargs):
 
 def runScript():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-		description = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~====P U B L I S H E R====~~~~~~~
-
-			    FTP only for now (sorry, folks)
-			'''))
+		description = banner(subtitle="Publisher"))
 
 	parser.add_argument("--zip", nargs=1, help="path to zip files")
 	parser.add_argument("--ctl", nargs=1, help="path to ctl files")

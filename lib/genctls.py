@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import activate_venv
 
+from veevutils import banner
+
 from zipfile import ZipFile
 from functools import reduce
 from bs4 import BeautifulSoup
@@ -167,14 +169,7 @@ def parseFolder(path, **kwargs):
 
 def runScript():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-		description = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~ .ctl FILE GENERATOR ~~~~~~~~~
-			'''))
+		description = banner(subtitle=".ctl File Generator"))
 
 	parser.add_argument("--src", nargs=1, help="path to folder containing zip files to process")
 	parser.add_argument("--out", nargs=1, help="path for output ctl files (will be created if it does not exist)")

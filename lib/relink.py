@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import activate_venv
 
+from veevutils import banner
+
 from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
 from pymonad import *
@@ -186,14 +188,7 @@ def runScript():
 
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-		description = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~~~~~ RE - LINKER ~~~~~~~~~~~~~
-			'''))
+		description = banner(subtitle="Re-Linker"))
 
 	parser.add_argument("--mv", nargs=3, help="recursively rename slide refs", metavar=("OLD_NAME", "NEW_NAME", "FOLDER"))
 	parser.add_argument("--veev2rel", nargs="+", help="recursively replace veeva links with relative links", metavar="FOLDER")

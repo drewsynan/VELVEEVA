@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import activate_venv
 
+from veevutils import banner
+
 import glob
 import os
 import sys
@@ -56,15 +58,7 @@ def runScript(ASYNC=False):
 		args.remove("--verbose")
 
 	if len(args) < 2:
-		banner = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~~~~ SLIDE PACKAGER ~~~~~~~~~~~
-			''')
-		print(banner)
+		print(banner(subtitle="Slide Packager"))
 		print("USAGE: ")
 		print("   %s src_dir [--verbose] [dest]" % args[0])
 		print("   (dest defaults to src_dir/_zips)")

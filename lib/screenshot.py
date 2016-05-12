@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import activate_venv
 
+from veevutils import banner
+
 from selenium import webdriver
 from contextlib import closing
 from PIL import Image
@@ -150,31 +152,7 @@ def local_slide_name(path):
 	newname = os.path.splitext(os.path.basename(path))[0] + ".jpg"
 	return newname
 
-def runScript():
-	VERBOSE = False
-	args = sys.argv
-
-	if "--verbose" in args:
-		VERBOSE = True
-		args.remove("--verbose")
-
-	if len(args) < 3:
-		banner = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~ Screenshot Generator ~~~~~~~~
-			''')
-		print(banner)
-		print("USAGE: ")
-		print("   %s [--verbose] source_folder path_to_config" % args[0])
-		sys.exit(0)
-
-	source_folder = args[1]
-	config_path = args[2]
-
+def take_screenshots_async(source_folder, config_path, verbose=False):
 	sizes = load_ss_config(config_path)
 	slides = parse_slide_folders(source_folder)
 
@@ -187,7 +165,7 @@ def runScript():
 	procs = []
 
 	for i in range(mp.cpu_count()*2):
-		p = mp.Process(target=ss_q, args=(q,VERBOSE))
+		p = mp.Process(target=ss_q, args=(q,verbose))
 		procs.append(p)
 		p.start()
 
@@ -200,6 +178,25 @@ def runScript():
 		q.put(None)
 
 	for proc in procs: proc.join()
+
+def runScript():
+	VERBOSE = False
+	args = sys.argv
+
+	if "--verbose" in args:
+		VERBOSE = True
+		args.remove("--verbose")
+
+	if len(args) < 3:
+		print(banner(subtitle="Screenshot Generator"))
+		print("USAGE: ")
+		print("   %s [--verbose] source_folder path_to_config" % args[0])
+		sys.exit(0)
+
+	source_folder = args[1]
+	config_path = args[2]
+
+	take_screenshots_async(source_folder, config_path, VERBOSE)
 
 if __name__ == "__main__":
 	runScript()

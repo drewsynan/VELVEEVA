@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-#import activate_venv
+import activate_venv
+
+from veevutils import banner
 
 import glob
 import os
@@ -128,15 +130,7 @@ def runScript(ASYNC=False):
 		args.remove("--verbose")
 
 	if len(args) < 5:
-		banner = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~~~ Template Renderer ~~~~~~~~~
-			''')
-		print(banner)
+		print(banner(subtitle="Template Renderer"))
 		print("USAGE: ")
 		print("   %s [--verbose] source_folder dest_folder templates_dir partials_dir" % args[0])
 		sys.exit(0)

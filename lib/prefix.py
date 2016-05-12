@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import activate_venv
 
+from veevutils import banner
+
 from functools import reduce
 from relink import parseFolder, mvRefs
 import os
@@ -89,13 +91,7 @@ def runScript():
 		return reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True)
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-		description = textwrap.dedent('''\
-			 _   ________ _   ___________   _____ 
-			| | / / __/ /| | / / __/ __| | / / _ |
-			| |/ / _// /_| |/ / _// _/ | |/ / __ |
-			|___/___/____|___/___/___/ |___/_/ |_|
-			                                      
-			~~~~~~~~~~~~ (PRE)-fixer ~~~~~~~~~~~~~
+		description = banner(subtitle="(PRE)-fixer") + textwrap.dedent('''\
 			WARNING: DO NOT USE ON SOURCE FILES
 			         UNDER GIT SOURCE CONTROL!
 			         THIS UTILITY DOES NOT USE
