@@ -8,16 +8,22 @@ import shutil
 import sys
 import textwrap
 
-def inject1(src_dir, dest_dir, merge=True, filter="*", verbose=False):
-	s_walk = os.walk(src_dir)
+def inject1(root_dir, src_dir, dest_dir, merge=True, filter="*", verbose=False):
+	s_walk = os.walk(os.path.abspath(os.path.join(root_dir,src_dir)))
 
 	for root, dirs, files in s_walk:
-		stripped_path = root.split(os.sep)[1:]
-		if len(stripped_path) > 1:
-			inner_dir = os.path.join(*stripped_path)
-		else:
-			inner_dir= ''.join(stripped_path)
 
+		# get the current directory relative to the root
+		split_root = os.path.abspath(root_dir).split(os.sep)
+		split_global = os.path.abspath(root).split(os.sep)
+
+
+		stripped_path = root.split(os.sep)[len(split_root)+1:]
+		if len(stripped_path) > 1:
+			inner_dir = os.path.join(root_dir,dest_dir,os.sep.join(stripped_path))
+		else:
+			inner_dir= os.path.join(root_dir,dest_dir,''.join(stripped_path))
+			
 		# check to see if the enclosing directory exists
 		if not os.path.exists(os.path.join(dest_dir,inner_dir)):
 			if verbose: print("Creating %s" % inner_dir)
@@ -33,7 +39,7 @@ def inject1(src_dir, dest_dir, merge=True, filter="*", verbose=False):
 				
 				shutil.copy2(compiled_src,compiled_dest)
 
-def inject(srcs, dests, verbose=False):
+def inject(root, srcs, dests, verbose=False):
 	if not type(srcs) == list:
 		srcs = [srcs]
 
@@ -43,7 +49,7 @@ def inject(srcs, dests, verbose=False):
 	for dest in dests:
 		for src in srcs:
 			if verbose: print("Injecting %s to %s" % (src,dest))
-			inject1(src, dest, verbose=verbose)
+			inject1(root, src, dest, verbose=verbose)
 
 def runScript():
 	VERBOSE = False
@@ -59,7 +65,7 @@ def runScript():
 		ROOT_ONLY = True
 		args.remove("--root-only")
 
-	if len(args) < 2:
+	if len(args) < 4:
 		banner = textwrap.dedent('''\
 			 _   ________ _   ___________   _____ 
 			| | / / __/ /| | / / __/ __| | / / _ |
@@ -70,24 +76,26 @@ def runScript():
 			''')
 		print(banner)
 		print("USAGE: ")
-		print("      %s source dest [--root-only] [--verbose]" % args[0])
+		print("      %s root source dest [--root-only] [--verbose]" % args[0])
 		sys.exit(0)
 
-	src = args[1]
-	dest = args[2]
+	root = args[1]
+	src = args[2]
+	dest = args[3]
 
-	if not os.path.exists(src):
+	if not os.path.exists(os.path.join(root,src)):
 		print("Source does not exist!")
 		sys.exit(1)
 
-	if not os.path.exists(dest):
-		os.mkdirs(dest)
+	if not os.path.exists(os.path.join(root,dest)):
+		os.makedirs(os.path.join(root,dest))
 
 	if ROOT_ONLY:
-		inject(src, dest, verbose=VERBOSE)
+		# dump files into the root
+		inject(root, src, dest, verbose=VERBOSE)
 	else:
-		subdirs = [os.path.join(dest, sd) for sd in next(os.walk(dest))[1]]
-		inject(src, subdirs, verbose=VERBOSE)
+		subdirs = [os.path.join(dest,sd) for sd in next(os.walk(os.path.join(root,dest)))[1]]
+		inject(root, src, subdirs, verbose=VERBOSE)
 
 if __name__ == '__main__':
 	runScript()

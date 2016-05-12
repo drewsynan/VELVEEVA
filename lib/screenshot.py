@@ -14,11 +14,7 @@ import os
 import sys
 import textwrap
 
-def note(msg):
-	if VERBOSE:
-		print(msg)
-
-def ss_(url, dest, sizes, filename, driver):
+def ss_(url, dest, sizes, filename, driver, verbose=False):
 	BACKGROUND_COLOR = (255, 255, 255)
 
 	def __snap(driver, w, h, fname, suffix=None):
@@ -30,7 +26,7 @@ def ss_(url, dest, sizes, filename, driver):
 		elif suffix == "[dimensions]":
 			suffix = str(w) + "x" + str(h)
 
-		note(url + ": " + str(w)+"x"+str(h))
+		if verbose: print(url + ": " + str(w)+"x"+str(h))
 
 		driver.set_window_size(int(h), int(w))
 		driver.get(url)
@@ -49,22 +45,22 @@ def ss_(url, dest, sizes, filename, driver):
 	
 	[__snap(driver, x['width'], x['height'], filename, x.get('suffix', None)) for x in sizes]
 
-def ss_q(q):
+def ss_q(q, verbose=False):
 	driver = webdriver.PhantomJS()
 
 	while True:
 		job = q.get()
 		if job is None: break
 
-		ss_(job[0], job[1], job[2], job[3], driver)
+		ss_(job[0], job[1], job[2], job[3], driver, verbose)
 		q.task_done()
 
 	driver.quit()
 
 
-def ss(url, dest, sizes, filename):
+def ss(url, dest, sizes, filename, verbose=False):
 	driver = webdriver.PhantomJS()
-	ss_(url, dest, sizes, filename, driver)
+	ss_(url, dest, sizes, filename, driver, verbose)
 	driver.quit()
 
 def ss_conc(configs, executor):
@@ -155,7 +151,26 @@ def local_slide_name(path):
 	return newname
 
 def runScript():
+	VERBOSE = False
 	args = sys.argv
+
+	if "--verbose" in args:
+		VERBOSE = True
+		args.remove("--verbose")
+
+	if len(args) < 3:
+		banner = textwrap.dedent('''\
+			 _   ________ _   ___________   _____ 
+			| | / / __/ /| | / / __/ __| | / / _ |
+			| |/ / _// /_| |/ / _// _/ | |/ / __ |
+			|___/___/____|___/___/___/ |___/_/ |_|
+			                                      
+			~~~~~~~~ Screenshot Generator ~~~~~~~~
+			''')
+		print(banner)
+		print("USAGE: ")
+		print("   %s [--verbose] source_folder path_to_config" % args[0])
+		sys.exit(0)
 
 	source_folder = args[1]
 	config_path = args[2]
@@ -172,7 +187,7 @@ def runScript():
 	procs = []
 
 	for i in range(mp.cpu_count()*2):
-		p = mp.Process(target=ss_q, args=(q,))
+		p = mp.Process(target=ss_q, args=(q,VERBOSE))
 		procs.append(p)
 		p.start()
 
@@ -187,5 +202,4 @@ def runScript():
 	for proc in procs: proc.join()
 
 if __name__ == "__main__":
-	VERBOSE = True
 	runScript()

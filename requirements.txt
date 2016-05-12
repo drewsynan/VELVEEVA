@@ -13,4 +13,6 @@ pytz==2015.7
 selenium==2.52.0
 smmap==0.9.0
 libsass==0.11.1
-eco==1.1.0rc3.1
+pyparsing==2.1.3
+PyExecJs==1.4.0
+coffeescript==1.1.2
