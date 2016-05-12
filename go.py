@@ -17,7 +17,7 @@ import concurrent.futures
 
 
 def execute(command):
-	popen = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
+	popen = subprocess.Popen(command, bufsize=0, stdout=subprocess.PIPE, universal_newlines=True)
 	stdout_lines = iter(popen.stdout.readline, "")
 	for stdout_line in stdout_lines:
 		yield stdout_line
@@ -116,7 +116,7 @@ def doScript():
 	### CTL File Info ###
 	CTLS_DIR = config['MAIN']['ctls_dir']
 	VEEVA_USERNAME = config['VEEVA']['username']
-	VEEVA_PWD = config['VEEVA']['password']
+	VEEVA_PASSWORD = config['VEEVA']['password']
 	VEEVA_SERVER = config['VEEVA']['server']
 	VEEVA_EMAIL = config['VEEVA'].get('email', None)
 
@@ -132,38 +132,37 @@ def doScript():
 	print("👉  %s 👈\n" % paint.bold.yellow(PROJECT_NAME))
 
 	try:
-		with ProgressBar(max_value=8, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
+		with ProgressBar(max_value=10, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
 			#0. nuke
-			progress.update(0)
 			print("🔥  %s" % paint.gray("Nuking old builds..."))
 			nuke(ROOT_DIR, config)
+			progress.update(1)
 
 			#1. scaffold needed folders 🗄
-			progress.update(1)
 			print("🗄  %s" % paint.gray("Creating directories..."))
 			scaffold(ROOT_DIR, config)
+			progress.update(2)
 
 			#2. inline local (non-html) files, and create build folders 💉
-			progress.update(2)
 			print("💉  %s " % paint.gray("Inlining partials and globals..."))
 			copy_locals(ROOT_DIR, SOURCE_DIR, DEST_DIR)
+			progress.update(3)
 
 			#3. inline partials and globals 
-			progress.update(3)
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "inject.py")
 			for out in execute(["python3", cmd, ROOT_DIR, GLOBALS_DIR, DEST_DIR]):
 				print(out)
+			progress.update(4)
 
 			#4. render sass 💅
-			progress.update(4)
 			print("💅  %s " % paint.gray("Compiling SASS..."))
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "compile_sass.py")
 
 			for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR)]):
 				print(out)
+			progress.update(5)
 
 			#5. render templates 📝
-			progress.update(5)
 			print("📝  %s " % paint.gray("Rendering templates..."))
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "render_templates.py")
 
@@ -173,8 +172,9 @@ def doScript():
 				os.path.join(ROOT_DIR, PARTIALS_DIR)]):
 				print(out)
 
-			#6. take screenshots 📸
 			progress.update(6)
+
+			#6. take screenshots 📸
 			print("📸  %s " % paint.gray("Taking screenshots..."))
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "screenshot.py")
 			src = os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR))
@@ -183,15 +183,16 @@ def doScript():
 			for out in execute(["python3", cmd, src, cfg]):
 				print(out)
 
-			#7. package slides 📬
 			progress.update(7)
+
+			#7. package slides 📬
 			print("📬  %s " % paint.gray("Packaging slides..."))
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "package_slides.py")
 			for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR), os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR)]):
 				print(out)
+			progress.update(8)
 
 			#8. generate control files ⚒
-			progress.update(8)
 			print("⚒  %s " % paint.gray("Generating .ctl files..."))
 			cmd = os.path.join(VELVEEVA_DIR, "lib", "genctls.py")
 
@@ -201,15 +202,30 @@ def doScript():
 				, "--src", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR))
 				, "--out", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,CTLS_DIR))
 				, "--u", VEEVA_USERNAME
-				, "--pwd", VEEVA_PWD]
+				, "--pwd", VEEVA_PASSWORD]
 
 			if VEEVA_EMAIL is not None: flags = flags + ["--email", VEEVA_EMAIL]
 
 			for out in execute(flags):
 				print(out)
+			progress.update(9)
 
 			#9. ftp 🚀
+			print("🚀  %s " % paint.gray("Publishing to Veeva FTP server..."))
+			cmd = os.path.join(VELVEEVA_DIR, "lib", "publish.py")
+			for out in execute(["python3", cmd
+				, "--zip", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR))
+				, "--ctl", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,CTLS_DIR))
+				, "--host", VEEVA_SERVER
+				, "--u", VEEVA_USERNAME
+				, "--pwd", VEEVA_PASSWORD]):
+				print(out)
+
+			progress.update(10)
+
+
 			# relinking
+			# don't use subprocess -> import directly
 			# concurrent build
 			# not as shitty exception handling
 			# file watcher architecture
