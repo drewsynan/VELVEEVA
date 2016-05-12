@@ -16,3 +16,4 @@ libsass==0.11.1
 pyparsing==2.1.3
 PyExecJs==1.4.0
 coffeescript==1.1.2
+painter==0.3.1
