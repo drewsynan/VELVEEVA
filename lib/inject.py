@@ -3,6 +3,7 @@ from __future__ import print_function
 import activate_venv
 from veevutils import banner
 
+import argparse
 import fnmatch
 import os
 import shutil
@@ -69,47 +70,54 @@ def inject_async(root, srcs, dests, verbose=False):
 				raise e
 
 def runScript(ASYNC=False):
-	VERBOSE = False
-	ROOT_ONLY = False
 
-	args = sys.argv
+	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+		description = banner(subtitle=".ctl File Generator"))
 
-	if "--verbose" in args:
-		VERBOSE = True
-		args.remove("--verbose")
-	
-	if "--root-only" in args:
-		ROOT_ONLY = True
-		args.remove("--root-only")
+	parser.add_argument("source", help="Source folder")
+	parser.add_argument("destination", help="Destination folder")
+	parser.add_argument("--inject-root-only", action="store_true", 
+		help="Only inject files in the root of the destination (don't look for slide folders)")
+	parser.add_argument("--sync", action="store_true", help="Run without concurrency")
+	parser.add_argument("--root", nargs=1, help="Project root directory (current directory is used if nont is specified")
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
 
-	if len(args) < 4:
-		print(banner(subtitle="Asset Injector"))
-		print("USAGE: ")
-		print("      %s root source dest [--root-only] [--verbose]" % args[0])
-		sys.exit(0)
-
-	root = args[1]
-	src = args[2]
-	dest = args[3]
-
-	if not os.path.exists(os.path.join(root,src)):
-		print("Source does not exist!")
-		sys.exit(1)
-
-	if not os.path.exists(os.path.join(root,dest)):
-		os.makedirs(os.path.join(root,dest))
-
-	if ROOT_ONLY:
-		# dump files into the root
-		inject(root, src, dest, verbose=VERBOSE)
+	if len(sys.argv) == 1:
+		parser.print_help()
+		return
 	else:
-		subdirs = [os.path.join(dest,sd) for sd in next(os.walk(os.path.join(root,dest)))[1]]
-		if ASYNC:
-			inject_async(root, src, subdirs, verbose=VERBOSE)
+		args = parser.parse_args()
+
+		VERBOSE = args.verbose
+		ROOT_ONLY = args.inject_root_only
+		ASYNC = (not args.sync)
+
+		if args.root is None:
+			root = os.getcwd()
 		else:
-			inject(root, src, subdirs, verbose=VERBOSE)
+			root = args.root[0]
+
+		src = args.source[0]
+		dest = args.destination[0]
+
+		if not os.path.exists(os.path.join(root,src)):
+			print("Source does not exist!")
+			sys.exit(1)
+
+		if not os.path.exists(os.path.join(root,dest)):
+			os.makedirs(os.path.join(root,dest))
+
+		if ROOT_ONLY:
+			# dump files into the root
+			inject(root, src, dest, verbose=VERBOSE)
+		else:
+			subdirs = [os.path.join(dest,sd) for sd in next(os.walk(os.path.join(root,dest)))[1]]
+			if ASYNC:
+				inject_async(root, src, subdirs, verbose=VERBOSE)
+			else:
+				inject(root, src, subdirs, verbose=VERBOSE)
 
 if __name__ == '__main__':
-	runScript(ASYNC=True)
+	runScript()
 
 

@@ -181,9 +181,9 @@ source lib/velvenv/bin/activate
 pip3 install -r requirements.txt || { deactivate; echo "😱  Error installing python packages! Aborting. 😱" >&2; exit 1; }
 deactivate
 
-echo "☕️ INSTALLING NODE MODULES..."
+# echo "☕️ INSTALLING NODE MODULES..."
 
-npm install || { echo "😱 Error installing node modules! Aborting. 😱" >&2; exit 1; }
+# npm install || { echo "😱 Error installing node modules! Aborting. 😱" >&2; exit 1; }
 
 echo "🍕 yum!"
 

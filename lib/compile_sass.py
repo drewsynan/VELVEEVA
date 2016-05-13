@@ -2,6 +2,7 @@
 import activate_venv
 from veevutils import banner
 
+import argparse
 import glob
 import os
 import sys
@@ -43,19 +44,22 @@ def compileSass(dir, remove_source=False, async=False):
 					os.remove(os.path.join(root,file))
 
 def runScript(ASYNC=False):
-	REMOVE = False
-	args = sys.argv
+	parser = argparse.ArgumentParser(
+		formatter_class=argparse.RawDescriptionHelpFormatter,
+		description=banner(subtitle="SASS Compiler"))
 
-	if "--remove" in args:
-		REMOVE = True
-		args.remove("--remove")
+	parser.add_argument("source", nargs=1, help="Source folder")
+	parser.add_argument("--remove", action="store_true", help="Remove .scss source files after compilation")
+	parser.add_argument("--root", nargs=1, help="Root project folder")
+	parser.add_argument("--sync", action="store_true", help="Run without concurrency")
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
 
-	if len(args) < 2:
-		print(banner(subtitle="SASS Compiler"))
-		print("USAGE: ")
-		print("   %s source_folder" % args[0])
-		sys.exit(0)
 
-	compileSass(args[1], remove_source=REMOVE, async=ASYNC)
+	if len(sys.argv) == 1:
+		parser.print_help()
+		return
+	else:
+		args = parser.parse_args()
+		compileSass(args.source[0], remove_source=args.remove, async=(not args.sync))
 
 if __name__ == '__main__': runScript(ASYNC=True)

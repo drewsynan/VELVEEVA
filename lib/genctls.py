@@ -171,12 +171,15 @@ def runScript():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
 		description = banner(subtitle=".ctl File Generator"))
 
-	parser.add_argument("--src", nargs=1, help="path to folder containing zip files to process", required=True)
-	parser.add_argument("--out", nargs=1, help="path for output ctl files (will be created if it does not exist)", required=True)
-	parser.add_argument("--root", nargs=1, help="root directory for the project (used for versioning)", required=True)
-	parser.add_argument("--u", nargs=1, help="Veeva username", required=True)
-	parser.add_argument("--pwd", nargs=1, help="Veeva password", required=True)
-	parser.add_argument("--email", nargs=1, help="Optional email for errors")
+	parser.add_argument("source", nargs=1, help="path to folder containing zip files to process")
+	parser.add_argument("destination", nargs=1, help="path for output ctl files (will be created if it does not exist)")
+	parser.add_argument("--u", metavar="USERNAME", nargs=1, help="Veeva username", required=True)
+	parser.add_argument("--pwd", metavar="PASSWORD", nargs=1, help="Veeva password", required=True)
+	parser.add_argument("--email", nargs=1, help="Optional email for errors", required=False)
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy", required=False)
+	parser.add_argument("--root", nargs=1,
+		 help="Optional root directory for the project (used for versioning) current working directory used if none specified", 
+		 required=False)
 
 	if len(sys.argv) == 1:
 		parser.print_help()
@@ -184,10 +187,16 @@ def runScript():
 	else:
 		args = parser.parse_args()
 
+	print(args)
+
 	email = None
 	if args.email is not None: email = args.email[0]
+	if args.root is None:
+		root = os.getcwd()
+	else:
+		root = args.root[0]
 
-	parseFolder(args.src[0], out=args.out[0], root=args.root[0], username=args.u[0], password=args.pwd[0], email=email)
+	parseFolder(args.source[0], out=args.destination[0], root=root, username=args.u[0], password=args.pwd[0], email=email)
 
 if __name__ == "__main__":
 	runScript()
