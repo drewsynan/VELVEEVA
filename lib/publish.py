@@ -6,6 +6,7 @@ from veevutils import banner
 from ftplib import FTP
 from genctls import isSlide
 from functools import reduce
+
 import argparse
 import textwrap
 import fnmatch
@@ -123,7 +124,8 @@ def runScript(verbose=False):
 	parser.add_argument("--host", nargs=1, help="server name", required=True)
 	parser.add_argument("--u", nargs=1, help="Veeva username", required=True)
 	parser.add_argument("--pwd", nargs=1, help="Veeva password", required=True)
-	parser.add_argument("--verbose", action="store_true", help="verbose output")
+	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
 
 	if len(sys.argv) == 1:
 		parser.print_help()

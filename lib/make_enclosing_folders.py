@@ -3,6 +3,7 @@ import activate_venv
 
 from veevutils import banner
 
+import argparse
 import glob
 import os
 import sys
@@ -36,20 +37,29 @@ def stripSpaces(path, filter="*"):
 
 
 def runScript():
-	args = sys.argv
+	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+		description = banner(subtitle="Folder Generator"))
 
-	if len(args) < 2:
-		print(banner(subtitle="Folder Generator"))
-		print("USAGE: ")
-		print("   %s path [\"glob-filter\"]" % args[0])
+	parser.add_argument("source", nargs=1, help="Source folder")
+	parser.add_argument("--filter", metavar="\"filter\"", nargs=1, help="Glob filter in quotes e.g.: \"*_slide\"")
+	parser.add_argument("--no-strip", action="store_true", help="Do not substitute spaces with '-'s in folder names")
+	parser.add_argument("--root", nargs=1, help="Project root folder")
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
+
+	if len(sys.argv) == 1:
+		parser.print_help()
 		return
+	else:
+		args = parser.parse_args()
 
-	filter = "*"
-	path = os.path.realpath(args[1])
-	if len(args) >= 3: filter = args[2]
-	
-	stripSpaces(path)
-	createEnclosingFolders(path, filter)
+		if args.filter is None:
+			filter = "*"
+		else:
+			filter = args.filter[0]
 
+		if not args.no_strip:
+			stripSpaces(args.source[0])
+
+		createEnclosingFolders(args.source[0], filter)
 
 if __name__ == "__main__": runScript()

@@ -2,11 +2,13 @@
 import activate_venv
 
 from veevutils import banner
+from prefix import parse_slide_folders
 
 from selenium import webdriver
 from contextlib import closing
 from PIL import Image
-from prefix import parse_slide_folders
+
+import argparse
 import concurrent.futures
 import multiprocessing as mp
 import re
@@ -180,23 +182,30 @@ def take_screenshots_async(source_folder, config_path, verbose=False):
 	for proc in procs: proc.join()
 
 def runScript():
-	VERBOSE = False
-	args = sys.argv
+	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+		description = banner(subtitle="Screenshot Generator"))
 
-	if "--verbose" in args:
-		VERBOSE = True
-		args.remove("--verbose")
+	parser.add_argument("source", nargs=1, help="Source folder")
+	parser.add_argument("config", nargs=1, help="Path to config file")
+	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy", required=False)
 
-	if len(args) < 3:
-		print(banner(subtitle="Screenshot Generator"))
-		print("USAGE: ")
-		print("   %s [--verbose] source_folder path_to_config" % args[0])
-		sys.exit(0)
+	if len(sys.argv) == 1:
+		parser.print_help()
+		return
+	else:
+		args = parser.parse_args()
+		VERBOSE = args.verbose
 
-	source_folder = args[1]
-	config_path = args[2]
+		if args.root is not None:
+			source_folder = os.path.join(args.root[0], args.source[0])
+			config_path = os.path.join(args.root[0], args.config[0])
+		else:
+			source_folder = args.source[0]
+			config_path = args.config[0]
 
-	take_screenshots_async(source_folder, config_path, VERBOSE)
+		take_screenshots_async(source_folder, config_path, VERBOSE)
+
 
 if __name__ == "__main__":
 	runScript()

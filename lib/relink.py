@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import activate_venv
-
 from veevutils import banner
 
 from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
 from pymonad import *
 from urllib.parse import urlparse
+
 import argparse
 import fnmatch
 import os
@@ -178,6 +178,7 @@ def parseFolder(path, **kwargs):
 				f.write(clean.encode('utf-8'))
 
 def runScript():
+	## TODO: make work with --root flag
 	def doesFileExist(fname):
 		exists = os.path.exists(fname)
 		if not exists: print("%s does not exist!" % fname)
@@ -190,11 +191,15 @@ def runScript():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
 		description = banner(subtitle="Re-Linker"))
 
-	parser.add_argument("--mv", nargs=3, help="recursively rename slide refs", metavar=("OLD_NAME", "NEW_NAME", "FOLDER"))
-	parser.add_argument("--veev2rel", nargs="+", help="recursively replace veeva links with relative links", metavar="FOLDER")
-	parser.add_argument("--rel2veev", nargs="+", help="recursively replace relative links with veeva links", metavar="FOLDER")
-	parser.add_argument("--integrate_all", nargs="+", help="recursively resolve relative links and replace hrefs with veeva", metavar="FOLDER")
-	
+	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
+	parser.add_argument("--verbose", action="store_true", required=False, help="Chatty Cathy")
+
+	group = parser.add_mutually_exclusive_group()
+	group.add_argument("--mv", nargs=3, metavar=("old_name", "new_name", "source"), help="recursively rename references to an old slide name with a new slide name")
+	group.add_argument("--veev2rel", nargs="+", metavar="source", help="recursively replace veeva links with relative links")
+	group.add_argument("--rel2veev", nargs="+", metavar="source", help="recursively replace relative links with veeva link")
+	group.add_argument("--integrate-all", nargs="+", metavar="source", help="recursively resolve relative links and replace hrefs with veeva")
+
 	if len(sys.argv) == 1:
 		parser.print_help()
 		return

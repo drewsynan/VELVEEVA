@@ -3,6 +3,7 @@ import activate_venv
 
 from veevutils import banner
 
+import argparse
 import glob
 import os
 import sys
@@ -11,7 +12,7 @@ import zipfile
 import functools
 import concurrent.futures
 
-def zip_slides_sync(root_dir, slides, dest, verbose=False):
+def zip_slides(root_dir, slides, dest, verbose=False):
 	if not os.path.exists(dest): os.makedirs(dest)
 
 	for slide in slides:
@@ -49,41 +50,50 @@ def zip_one(root_dir, slide, dest, verbose=False):
 				zf.write(os.path.join(root, file), archive_name)
 
 def runScript(ASYNC=False):
-	VERBOSE = False
-
-	args = sys.argv
-
-	if "--verbose" in args:
-		VERBOSE = True
-		args.remove("--verbose")
-
-	if len(args) < 2:
-		print(banner(subtitle="Slide Packager"))
-		print("USAGE: ")
-		print("   %s src_dir [--verbose] [dest]" % args[0])
-		print("   (dest defaults to src_dir/_zips)")
-		sys.exit(0)
 
 	def okay_to_add(path):
 		IGNORES = ["_zips", "_ctls"]
 		return functools.reduce(lambda acc,current: acc and (current != path), IGNORES, True)
 
-	root_dir = args[1]
-	srcs = [os.path.join(root_dir,sd) for sd in next(os.walk(root_dir))[1] if okay_to_add(sd)]
+	parser = argparse.ArgumentParser(
+		formatter_class=argparse.RawDescriptionHelpFormatter,
+		description = banner(subtitle="Slide Packager"))
 
-	if len(srcs) < 1:
-		print("No slides found!")
-		sys.exit(1)
-
-	if len(args) >= 3:
-		dest = args[2]
-	else:
-		dest = os.path.join(args[1],"_zips")
+	parser.add_argument("source", nargs=1, help="Source folder")
+	parser.add_argument("destination", nargs='?', help="Destination folder (if none is specified, defaults to source/_zips)")
+	parser.add_argument("--root", nargs=1, help="Project root directiory", required=False)
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy", required=False)
+	parser.add_argument("--sync", action="store_true", help="Run without concurrency", required=False)
 	
-	if ASYNC:
-		zip_slides_async(root_dir, srcs, dest, verbose=VERBOSE)
+	if len(sys.argv) == 1:
+		parser.print_help()
+		return
 	else:
-		zip_slides_sync(root_dir, srcs, dest, verbose=VERBOSE)
+		args = parser.parse_args()
+		
+		VERBOSE = args.verbose
+		ASYNC = (not args.sync)
+
+		if args.destination is None:
+			dest = os.path.join(args.source[0],"_zips")
+		else:
+			dest = args.destination[0]
+
+
+		if args.root is not None:
+			root_dir = os.path.join(args.root[0],args.source[0])
+		else:
+			root_dir = args.source[0]
+
+		srcs = [os.path.join(root_dir,sd) for sd in next(os.walk(root_dir))[1] if okay_to_add(sd)]
+		if len(srcs) < 1:
+			print("No slides found!")
+			sys.exit(1)
+
+		if ASYNC:
+			zip_slides_async(root_dir, srcs, dest, verbose=VERBOSE)
+		else:
+			zip_slides(root_dir, srcs, dest, verbose=VERBOSE)
 
 
 if __name__ == "__main__": runScript(ASYNC=True)

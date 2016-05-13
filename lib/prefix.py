@@ -2,9 +2,10 @@
 import activate_venv
 
 from veevutils import banner
-
 from functools import reduce
 from relink import parseFolder, mvRefs
+
+import argparse
 import os
 import sys
 import argparse
@@ -82,6 +83,7 @@ def prefix_refs(prefix, slidelist, root):
 		parseFolder(root, actions=[mvRefs(slide, prefix + slide)], cutoff=1)
 
 def runScript():
+	## TODO make work with --root flag
 	def doesFileExist(fname):
 		exists = os.path.exists(fname)
 		if not exists: print("%s does not exist!" % fname)
@@ -101,8 +103,10 @@ def runScript():
 			         Use on built files, thx.
 			'''))
 
-	parser.add_argument("prefix", nargs=1, help="prefix string", required=True)
-	parser.add_argument("folder", nargs="+", help="folder(s) to process", required=True)
+	parser.add_argument("prefix", nargs=1, help="prefix string")
+	parser.add_argument("source", nargs="+", help="folder(s) to process")
+	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
+	parser.add_argument("--verbose", action="store_true", required=False)
 
 	if len(sys.argv) == 1:
 		parser.print_help()
@@ -110,21 +114,14 @@ def runScript():
 	else:
 		args = parser.parse_args()
 
-	if args.prefix is None:
-		return
-
-	if args.folder is not None:
-		if not allExists(args.folder):
+		the_prefix = args.prefix[0]
+		folders = args.source
+		if not allExists(folders):
 			return
-	else:
-		return
 
-	the_prefix = args.prefix[0]
-	folders = args.folder
-
-	for folder in folders:
-		prefix_refs(the_prefix, find_slides(folder), folder)
-		prefix_folder(the_prefix, folder)
+		for folder in folders:
+			prefix_refs(the_prefix, find_slides(folder), folder)
+			prefix_folder(the_prefix, folder)
 
 if __name__ == "__main__":
 	runScript()
