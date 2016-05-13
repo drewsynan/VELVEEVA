@@ -32,8 +32,8 @@ def runScript():
 		formatter_class=argparse.RawDescriptionHelpFormatter,
 		description=banner(subtitle="PDF Rasterizer"))
 
-	parser.add_argument("source_folder", nargs=1, help="Source folder")
-	parser.add_argument("dest_folder", nargs=1, help="Destination folder")
+	parser.add_argument("source", nargs=1, help="Source folder")
+	parser.add_argument("destination", nargs=1, help="Destination folder")
 	parser.add_argument("--root", nargs=1, help="Project root directory")
 	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
 
@@ -42,6 +42,6 @@ def runScript():
 		return
 	else:
 		args = parser.parse_args()
-		convertPDFs(args.source_folder[0], args.dest_folder[0])
+		convertPDFs(args.source[0], args.destination[0])
 
 if __name__ == '__main__': runScript()
