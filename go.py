@@ -14,6 +14,7 @@ import subprocess
 import os
 import inspect
 import concurrent.futures
+import functools
 
 
 def execute(command):
@@ -75,173 +76,211 @@ def copy_locals(root_dir, src, dest, verbose=False):
 			except Exception as e:
 				raise e
 
-def doScript():
-	VERBOSE = False
+def create_environment(config):
+	ENV = {}
+	ENV['config'] = config
 
+	ENV['SOURCE_DIR']		= config['MAIN']['source_dir']
+	ENV['DEST_DIR']			= config['MAIN']['output_dir']
+	ENV['GLOBALS_DIR']		= config['MAIN']['globals_dir']
+	ENV['PARTIALS_DIR']		= config['MAIN']['partials_dir']
+	ENV['TEMPLATES_DIR']	= config['MAIN']['templates_dir']
+	ENV['ZIPS_DIR']			= config['MAIN']['zips_dir']
+
+	### CTL File Info ###
+	ENV['CTLS_DIR']			= config['MAIN']['ctls_dir']
+	ENV['VEEVA_USERNAME']	= config['VEEVA']['username']
+	ENV['VEEVA_PASSWORD']	= config['VEEVA']['password']
+	ENV['VEEVA_SERVER']		= config['VEEVA']['server']
+	ENV['VEEVA_EMAIL']		= config['VEEVA'].get('email', None)
+
+	ENV['ROOT_DIR']			= os.getcwd()
+	ENV['CONFIG_FILE_NAME']	= "VELVEEVA-config.json"
+	ENV['PROJECT_NAME']		= config['MAIN']['name']
+
+	ENV['VELVEEVA_DIR']		= os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
+
+	return ENV
+
+def create_parser():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
 		description=banner())
 	
 	parser.add_argument("--bake", 			action="store_true", help="Compile templates and SASS (yum!)")
-	parser.add_argument("--clean",			action="store_true", help="Clean up the mess (mom would be proud!) [Selected when no options are given]")
+	parser.add_argument("--clean",			action="store_true", help="Clean up the mess (mom would be proud!)")
 	parser.add_argument("--controls",		action="store_true", help="Generate slide control files (gonna have something already baked)")
-	parser.add_argument("--controlsonly", 	action="store_true", help="Only generate control files")
-	parser.add_argument("--dev",			action="store_true", help="Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using go --clean --watch --veev2rel")
+	parser.add_argument("--dev",			action="store_true", help="Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using --nuke --bake --watch --veev2rel")
+	parser.add_argument("--go", 			action="store_true", help="Use a quick-bake recipe -> nuke, bake, screenshots, package, clean")
 	parser.add_argument("--init",			action="store_true", help="Initialize a new VELVEEVA project")
 	parser.add_argument("--nuke", 			action="store_true", help="Nuke old builds and temp files")
-	parser.add_argument("--nobake",			action="store_true", help="Don't bake it...")
 	parser.add_argument("--package",		action="store_true", help="Wrap it up [Selected when no options are given]")
-	parser.add_argument("--packageonly",	action="store_true", help="Just wrap it up (you gotta already have something baked)")
 	parser.add_argument("--publish", 		action="store_true", help="Ship it off to market")
-	parser.add_argument("--publishonly",	action="store_true", help="(Only) ship it off to market (you gotta already have something baked, and control files generated)")
 	parser.add_argument("--relink", 		action="store_true", help="Make some href saussage (replace relative links with global and convert to veeva: protocol)")
-	parser.add_argument("--screenshots",	action="store_true", help="Include Screenshots [Selected when no options are given]")
+	parser.add_argument("--rel2veev", 		action="store_true", help="Convert relative links to veeva: protocol")
+	parser.add_argument("--screenshots",	action="store_true", help="Include Screenshots")
 	parser.add_argument("--veev2rel",		action="store_true", help="Convert veeva: hrefs to relative links")
 	parser.add_argument("--verbose",		action="store_true", help="Chatty Cathy")
 	parser.add_argument("--watch",			action="store_true", help="Watch for changes and re-bake on change")
+
+	return parser
+
+def doScript():
+	VERBOSE = False
+
+	parser = create_parser()	
 	
 	if len(sys.argv) == 1:
 		parser.print_help()
 		sys.exit(0)
 
 	args = parser.parse_args()
-	config = parse_config()
+	flags = filter(lambda kvpair: kvpair[1] == True, (vars(args).items()))
 
-	SOURCE_DIR = config['MAIN']['source_dir']
-	DEST_DIR = config['MAIN']['output_dir']
-	GLOBALS_DIR = config['MAIN']['globals_dir']
-	PARTIALS_DIR = config['MAIN']['partials_dir']
-	TEMPLATES_DIR = config['MAIN']['templates_dir']
-	ZIPS_DIR = config['MAIN']['zips_dir']
+	print(list(flags))
+	return
 
-	### CTL File Info ###
-	CTLS_DIR = config['MAIN']['ctls_dir']
-	VEEVA_USERNAME = config['VEEVA']['username']
-	VEEVA_PASSWORD = config['VEEVA']['password']
-	VEEVA_SERVER = config['VEEVA']['server']
-	VEEVA_EMAIL = config['VEEVA'].get('email', None)
-
-	ROOT_DIR = os.getcwd()
-	CONFIG_FILE_NAME = "VELVEEVA-config.json"
-	PROJECT_NAME = config['MAIN']['name']
-
-	VELVEEVA_DIR = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
-
-	#💩🍕
-
-	print(banner())
-	print("👉  %s 👈\n" % paint.bold.yellow(PROJECT_NAME))
-
-	try:
-		with ProgressBar(max_value=11, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
-			#0. nuke
-			print("🔥  %s" % paint.gray("Nuking old builds..."))
-			progress.update(1)
-			nuke(ROOT_DIR, config)
-
-			#1. scaffold needed folders 🗄
-			print("🗄  %s" % paint.gray("Creating directories..."))
-			progress.update(2)
-			scaffold(ROOT_DIR, config)
-
-			#2. inline local (non-html) files, and create build folders 💉
-			print("💉  %s " % paint.gray("Inlining partials and globals..."))
-			progress.update(3)
-			copy_locals(ROOT_DIR, SOURCE_DIR, DEST_DIR)
-
-			#3. inline partials and globals 
-			progress.update(4)
-			cmd = os.path.join(VELVEEVA_DIR, "lib", "inject.py")
-			for out in execute(["python3", cmd, ROOT_DIR, GLOBALS_DIR, DEST_DIR]):
-				print(out)
-
-			#4. render sass 💅
-			print("💅  %s " % paint.gray("Compiling SASS..."))
-			progress.update(5)
-			cmd = os.path.join(VELVEEVA_DIR, "lib", "compile_sass.py")
-
-			for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR)]):
-				print(out)
-			
-
-			#5. render templates 📝
-			print("📝  %s " % paint.gray("Rendering templates..."))
-			progress.update(6)
-			cmd = os.path.join(VELVEEVA_DIR, "lib", "render_templates.py")
-
-			for out in execute(["python3", cmd, 
-				os.path.join(ROOT_DIR, SOURCE_DIR), os.path.join(ROOT_DIR,DEST_DIR),
-				os.path.join(ROOT_DIR, TEMPLATES_DIR),
-				os.path.join(ROOT_DIR, PARTIALS_DIR)]):
-				print(out)
+	ENV = create_environment(parse_config())
 
 
-			#6. take screenshots 📸
-			print("📸  %s " % paint.gray("Taking screenshots..."))
-			progress.update(7)
-			cmd = os.path.join(VELVEEVA_DIR, "lib", "screenshot.py")
-			src = os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR))
-			cfg = os.path.abspath(os.path.join(ROOT_DIR,CONFIG_FILE_NAME))
+	def nuke(env, i):
+		print("🔥  %s" % paint.gray("Nuking old builds..."))
+		env['progress'].update(i)
+		nuke(env['ROOT_DIR'], env['config'])
 
-			for out in execute(["python3", cmd, src, cfg]):
-				print(out)
+	def scaffold(env, i):
+		print("🗄  %s" % paint.gray("Creating directories..."))
+		env['progress'].update(i)
+		scaffold(env['ROOT_DIR'], env['config'])
 
+	def inline_local(env, i):
+		print("💉  %s " % paint.gray("Inlining partials and globals..."))
+		env['progress'].update(i)
+		copy_locals(env['ROOT_DIR'], env['SOURCE_DIR'], env['DEST_DIR'])
 
-			#7. package slides 📬
-			progress.update(8)
-			print("📬  %s " % paint.gray("Packaging slides..."))
-			cmd = os.path.join(VELVEEVA_DIR, "lib", "package_slides.py")
-			for out in execute(["python3", cmd, os.path.join(ROOT_DIR,DEST_DIR), os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR)]):
-				print(out)
+	def inline_global(env, i):
+		env['progress'].update(i)
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "inject.py")
+		for out in execute(["python3", cmd, env['ROOT_DIR'], env['GLOBALS_DIR'], env['DEST_DIR']]):
+			print(out)
 
-			#8. generate control files ⚒
-			print("⚒  %s " % paint.gray("Generating .ctl files..."))
-			progress.update(9)
-			cmd = os.path.join(VELVEEVA_DIR, "lib", "genctls.py")
+	def render_sass(env, i):
+		print("💅  %s " % paint.gray("Compiling SASS..."))
+		env['progress'].update(i)
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "compile_sass.py")
 
-			flags = ["python3"
-				, cmd
-				, "--root", ROOT_DIR
-				, "--src", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR))
-				, "--out", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,CTLS_DIR))
-				, "--u", VEEVA_USERNAME
-				, "--pwd", VEEVA_PASSWORD]
+		for out in execute(["python3", cmd, os.path.join(env['ROOT_DIR'],env['DEST_DIR'])]):
+			print(out)
 
-			if VEEVA_EMAIL is not None: flags = flags + ["--email", VEEVA_EMAIL]
+	def render_templates(env, i):
+		print("📝  %s " % paint.gray("Rendering templates..."))
+		env['progress'].update(i)
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "render_templates.py")
 
-			for out in execute(flags):
-				print(out)
+		for out in execute(["python3", cmd, 
+			os.path.join(env['ROOT_DIR'], env['SOURCE_DIR']), os.path.join(env['ROOT_DIR'],env['DEST_DIR']),
+			os.path.join(env['ROOT_DIR'], env['TEMPLATES_DIR']),
+			os.path.join(env['ROOT_DIR'], env['PARTIALS_DIR'])]):
+			print(out)
 
-			#9. ftp 🚀
-			print("🚀  %s " % paint.gray("Publishing to Veeva FTP server..."))
-			progress.update(10)
-			
-			cmd = os.path.join(VELVEEVA_DIR, "lib", "publish.py")
-			for out in execute(["python3", cmd
-				, "--zip", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,ZIPS_DIR))
-				, "--ctl", os.path.abspath(os.path.join(ROOT_DIR,DEST_DIR,CTLS_DIR))
-				, "--host", VEEVA_SERVER
-				, "--u", VEEVA_USERNAME
-				, "--pwd", VEEVA_PASSWORD]):
-				print(out)
+	def take_screenshots(env, i):
+		print("📸  %s " % paint.gray("Taking screenshots..."))
+		env['progress'].update(i)
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "screenshot.py")
+		src = os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR']))
+		cfg = os.path.abspath(os.path.join(env['ROOT_DIR'],env['CONFIG_FILE_NAME']))
 
+		for out in execute(["python3", cmd, src, cfg]):
+			print(out)
 
-			#done!
-			progress.update(11)
+	def package_slides(env, i):
+		print("📬  %s " % paint.gray("Packaging slides..."))
+		env['progress'].update(i)
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "package_slides.py")
+		for out in execute(["python3", cmd, 
+				os.path.join(env['ROOT_DIR'],env['DEST_DIR']), 
+				os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['ZIPS_DIR'])]):
+			print(out)
 
-			# relinking
-			# don't use subprocess -> import directly
-			# concurrent build
-			# not as shitty exception handling
-			# file watcher architecture
-			# all utils should use python argparse and --src SRC (e.g.) flags not strictly positional arguments
-			# make flags required (so fails if not present)
-			# unified banner printer
-	except Exception as e:
-		print(paint.bold.red("\n💩  there was an error:"))
-		print(e)
-		sys.exit(1)
+	def generate_ctls(env, i):
+		print("⚒  %s " % paint.gray("Generating .ctl files..."))
+		env['progress'].update(i)
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "genctls.py")
 
-	print(paint.bold.green("\n🍕  Yum!"))
+		flags = ["python3"
+					, cmd
+					, "--root", env['ROOT_DIR']
+					, "--src", os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['ZIPS_DIR']))
+					, "--out", os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['CTLS_DIR']))
+					, "--u", env['VEEVA_USERNAME']
+					, "--pwd", env['VEEVA_PASSWORD']
+				]
+
+		if env.get('VEEVA_EMAIL', None) is not None: flags = flags + ["--email", env['VEEVA_EMAIL']]
+
+		for out in execute(flags):
+			print(out)
+
+	def ftp_upload(env, i):
+		print("🚀  %s " % paint.gray("Publishing to Veeva FTP server..."))
+		env['progress'].update(i)
+		
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "publish.py")
+		for out in execute(["python3", cmd
+			, "--zip", os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['ZIPS_DIR']))
+			, "--ctl", os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['CTLS_DIR']))
+			, "--host", env['VEEVA_SERVER']
+			, "--u", env['VEEVA_USERNAME']
+			, "--pwd", env['VEEVA_PASSWORD'] ]):
+			print(out)		
+
+	### build planner ###
+	def build_planner(flags):
+		tasks = {
+			"nuke": [nuke],
+			"bake": [scaffold, inline_local, inline_global, render_sass, render_templates],
+			"screenshots": [take_screenshots],
+			"package": [package_slides],
+			"controls": [generate_ctls],
+			"publish": [ftp_upload],
+			"relink": [],
+			"veev2rel": [],
+			"rel2veev": []
+		}
+
+		task_dependencies = {
+			nuke: [None],
+			scaffold: [None, nuke],
+			inline_local: [scaffold],
+			inline_global: [scaffold],
+			render_sass: [inline_local, inline_global],
+			render_templates: [inline_local, inline_global],
+			take_screenshots: [render_sass, render_templates],
+			package_slides: [render_sass, render_templates, take_screenshots],
+			generate_ctls: [package_slides],
+			ftp_upload: [generate_ctls]
+		}
+
+		## create dependency graph
+		## figure out which tasks can be run in parallel at different stages in the graph
+		## return a build plan
+
+	def build_runner(build, env):
+
+		print(banner())
+		print("👉  %s 👈\n" % paint.bold.yellow(ENV['PROJECT_NAME']))
+
+		try:
+			with ProgressBar(max_value=11, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
+		
+				progress.update(11)
+
+				
+		except Exception as e:
+			print(paint.bold.red("\n💩  there was an error:"))
+			print(e)
+			sys.exit(1)
+
+		print(paint.bold.green("\n🍕  Yum!"))
 	
 
 if __name__ == '__main__':
