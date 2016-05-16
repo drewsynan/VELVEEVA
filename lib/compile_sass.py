@@ -51,7 +51,7 @@ def runScript(ASYNC=False):
 	parser.add_argument("source", nargs=1, help="Source folder")
 	parser.add_argument("--remove", action="store_true", help="Remove .scss source files after compilation")
 	parser.add_argument("--root", nargs=1, help="Root project folder")
-	parser.add_argument("--sync", action="store_true", help="Run without concurrency")
+	parser.add_argument("--notparallel", action="store_true", help="Run without concurrency")
 	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
 
 
@@ -60,6 +60,6 @@ def runScript(ASYNC=False):
 		return
 	else:
 		args = parser.parse_args()
-		compileSass(args.source[0], remove_source=args.remove, async=(not args.sync))
+		compileSass(args.source[0], remove_source=args.remove, async=(not args.notparallel))
 
 if __name__ == '__main__': runScript(ASYNC=True)

@@ -120,7 +120,8 @@ def create_parser():
 	parser.add_argument("--screenshots",	action="store_true", help="Include Screenshots")
 	parser.add_argument("--veev2rel",		action="store_true", help="Convert veeva: hrefs to relative links")
 	parser.add_argument("--verbose",		action="store_true", help="Chatty Cathy")
-	parser.add_argument("--watch",			action="store_true", help="Watch for changes and re-bake on change")
+	parser.add_argument("--notparallel", 	action="store_true", help="Only run things one after another")
+	parser.add_argument("--watch",			action="store_true", help="Watch for changes and re-build on change")
 
 	return parser
 
@@ -248,21 +249,23 @@ def doScript():
 		}
 
 		task_dependencies = {
-			nuke: [None],
-			scaffold: [None, nuke],
-			inline_local: [scaffold],
-			inline_global: [scaffold],
-			render_sass: [inline_local, inline_global],
-			render_templates: [inline_local, inline_global],
-			take_screenshots: [render_sass, render_templates],
-			package_slides: [render_sass, render_templates, take_screenshots],
-			generate_ctls: [package_slides],
-			ftp_upload: [generate_ctls]
+			nuke: 				None,
+			scaffold: 			{"soft": [nuke]}, ## how to show hard vs soft dependency? Doesn't need nuke, but can't be run before nuke
+			inline_local: 		{"hard": [scaffold]},
+			inline_global: 		{"hard": [scaffold]},
+			render_sass:  		{"hard": [inline_local, inline_global]},
+			render_templates:	{"hard": [inline_local, inline_global]},
+			take_screenshots:	{"hard": [render_sass, render_templates]},
+			package_slides:		{"hard": [take_screenshots]},
+			generate_ctls:		{"hard": [package_slides]},
+			ftp_upload:			{"hard": [generate_ctls]}
 		}
 
-		## create dependency graph
-		## figure out which tasks can be run in parallel at different stages in the graph
-		## return a build plan
+		# for each flag, loop up tasks and concat them together from the task list
+		# filter out unique tasks
+		# build the directed graph
+		# figure out which tasks can be run in parallel at different stages in the graph (topological sorting)
+		# return a build plan
 
 	def build_runner(build, env):
 

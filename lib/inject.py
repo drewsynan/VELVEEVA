@@ -78,7 +78,7 @@ def runScript(ASYNC=False):
 	parser.add_argument("destination", help="Destination folder")
 	parser.add_argument("--inject-root-only", action="store_true", 
 		help="Only inject files in the root of the destination (don't look for slide folders)")
-	parser.add_argument("--sync", action="store_true", help="Run without concurrency")
+	parser.add_argument("--notparallel", action="store_true", help="Run without concurrency")
 	parser.add_argument("--root", nargs=1, help="Project root directory (current directory is used if nont is specified")
 	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
 
@@ -90,7 +90,7 @@ def runScript(ASYNC=False):
 
 		VERBOSE = args.verbose
 		ROOT_ONLY = args.inject_root_only
-		ASYNC = (not args.sync)
+		ASYNC = (not args.notparallel)
 
 		if args.root is None:
 			root = os.getcwd()

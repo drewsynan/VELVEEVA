@@ -130,7 +130,7 @@ def runScript(ASYNC=False):
 	parser.add_argument("destination", nargs=1, help="Destination folder")
 	parser.add_argument("templates", nargs=1, help="Templates folder")
 	parser.add_argument("partials", nargs=1, help="Partials folder")
-	parser.add_argument("--sync", action="store_true", help="Run without concurrency")
+	parser.add_argument("--notparallel", action="store_true", help="Run without concurrency")
 	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
 	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy", required=False)
 
@@ -141,7 +141,7 @@ def runScript(ASYNC=False):
 		args = parser.parse_args()
 
 		VERBOSE = args.verbose
-		ASYNC = (not args.sync)
+		ASYNC = (not args.notparallel)
 
 		SOURCE = args.source[0]
 		DEST = args.destination[0]

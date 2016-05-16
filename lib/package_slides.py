@@ -63,7 +63,7 @@ def runScript(ASYNC=False):
 	parser.add_argument("destination", nargs='?', help="Destination folder (if none is specified, defaults to source/_zips)")
 	parser.add_argument("--root", nargs=1, help="Project root directiory", required=False)
 	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy", required=False)
-	parser.add_argument("--sync", action="store_true", help="Run without concurrency", required=False)
+	parser.add_argument("--notparallel", action="store_true", help="Run without concurrency", required=False)
 	
 	if len(sys.argv) == 1:
 		parser.print_help()
@@ -72,7 +72,7 @@ def runScript(ASYNC=False):
 		args = parser.parse_args()
 		
 		VERBOSE = args.verbose
-		ASYNC = (not args.sync)
+		ASYNC = (not args.notparallel)
 
 		if args.destination is None:
 			dest = os.path.join(args.source[0],"_zips")
