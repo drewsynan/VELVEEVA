@@ -96,6 +96,8 @@ def create_environment(config):
 
 	ENV['ROOT_DIR']			= os.getcwd()
 	ENV['CONFIG_FILE_NAME']	= "VELVEEVA-config.json"
+	ENV['PREFLIGHT_HOOK']	= config.get('HOOKS',{}).get('pre', None)
+	EVN['POSTFLIGHT_HOOK']	= config.get('HOOKS', {}).get('post', None)
 	ENV['PROJECT_NAME']		= config['MAIN']['name']
 
 	ENV['VELVEEVA_DIR']		= os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
@@ -269,6 +271,8 @@ def doScript():
 
 	def build_runner(build, env):
 
+		if env['PREFLIGHT_HOOK'] is not None: execute([ENV['PREFLIGHT_HOOK']])
+
 		print(banner())
 		print("👉  %s 👈\n" % paint.bold.yellow(ENV['PROJECT_NAME']))
 
@@ -277,6 +281,7 @@ def doScript():
 		
 				progress.update(11)
 
+			if env['POSTFLIGHT_HOOK'] is not None: execute([ENV['POSTFLIGHT_HOOK']])
 				
 		except Exception as e:
 			print(paint.bold.red("\n💩  there was an error:"))

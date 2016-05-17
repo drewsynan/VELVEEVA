@@ -203,6 +203,24 @@ def runScript():
 			}
 		]
 	}
+
+	hooks = {
+		'key': 'HOOKS',
+		'subkeys': [
+			{
+				'key': 'pre',
+				'prompt': 'Pre-flight script filename',
+				'default': '',
+				'parser': string_parser
+			},
+			{
+				'key': 'post',
+				'prompt': 'Post-flight script filename',
+				'default': '',
+				'parser': string_parser
+			}
+		]
+	}
 	
 	
 	config = {}
