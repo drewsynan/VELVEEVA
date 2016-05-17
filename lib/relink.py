@@ -37,7 +37,7 @@ def attribute_transform(attribute, transform):
 			item[attribute] = transform(item[attribute])
 	return transformed
 
-def addMeta(**kwargs):
+def add_meta(**kwargs):
 	def transformed(items, soup):
 		nonlocal kwargs
 
@@ -54,7 +54,7 @@ def addMeta(**kwargs):
 
 	return transformed
 
-def fixRelativePath(path):
+def fix_relative_path(path):
 	return re.sub("(\.\.\/)*", "", path)
 
 def fix_hyperlink_protocol(href):
@@ -67,7 +67,7 @@ def fix_hyperlink_protocol(href):
 		slide_name = match.group(1)
 		return "veeva:gotoSlide(%s.zip)" % slide_name
 
-def fixVeev2Rel(href):
+def fix_veev_2_rel(href):
 	match = re.search("veeva:gotoSlide\((.+)\.zip\)", href)
 	if match is None:
 		return href
@@ -75,7 +75,7 @@ def fixVeev2Rel(href):
 		return "../" + match.group(1) + "/" + match.group(1) + ".html"
 
 def fix_rel_2_veev(href):
-	return fix_hyperlink_protocol(fixRelativePath(href))
+	return fix_hyperlink_protocol(fix_relative_path(href))
 
 @curry
 def mv_rel(old_slide_name, new_slide_name, href):
@@ -98,23 +98,23 @@ def integrate_all(src):
 		action(
 			"stylesheets",
 			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
-			attribute_transform("href", fixRelativePath)),
+			attribute_transform("href", fix_relative_path)),
 		action(
 			"scripts",
 			lambda soup: soup.find_all("script", src=True),
-			attribute_transform("src", fixRelativePath)),
+			attribute_transform("src", fix_relative_path)),
 		action(
 			"images",
 			lambda soup: soup.find_all("img"),
-			attribute_transform("src", fixRelativePath)),
+			attribute_transform("src", fix_relative_path)),
 		action(
 			"iframes",
 			lambda soup: soup.find_all("iframe"),
-			attribute_transform("src", fixRelativePath)),
+			attribute_transform("src", fix_relative_path)),
 		action(
 			"hyperlink_paths",
 			lambda soup: soup.find_all("a", href=True),
-			attribute_transform("href", fixRelativePath)),
+			attribute_transform("href", fix_relative_path)),
 		action(
 			"hyperlink_protocols",
 			lambda soup: soup.find_all("a", href=True),
@@ -122,7 +122,7 @@ def integrate_all(src):
 		action(
 			"utf",
 			lambda soup: soup.find_all("meta", charset=True),
-			addMeta(charset="utf-8"))
+			add_meta(charset="utf-8"))
 	]
 
 	return run_actions(actions, src)
@@ -132,7 +132,7 @@ def veev2rel(src):
 		action(
 			"veeva to relative",
 			lambda soup: soup.find_all("a", href=True),
-			attribute_transform("href", fixVeev2Rel))
+			attribute_transform("href", fix_veev_2_rel))
 	]
 	return run_actions(actions, src)
 
@@ -163,6 +163,7 @@ def mv_refs(old_slide_name, new_slide_name, src):
 def parse_folder(path, **kwargs):
 	actions = kwargs.get("actions", [])
 	CUTOFF = kwargs.get("cutoff", float("inf"))
+	verbose = kwargs.get("verbose", False)
 
 	matches = []
 	for root, dirnames, filenames in os.walk(path):
@@ -171,7 +172,7 @@ def parse_folder(path, **kwargs):
 				matches.append(os.path.join(root, filename))
 
 	for filename in matches:
-		print("Re-linking %s" % filename)
+		if verbose: print("Re-linking %s" % filename)
 		for action in actions:
 			clean = action(open(filename, 'rb'))
 			with open(filename, 'wb') as f:
@@ -202,16 +203,17 @@ def runScript():
 
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
-	else:
-		args = parser.parse_args()
+		return 2
+
+	args = parser.parse_args()
+	verbose = args.verbose
 
 	if args.mv is not None:
 		old, new, folder = args.mv
 		if not all_exists([folder]): 
 			return 128
 		else:
-			return parse_folder(folder, actions=[mv_refs(old, new)])
+			return parse_folder(folder, actions=[mv_refs(old, new)], verbose=verbose)
 
 	if args.veev2rel is not None:
 		folders = args.veev2rel
@@ -219,7 +221,7 @@ def runScript():
 			return 128
 		else:
 			for folder in folders:
-				parse_folder(folder, actions=[veev2rel])
+				parse_folder(folder, actions=[veev2rel], verbose=verbose)
 			return
 
 	if args.rel2veev is not None:
@@ -228,7 +230,7 @@ def runScript():
 			return 128
 		else:
 			for folder in folders:
-				parse_folder(folder, actions=[rel2veev])
+				parse_folder(folder, actions=[rel2veev], verbose=verbose)
 			return
 
 	if args.integrate_all is not None:
@@ -237,7 +239,7 @@ def runScript():
 			return 128
 		else:
 			for folder in folders:
-				parse_folder(folder, actions=[integrate_all])
+				parse_folder(folder, actions=[integrate_all], verbose=verbose)
 			return
 
 if __name__ == "__main__": 

@@ -30,6 +30,7 @@ def safe_rename(old, new):
 		repo = git.Git(search_for_repo_path(old))
 		try:
 			repo.mv(old,new)
+			repo.add(new)
 		except git.GitCommandError as e:
 			if e.status == 128: # empty directory, so it's not tracked by git
 				os.rename(old, new)
