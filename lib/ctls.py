@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import activate_venv
 
-from veevutils import banner
+from veevutils import banner, parse_slide, is_slide
 
 from zipfile import ZipFile
 from functools import reduce
@@ -21,35 +21,35 @@ import textwrap
 import fnmatch
 import uuid
 
-def isSlide(filename):
-	return parseSlide(filename) is not None
+# def isSlide(filename):
+# 	return parseSlide(filename) is not None
 
-def parseSlide(filename):
-	baseName = os.path.split(os.path.splitext(filename)[0])[-1]
-	matcher = re.compile("(?:" + baseName + "/)(" + baseName + "(.htm(?:l)?|.pdf|.jpg|.jpeg))$")
+# def parseSlide(filename):
+# 	baseName = os.path.split(os.path.splitext(filename)[0])[-1]
+# 	matcher = re.compile("(?:" + baseName + "/)(" + baseName + "(.htm(?:l)?|.pdf|.jpg|.jpeg))$")
+
+# 	with ZipFile(filename, 'r') as z:
+# 		results = [x for x in z.namelist() if matcher.match(x) is not None]
+
+# 		if len(results) > 0:
+# 			slideNames = [(matcher.match(x).group(0), matcher.match(x).group(2)) for x in results]
+# 			return slideNames[0]
+
+# 	return None
+
+def parse_meta(filename):
+	slide_file = parse_slide(filename)
+	if slide_file is None: return None
+
 
 	with ZipFile(filename, 'r') as z:
-		results = [x for x in z.namelist() if matcher.match(x) is not None]
-
-		if len(results) > 0:
-			slideNames = [(matcher.match(x).group(0), matcher.match(x).group(2)) for x in results]
-			return slideNames[0]
-
-	return None
-
-def parseMeta(filename):
-	slideFile = parseSlide(filename)
-	if slideFile is None: return None
-
-
-	with ZipFile(filename, 'r') as z:
-		with(z.open(slideFile[0])) as f:
-			slideType = slideFile[1]
+		with(z.open(slide_file[0])) as f:
+			slide_type = slide_file[1]
 
 			title_string = None
 			description_string = None
 
-			if slideType == ".htm" or slideType == ".html":
+			if slide_type == ".htm" or slide_type == ".html":
 				soup = BeautifulSoup(f.read(), "lxml")
 
 				title = soup.find('meta', {'name':'veeva_title'})
@@ -60,7 +60,7 @@ def parseMeta(filename):
 				if description is not None:
 					description_string = description.get('content', None)
 
-			if slideType == ".pdf":
+			if slide_type == ".pdf":
 				doc = PDFDocument()
 				parser = PDFParser(f)
 
@@ -81,7 +81,7 @@ def parseMeta(filename):
 					except KeyError:
 						description_string = None
 
-			if slideType == ".jpg" or slideType == ".jpeg":
+			if slide_type == ".jpg" or slide_type == ".jpeg":
 				tmp_file_name = str(uuid.uuid1()) + ".jpg"
 				with open(tmp_file_name, 'wb') as tf:
 					tf.write(f.read())
@@ -120,7 +120,7 @@ def parseCurrentVersion(root_path):
 
 def createRecordString(filename, version=None, email=None, username=None, password=None):
 
-	meta = parseMeta(filename)
+	meta = parse_meta(filename)
 	pieces = []
 
 	pieces.append("USER="+str(username))
@@ -158,7 +158,7 @@ def parseFolder(path, **kwargs):
 	for root, dirnames, filenames in os.walk(path):
 		if root.count(os.sep) - path.count(os.sep) <= CUTOFF:
 			for filename in fnmatch.filter(filenames, "*.zip"):
-				if isSlide(os.path.join(root,filename)): matches.append(os.path.join(root, filename))
+				if is_slide(os.path.join(root,filename)): matches.append(os.path.join(root, filename))
 
 
 	control_files = [createRecordString(m, version=version, username=username, password=password, email=email) for m in matches]

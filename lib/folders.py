@@ -10,7 +10,7 @@ import sys
 import shutil
 import textwrap
 
-def createEnclosingFolders(path, filter="*"):
+def create_enclosing_folders(path, filter="*"):
 	files = glob.glob(os.path.join(path,filter))
 
 	for file in files:
@@ -26,7 +26,7 @@ def createEnclosingFolders(path, filter="*"):
 
 			shutil.move(src, dest)
 
-def stripSpaces(path, filter="*"):
+def strip_spaces(path, filter="*"):
 	matches = glob.glob(os.path.join(path, filter))
 
 	for match in matches:
@@ -58,8 +58,8 @@ def runScript():
 			filter = args.filter[0]
 
 		if not args.no_strip:
-			stripSpaces(args.source[0])
+			strip_spaces(args.source[0])
 
-		createEnclosingFolders(args.source[0], filter)
+		create_enclosing_folders(args.source[0], filter)
 
 if __name__ == "__main__": runScript()

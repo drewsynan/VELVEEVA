@@ -160,14 +160,14 @@ def doScript():
 
 	def inline_global(env, i):
 		env['progress'].update(i)
-		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "inject.py")
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "assets.py")
 		for out in execute(["python3", cmd, env['ROOT_DIR'], env['GLOBALS_DIR'], env['DEST_DIR']]):
 			print(out)
 
 	def render_sass(env, i):
 		print("💅  %s " % paint.gray("Compiling SASS..."))
 		env['progress'].update(i)
-		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "compile_sass.py")
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "sass.py")
 
 		for out in execute(["python3", cmd, os.path.join(env['ROOT_DIR'],env['DEST_DIR'])]):
 			print(out)
@@ -175,7 +175,7 @@ def doScript():
 	def render_templates(env, i):
 		print("📝  %s " % paint.gray("Rendering templates..."))
 		env['progress'].update(i)
-		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "render_templates.py")
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "templates.py")
 
 		for out in execute(["python3", cmd, 
 			os.path.join(env['ROOT_DIR'], env['SOURCE_DIR']), os.path.join(env['ROOT_DIR'],env['DEST_DIR']),
@@ -186,7 +186,7 @@ def doScript():
 	def take_screenshots(env, i):
 		print("📸  %s " % paint.gray("Taking screenshots..."))
 		env['progress'].update(i)
-		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "screenshot.py")
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "screenshots.py")
 		src = os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR']))
 		cfg = os.path.abspath(os.path.join(env['ROOT_DIR'],env['CONFIG_FILE_NAME']))
 
@@ -196,7 +196,7 @@ def doScript():
 	def package_slides(env, i):
 		print("📬  %s " % paint.gray("Packaging slides..."))
 		env['progress'].update(i)
-		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "package_slides.py")
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "package.py")
 		for out in execute(["python3", cmd, 
 				os.path.join(env['ROOT_DIR'],env['DEST_DIR']), 
 				os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['ZIPS_DIR'])]):
@@ -205,7 +205,7 @@ def doScript():
 	def generate_ctls(env, i):
 		print("⚒  %s " % paint.gray("Generating .ctl files..."))
 		env['progress'].update(i)
-		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "genctls.py")
+		cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "ctls.py")
 
 		flags = ["python3"
 					, cmd

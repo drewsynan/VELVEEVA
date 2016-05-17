@@ -29,7 +29,7 @@ def transformer_(soup, selector, transform):
 	items = selector(soup)
 	transform(items, soup)
 
-def attributeTransform(attribute, transform):
+def attribute_transform(attribute, transform):
 	def transformed(items, soup):
 		if items == []: return
 
@@ -57,7 +57,7 @@ def addMeta(**kwargs):
 def fixRelativePath(path):
 	return re.sub("(\.\.\/)*", "", path)
 
-def fixHyperlinkProtocol(href):
+def fix_hyperlink_protocol(href):
 	if urlparse(href).netloc != '': return href
 	
 	match = re.search("(?P<slide_name>[^/]+)\/(?P=slide_name)\.htm(l)?", href)
@@ -74,11 +74,11 @@ def fixVeev2Rel(href):
 	else:
 		return "../" + match.group(1) + "/" + match.group(1) + ".html"
 
-def fixRel2Veev(href):
-	return fixHyperlinkProtocol(fixRelativePath(href))
+def fix_rel_2_veev(href):
+	return fix_hyperlink_protocol(fixRelativePath(href))
 
 @curry
-def mvRel(old_slide_name, new_slide_name, href):
+def mv_rel(old_slide_name, new_slide_name, href):
 	if urlparse(href).netloc == '':
 		oldSlide = re.compile("((?:[^/]*\/)*)(?P<slide_name>" + old_slide_name + ")\/(?P=slide_name)(\.htm(?:l)?)")
 		return oldSlide.sub(r"\g<1>" + new_slide_name + "/" + new_slide_name + r"\g<3>", href)
@@ -86,81 +86,81 @@ def mvRel(old_slide_name, new_slide_name, href):
 		return href
 
 @curry
-def mvVeev(old_slide_name, new_slide_name, href):
+def mv_veev(old_slide_name, new_slide_name, href):
 	oldSlide = re.compile("veeva:([^(]+)\(" + old_slide_name + ".zip\)")
 	return oldSlide.sub(r"veeva:\g<1>" + "(" + new_slide_name + ".zip)", href)
 
-def runActions(actions, src):
+def run_actions(actions, src):
 	return reduce(lambda prev, new: prev >> new, actions, unit(State, src)).getResult(-1)
 
-def integrateAll(src):
+def integrate_all(src):
 	actions = [
 		action(
 			"stylesheets",
 			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
-			attributeTransform("href", fixRelativePath)),
+			attribute_transform("href", fixRelativePath)),
 		action(
 			"scripts",
 			lambda soup: soup.find_all("script", src=True),
-			attributeTransform("src", fixRelativePath)),
+			attribute_transform("src", fixRelativePath)),
 		action(
 			"images",
 			lambda soup: soup.find_all("img"),
-			attributeTransform("src", fixRelativePath)),
+			attribute_transform("src", fixRelativePath)),
 		action(
 			"iframes",
 			lambda soup: soup.find_all("iframe"),
-			attributeTransform("src", fixRelativePath)),
+			attribute_transform("src", fixRelativePath)),
 		action(
 			"hyperlink_paths",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixRelativePath)),
+			attribute_transform("href", fixRelativePath)),
 		action(
 			"hyperlink_protocols",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixHyperlinkProtocol)),
+			attribute_transform("href", fix_hyperlink_protocol)),
 		action(
 			"utf",
 			lambda soup: soup.find_all("meta", charset=True),
 			addMeta(charset="utf-8"))
 	]
 
-	return runActions(actions, src)
+	return run_actions(actions, src)
 
 def veev2rel(src):
 	actions = [
 		action(
 			"veeva to relative",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixVeev2Rel))
+			attribute_transform("href", fixVeev2Rel))
 	]
-	return runActions(actions, src)
+	return run_actions(actions, src)
 
 def rel2veev(src):
 	actions = [
 		action(
 			"relative to veeva",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixRel2Veev))
+			attribute_transform("href", fix_rel_2_veev))
 	]
-	return runActions(actions, src)
+	return run_actions(actions, src)
 
 @curry
-def mvRefs(old_slide_name, new_slide_name, src):
+def mv_refs(old_slide_name, new_slide_name, src):
 	actions = [
 		action(
 			"old rel to old rel",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", mvRel(old_slide_name, new_slide_name) )),
+			attribute_transform("href", mv_rel(old_slide_name, new_slide_name) )),
 		action(
 			"old veeva to new veeva",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", mvVeev(old_slide_name, new_slide_name) ))
+			attribute_transform("href", mv_veev(old_slide_name, new_slide_name) ))
 	]
 
-	return runActions(actions, src)
+	return run_actions(actions, src)
 
-def parseFolder(path, **kwargs):
+def parse_folder(path, **kwargs):
 	actions = kwargs.get("actions", [])
 	CUTOFF = kwargs.get("cutoff", float("inf"))
 
@@ -179,13 +179,13 @@ def parseFolder(path, **kwargs):
 
 def runScript():
 	## TODO: make work with --root flag
-	def doesFileExist(fname):
+	def does_file_exist(fname):
 		exists = os.path.exists(fname)
 		if not exists: print("%s does not exist!" % fname)
 		return exists
 
-	def allExists(folders):
-		return reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True)
+	def all_exists(folders):
+		return reduce(lambda acc, arg: acc and does_file_exist(arg), folders, True)
 
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -208,36 +208,36 @@ def runScript():
 
 	if args.mv is not None:
 		old, new, folder = args.mv
-		if not allExists([folder]): 
+		if not all_exists([folder]): 
 			return
 		else:
-			return parseFolder(folder, actions=[mvRefs(old, new)])
+			return parse_folder(folder, actions=[mv_refs(old, new)])
 
 	if args.veev2rel is not None:
 		folders = args.veev2rel
-		if not allExists(folders):
+		if not all_exists(folders):
 			return
 		else:
 			for folder in folders:
-				parseFolder(folder, actions=[veev2rel])
+				parse_folder(folder, actions=[veev2rel])
 			return
 
 	if args.rel2veev is not None:
 		folders = args.rel2veev
-		if not allExists(folders):
+		if not all_exists(folders):
 			return
 		else:
 			for folder in folders:
-				parseFolder(folder, actions=[rel2veev])
+				parse_folder(folder, actions=[rel2veev])
 			return
 
 	if args.integrate_all is not None:
 		folders = args.integrate_all
-		if not allExists(folders):
+		if not all_exists(folders):
 			return
 		else:
 			for folder in folders:
-				parseFolder(folder, actions=[integrateAll])
+				parse_folder(folder, actions=[integrate_all])
 			return
 
 if __name__ == "__main__": runScript()

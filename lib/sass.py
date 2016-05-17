@@ -19,7 +19,7 @@ def rename_one(file):
 
 	os.rename(file, renamed)
 
-def compileSass(dir, remove_source=False, async=False):
+def compile_sass(dir, remove_source=False, async=False):
 	builder.build_directory(dir, dir)
 	#compiled = glob.glob(os.path.join(dir,"*.scss.css"))
 	compiled = []
@@ -60,6 +60,6 @@ def runScript(ASYNC=False):
 		return
 	else:
 		args = parser.parse_args()
-		compileSass(args.source[0], remove_source=args.remove, async=(not args.notparallel))
+		compile_sass(args.source[0], remove_source=args.remove, async=(not args.notparallel))
 
 if __name__ == '__main__': runScript(ASYNC=True)

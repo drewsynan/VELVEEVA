@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import activate_venv
 
-from veevutils import banner
+from veevutils import banner, is_slide, safe_rename
 from functools import reduce
-from relink import parseFolder, mvRefs
+from relink import parse_folder, mv_refs
 
 import argparse
 import os
@@ -19,11 +19,8 @@ def find_slides(path, cutoff = 1):
 	for root, dirnames, filenames in os.walk(path):
 		if root.count(os.sep) <= cutoff:
 			for filename in filenames:
-				parentPath, parent_name = os.path.split(root)
-				matcher = re.compile(parent_name + "(?:(-thumb)|(-full))?\.[^.]+$")
-
-				if matcher.match(filename) is not None:
-					slides.add(parent_name)
+				parent_path, parent_name = os.path.split(root)
+				if is_slide(filename): slides.add(parent_name)
 
 	return list(slides)
 
@@ -39,10 +36,9 @@ def parse_slide_folders(path):
 	for root, dirnames, filenames in os.walk(path):
 		if root.count(os.sep) - base_depth <= CUTOFF:
 			for filename in filenames:
-				parentPath, parent_name = os.path.split(root)
+				parent_path, parent_name = os.path.split(root)
 
-				matcher = re.compile(parent_name + "(?:(-thumb)|(-full))?\.[^.]+$")
-				if matcher.match(filename) is not None:
+				if is_slide(filename):
 					filepaths.append((root, filename))
 					dirs.add(root)
 
@@ -65,7 +61,7 @@ def prefix_folder(prefix, path):
 		print("Renaming slide %s to %s" % (old_file, new_file))
 		sys.stdout.flush()
 
-		os.rename(old_file, new_file)
+		safe_rename(old_file, new_file)
 
 	for parentdir in parentdirs:
 		parent_pieces = os.path.split(parentdir)
@@ -73,14 +69,14 @@ def prefix_folder(prefix, path):
 		print("Renaming container %s to %s" % (parentdir, new_folder))
 		sys.stdout.flush()
 
-		os.rename(parentdir, new_folder)
+		safe_rename(parentdir, new_folder)
 
 def prefix_refs(prefix, slidelist, root):
 	for slide in slidelist:
 		print("Changing all references to slide %s" % slide)
 		sys.stdout.flush()
 
-		parseFolder(root, actions=[mvRefs(slide, prefix + slide)], cutoff=1)
+		parse_folder(rmv_refsctions=[mv_refs(slide, prefix + slide)], cutoff=1)
 
 def runScript():
 	## TODO make work with --root flag
@@ -93,15 +89,7 @@ def runScript():
 		return reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True)
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-		description = banner(subtitle="(PRE)-fixer") + textwrap.dedent('''\
-			WARNING: DO NOT USE ON SOURCE FILES
-			         UNDER GIT SOURCE CONTROL!
-			         THIS UTILITY DOES NOT USE
-			         GIT MV (yet) AND IT =WILL=
-			         FUCK UP YOUR REPO
-
-			         Use on built files, thx.
-			'''))
+		description = banner(subtitle="(PRE)-fixer")
 
 	parser.add_argument("prefix", nargs=1, help="prefix string")
 	parser.add_argument("source", nargs="+", help="folder(s) to process")

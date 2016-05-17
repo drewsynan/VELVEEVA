@@ -51,6 +51,7 @@ def zip_one(root_dir, slide, dest, verbose=False):
 
 def runScript(ASYNC=False):
 
+	# should use is_slide() to check that a folder is actually a slide folder
 	def okay_to_add(path):
 		IGNORES = ["_zips", "_ctls"]
 		return functools.reduce(lambda acc,current: acc and (current != path), IGNORES, True)
