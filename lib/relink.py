@@ -209,14 +209,14 @@ def runScript():
 	if args.mv is not None:
 		old, new, folder = args.mv
 		if not all_exists([folder]): 
-			return
+			return 128
 		else:
 			return parse_folder(folder, actions=[mv_refs(old, new)])
 
 	if args.veev2rel is not None:
 		folders = args.veev2rel
 		if not all_exists(folders):
-			return
+			return 128
 		else:
 			for folder in folders:
 				parse_folder(folder, actions=[veev2rel])
@@ -225,7 +225,7 @@ def runScript():
 	if args.rel2veev is not None:
 		folders = args.rel2veev
 		if not all_exists(folders):
-			return
+			return 128
 		else:
 			for folder in folders:
 				parse_folder(folder, actions=[rel2veev])
@@ -234,11 +234,12 @@ def runScript():
 	if args.integrate_all is not None:
 		folders = args.integrate_all
 		if not all_exists(folders):
-			return
+			return 128
 		else:
 			for folder in folders:
 				parse_folder(folder, actions=[integrate_all])
 			return
 
-if __name__ == "__main__": runScript()
+if __name__ == "__main__": 
+	sys.exit(runScript())
 

@@ -129,7 +129,7 @@ def runScript(verbose=False):
 
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
+		return 2
 	else:
 		args = parser.parse_args()
 
@@ -140,7 +140,7 @@ def runScript(verbose=False):
 	except Exception as e:
 		print(e)
 		sys.stdout.flush()
-		return
+		return 128
 
 if __name__ == "__main__":
-	runScript()
+	sys.exit(runScript())

@@ -39,9 +39,10 @@ def runScript():
 
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
+		return 2
 	else:
 		args = parser.parse_args()
 		convertPDFs(args.source[0], args.destination[0])
 
-if __name__ == '__main__': runScript()
+if __name__ == '__main__': 
+	sys.exit(runScript())

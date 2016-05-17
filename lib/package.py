@@ -68,7 +68,7 @@ def runScript(ASYNC=False):
 	
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
+		return 2
 	else:
 		args = parser.parse_args()
 		
@@ -97,4 +97,5 @@ def runScript(ASYNC=False):
 			zip_slides(root_dir, srcs, dest, verbose=VERBOSE)
 
 
-if __name__ == "__main__": runScript(ASYNC=True)
+if __name__ == "__main__": 
+	sys.exit(runScript(ASYNC=True))

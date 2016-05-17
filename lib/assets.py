@@ -84,7 +84,7 @@ def runScript(ASYNC=False):
 
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
+		return 2
 	else:
 		args = parser.parse_args()
 
@@ -118,6 +118,6 @@ def runScript(ASYNC=False):
 				inject(root, src, subdirs, verbose=VERBOSE)
 
 if __name__ == '__main__':
-	runScript()
+	sys.exit(runScript())
 
 

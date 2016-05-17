@@ -57,9 +57,10 @@ def runScript(ASYNC=False):
 
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
+		return 2
 	else:
 		args = parser.parse_args()
 		compile_sass(args.source[0], remove_source=args.remove, async=(not args.notparallel))
 
-if __name__ == '__main__': runScript(ASYNC=True)
+if __name__ == '__main__': 
+	sys.exit(runScript(ASYNC=True))

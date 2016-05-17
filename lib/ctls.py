@@ -183,7 +183,7 @@ def runScript():
 
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
+		return 2
 	else:
 		args = parser.parse_args()
 
@@ -199,4 +199,4 @@ def runScript():
 	parseFolder(args.source[0], out=args.destination[0], root=root, username=args.u[0], password=args.pwd[0], email=email)
 
 if __name__ == "__main__":
-	runScript()
+	sys.exit(runScript())
