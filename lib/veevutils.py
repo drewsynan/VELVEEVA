@@ -8,8 +8,7 @@ import git
 import glob
 import shutil
 
-__all__ = ['banner', 'parse_slide', 'is_slide']
-
+VALID_SLIDE_EXTENSIONS = ['.htm', '.html', '.pdf', '.jpg', '.jpeg', '.mp4']
 
 def search_for_repo_path(current_path, last_path=None):
 	current_path = os.path.abspath(current_path)

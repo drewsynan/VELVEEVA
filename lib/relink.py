@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import activate_venv
-from veevutils import banner
+from veevutils import banner, VALID_SLIDE_EXTENSIONS
 
 from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
@@ -60,7 +60,7 @@ def fix_relative_path(path):
 def fix_hyperlink_protocol(href):
 	if urlparse(href).netloc != '': return href
 	
-	match = re.search("(?P<slide_name>[^/]+)\/(?P=slide_name)\.htm(l)?", href)
+	match = re.search("(?P<slide_name>[^/]+)\/(?P=slide_name)\(?:.htm(l)?|.pdf)", href) ##### need to re-factor this out into a supported types module
 	if match is None:
 		return href
 	else:
@@ -80,6 +80,7 @@ def fix_rel_2_veev(href):
 @curry
 def mv_rel(old_slide_name, new_slide_name, href):
 	if urlparse(href).netloc == '':
+		ext_string =
 		oldSlide = re.compile("((?:[^/]*\/)*)(?P<slide_name>" + old_slide_name + ")\/(?P=slide_name)(\.htm(?:l)?)")
 		return oldSlide.sub(r"\g<1>" + new_slide_name + "/" + new_slide_name + r"\g<3>", href)
 	else:
