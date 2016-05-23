@@ -1,5 +1,6 @@
 import textwrap
 from painter import paint
+import collections
 import math
 import os
 import zipfile
@@ -7,8 +8,103 @@ import re
 import git
 import glob
 import shutil
+import json
+from pymonad import *
+import uuid
 
 VALID_SLIDE_EXTENSIONS = ['.htm', '.html', '.pdf', '.jpg', '.jpeg', '.mp4']
+
+def get_extension_regex(exts=VALID_SLIDE_EXTENSIONS):
+	return "(%s)" % "|".join(exts)
+
+def get_path_regex(exts=VALID_SLIDE_EXTENSIONS, slide_name=None):
+	vals = {
+		'sep': '/',
+		'ext_regex': "|".join(exts)
+	}
+
+	if slide_name is None: 
+		vals["slide_name"] = "[^%s]+" % vals["sep"]
+	else:
+		vals["slide_name"] = slide_name
+
+	return "(.*)(?P<slide_name>%(slide_name)s)%(sep)s(?P=slide_name)(%(ext_regex)s)" % vals
+
+def parse_slide_path(p, slide_name=None):
+	SlidePath = collections.namedtuple('SlidePath', ['parent_path', 'slide_name', 'extension'])
+	matcher = re.compile(get_path_regex(slide_name=slide_name)).match(p)
+
+	if matcher is None: 
+		return None
+	else:
+		return SlidePath(matcher.group(1), matcher.group(2), matcher.group(3))
+
+
+def get_veeva_command_regex(command_name=None, command_args=None):
+	vals = {}
+	if command_name is None:
+		vals['command_name'] = "[^(]+"
+	else:
+		vals['command_name'] = command_name
+
+	if command_args is None:
+		vals['command_args'] = ".*"
+	else:
+		vals['command_args'] = command_args
+
+	return "^veeva:(?P<command_name>%(command_name)s)\((%(command_args)s)\)" % vals
+
+def get_javascript_regex(function_name=None, function_args=None, namespace=None):
+	vals = {}
+	if namespace is None:
+		vals['namespace'] = ''
+	else:
+		vals['namespace'] = namespace
+
+	if function_name is None:
+		vals['function_name'] = "[^(]+"
+	else:
+		vals['function_name'] = function_name
+
+	if function_args is None:
+		vals['function_args'] = ".*"
+	else:
+		if type(function_args) is list:
+			vals['function_args'] = ",".join(function_args)
+		else:
+			vals['function_args'] = function_args
+
+	return "^(?:javascript:)?(%(namespace)s)?(?:[.]*)?(?P<function_name>%(function_name)s)\((%(function_args)s)\)" % vals
+
+def get_veeva_slide_regex(command_name=None, slide_name=''):
+	return get_veeva_command_regex(command_name=command_name, command_args=slide_name+".zip")
+
+def parse_veeva_href(href, command_name=None, command_args=None):
+	VeevaCommand = collections.namedtuple('VeevaCommand', ['command_name', 'command_args'])
+	matcher = re.compile(get_veeva_command_regex(command_name=command_name, command_args=command_args)).match(href)
+
+	if matcher is None:
+		return None
+	else:
+		return VeevaCommand(matcher.group(1), matcher.group(2))
+
+def parse_veeva_onclick(href, command_name=None, command_args=None, namespace="com.veeva.clm"):
+	VeevaCommand = collections.namedtuple('VeevaCommand', ['command_name', 'command_args', 'namespace'])
+	matcher = re.compile(get_javascript_regex(namespace=namespace)).match(href)
+
+	def parse_args(arg_string):
+
+		pass
+
+	if matcher is None:
+		return None
+	else:
+		unique = str(uuid.uuid1())
+		func_name = matcher.group(2)
+		func_args = json.loads("[%s]" % matcher.group(3).replace("\"", unique).replace("'", "\"").replace(unique, "'")) #wrong wrong wrong wrong, but ok for now
+		func_namespace = matcher.group(1)
+
+		return VeevaCommand(func_name, [arg for arg in func_args if arg != ''], func_namespace)
 
 def search_for_repo_path(current_path, last_path=None):
 	current_path = os.path.abspath(current_path)
@@ -54,8 +150,8 @@ def safe_delete(p):
 			os.remove(p)
 
 def parse_slide(folder_path):
-	FORMAT_EXTENSIONS = ['.html', '.htm', '.jpg', '.pdf', '.mp4']
-	EXTENSION_REGEX = "(%s)" % "|".join(FORMAT_EXTENSIONS)
+	FORMAT_EXTENSIONS = VALID_SLIDE_EXTENSIONS
+	EXTENSION_REGEX = get_extension_regex(FORMAT_EXTENSIONS)
 	PATH_REGEX = "(?:.*%(slide_name)s%(os_sep)s)(%(slide_name)s%(extension_regex)s)$"
 
 	def is_zip(f):
@@ -110,6 +206,40 @@ def parse_slide(folder_path):
 
 def is_slide(slide_path):
 	return parse_slide(slide_path) is not None
+
+def parse_slide_name_from_href(href):
+	veeva_matcher = re.compile(get_veeva_slide_regex('gotoSlide'))
+	path_matcher = re.compile(get_path_regex())
+
+	matchers = [veeva_matcher.match(href), path_matcher.match(href)]
+
+	for matcher in matchers:
+		if matcher is not None:
+			return matcher.group(1).split(".zip")[0]
+
+	# nothing!?
+	return None
+
+@curry
+def veeva_composer(prefix, command, args):
+	if args is None: args = []
+	if type(args) is not list: args = [args]
+
+	if prefix is None: prefix = ''
+
+	return prefix + command + "(" + ",".join(args) + (")")
+
+@curry
+def path_composer(parent_path, slide_name, extension):
+	if parent_path is None: parent_path = ''
+
+	if len(parent_path > 0):
+		if parent_path[-1] != "/": parent_path = parent_path + "/"
+
+	return parent_path + slide_name + "/" + slide_name + extension
+
+def identity_composer(*args):
+	return args
 
 def banner(type="normal",subtitle=None):
 	WIDTH_IN_CHARS = 38

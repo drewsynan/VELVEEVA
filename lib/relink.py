@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import activate_venv
-from veevutils import banner, VALID_SLIDE_EXTENSIONS
+from veevutils import banner, VALID_SLIDE_EXTENSIONS, parse_slide_name_from_href
 
 from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
@@ -15,12 +15,12 @@ import sys
 import textwrap
 
 @curry
-def action(name, selector, action, source):
+def action(name, selector, action, composer, source):
 
 	@State
 	def closure(old_state):
 		b = BeautifulSoup(source, "lxml")
-		transformer_(b, selector, action)
+		transformer_(b, selector, action(composer))
 		
 		return (b.prettify(), old_state + 1)
 	return closure
@@ -30,7 +30,8 @@ def transformer_(soup, selector, transform):
 	transform(items, soup)
 
 def attribute_transform(attribute, transform):
-	def transformed(items, soup):
+	@curry
+	def transformed(composer, items, soup):
 		if items == []: return
 
 		for item in items:
@@ -38,7 +39,8 @@ def attribute_transform(attribute, transform):
 	return transformed
 
 def add_meta(**kwargs):
-	def transformed(items, soup):
+	@curry
+	def transformed(composer, items, soup):
 		nonlocal kwargs
 
 		if soup.html is None: return #empty dom
@@ -54,76 +56,125 @@ def add_meta(**kwargs):
 
 	return transformed
 
-def fix_relative_path(path):
+@curry
+def veeva_href_to_onclick(composer, items, soup):
+	if soup.html is None: return #empty dom
+
+	for item in items:
+		current_href = item["href"]
+		veeva_match = parse_veeva_href(current_href)
+		if veeva_match is not None:
+			cmd = veeva_match.command_name
+			cmd_args = veeva_match.command_args
+			item["href"] = "javascript:void(0)"
+			item["onClick"] = composer(cmd, [cmd_args, "''"])
+
+@curry
+def veeva_onclick_to_href(composer, items, soup):
+	if soup.html is None: return
+
+	for item in items:
+		match = parse_veeva_onclick(item["onClick"])
+		if match is not None:
+			cmd = match.command_name
+			cmd_args = match.command_args
+			item["href"] = composer(cmd, cmd_args)
+			item["onClick"] = None
+
+@curry
+def fix_relative_path(composer, path):
 	return re.sub("(\.\.\/)*", "", path)
 
-def fix_hyperlink_protocol(href):
+@curry
+def fix_hyperlink_protocol(composer, href):
 	if urlparse(href).netloc != '': return href
 	
-	match = re.search("(?P<slide_name>[^/]+)\/(?P=slide_name)\(?:.htm(l)?|.pdf)", href) ##### need to re-factor this out into a supported types module
+	match = parse_slide_name_from_href(href)
 	if match is None:
 		return href
 	else:
-		slide_name = match.group(1)
-		return "veeva:gotoSlide(%s.zip)" % slide_name
-
-def fix_veev_2_rel(href):
-	match = re.search("veeva:gotoSlide\((.+)\.zip\)", href)
-	if match is None:
-		return href
-	else:
-		return "../" + match.group(1) + "/" + match.group(1) + ".html"
-
-def fix_rel_2_veev(href):
-	return fix_hyperlink_protocol(fix_relative_path(href))
-
+		return composer("gotoSlide", match + ".zip")
 @curry
+def fix_veev_2_rel(composer, href):
+	match = parse_slide_name_from_href(href)
+	if match is None:
+		return href
+	else:
+		return composer(match, ".html")
+@curry
+def fix_rel_2_veev(composer, href):
+	return fix_hyperlink_protocol(composer, fix_relative_path(composer, href))
+
 def mv_rel(old_slide_name, new_slide_name, href):
-	if urlparse(href).netloc == '':
-		ext_string =
-		oldSlide = re.compile("((?:[^/]*\/)*)(?P<slide_name>" + old_slide_name + ")\/(?P=slide_name)(\.htm(?:l)?)")
-		return oldSlide.sub(r"\g<1>" + new_slide_name + "/" + new_slide_name + r"\g<3>", href)
-	else:
-		return href
 
-@curry
+	@curry
+	def closure(composer, href):
+		if urlparse(href).netloc == '':
+			old_slide = parse_slide_path(href, slide_name=old_slide_name)
+			if old_slide is not None:
+				#return old_slide.parent_path + new_slide_name + "/" + new_slide_name + old_slide.extension
+				return composer(new_slide_name, old_slide.extension)
+			else:
+				return href
+		else:
+			return href
+
+	return closure
+
+
 def mv_veev(old_slide_name, new_slide_name, href):
-	oldSlide = re.compile("veeva:([^(]+)\(" + old_slide_name + ".zip\)")
-	return oldSlide.sub(r"veeva:\g<1>" + "(" + new_slide_name + ".zip)", href)
+
+	@curry
+	def closure(composer, href):
+		old_slide = parse_veeva_href(href, command_args=old_slide_name+".zip")
+
+		if old_slide is not None:
+			return composer(old_slide.command_name, new_slide_name+".zip")
+		else:
+			return href
+
+	return closure
 
 def run_actions(actions, src):
 	return reduce(lambda prev, new: prev >> new, actions, unit(State, src)).getResult(-1)
 
-def integrate_all(src):
+def integrate_all(composer, src):
 	actions = [
 		action(
 			"stylesheets",
 			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
-			attribute_transform("href", fix_relative_path)),
+			attribute_transform("href", fix_relative_path),
+			composer),
 		action(
 			"scripts",
 			lambda soup: soup.find_all("script", src=True),
-			attribute_transform("src", fix_relative_path)),
+			attribute_transform("src", fix_relative_path),
+			composer),
 		action(
 			"images",
 			lambda soup: soup.find_all("img"),
-			attribute_transform("src", fix_relative_path)),
+			attribute_transform("src", fix_relative_path),
+			composer),
 		action(
 			"iframes",
 			lambda soup: soup.find_all("iframe"),
-			attribute_transform("src", fix_relative_path)),
+			attribute_transform("src", fix_relative_path),
+			composer),
 		action(
 			"hyperlink_paths",
 			lambda soup: soup.find_all("a", href=True),
-			attribute_transform("href", fix_relative_path)),
+			attribute_transform("href", fix_relative_path),
+			composer),
 		action(
 			"hyperlink_protocols",
 			lambda soup: soup.find_all("a", href=True),
-			attribute_transform("href", fix_hyperlink_protocol)),
+			attribute_transform("href", fix_hyperlink_protocol),
+			veeva_composer("veeva:")),
 		action(
 			"utf",
 			lambda soup: soup.find_all("meta", charset=True),
-			add_meta(charset="utf-8"))
+			add_meta(charset="utf-8"),
+			veeva_composer("veeva:"))
 	]
 
 	return run_actions(actions, src)
@@ -133,7 +184,8 @@ def veev2rel(src):
 		action(
 			"veeva to relative",
 			lambda soup: soup.find_all("a", href=True),
-			attribute_transform("href", fix_veev_2_rel))
+			attribute_transform("href", fix_veev_2_rel),
+			path_composer("../"))
 	]
 	return run_actions(actions, src)
 
@@ -142,7 +194,8 @@ def rel2veev(src):
 		action(
 			"relative to veeva",
 			lambda soup: soup.find_all("a", href=True),
-			attribute_transform("href", fix_rel_2_veev))
+			attribute_transform("href", fix_rel_2_veev),
+			veeva_composer("veeva:"))
 	]
 	return run_actions(actions, src)
 
@@ -152,11 +205,13 @@ def mv_refs(old_slide_name, new_slide_name, src):
 		action(
 			"old rel to old rel",
 			lambda soup: soup.find_all("a", href=True),
-			attribute_transform("href", mv_rel(old_slide_name, new_slide_name) )),
+			attribute_transform("href", mv_rel(old_slide_name, new_slide_name)),
+			veeva_composer("veeva:")),
 		action(
 			"old veeva to new veeva",
 			lambda soup: soup.find_all("a", href=True),
-			attribute_transform("href", mv_veev(old_slide_name, new_slide_name) ))
+			attribute_transform("href", mv_veev(old_slide_name, new_slide_name)),
+			veeva_composer("veeva:"))
 	]
 
 	return run_actions(actions, src)
@@ -209,12 +264,14 @@ def runScript():
 	args = parser.parse_args()
 	verbose = args.verbose
 
+	composer = veeva_composer("veeva:")
+
 	if args.mv is not None:
 		old, new, folder = args.mv
 		if not all_exists([folder]): 
 			return 128
 		else:
-			return parse_folder(folder, actions=[mv_refs(old, new)], verbose=verbose)
+			return parse_folder(folder, actions=[mv_refs(composer, old, new)], verbose=verbose)
 
 	if args.veev2rel is not None:
 		folders = args.veev2rel
@@ -222,7 +279,7 @@ def runScript():
 			return 128
 		else:
 			for folder in folders:
-				parse_folder(folder, actions=[veev2rel], verbose=verbose)
+				parse_folder(folder, actions=[veev2rel(composer)], verbose=verbose)
 			return
 
 	if args.rel2veev is not None:
@@ -231,7 +288,7 @@ def runScript():
 			return 128
 		else:
 			for folder in folders:
-				parse_folder(folder, actions=[rel2veev], verbose=verbose)
+				parse_folder(folder, actions=[rel2veev(composer)], verbose=verbose)
 			return
 
 	if args.integrate_all is not None:
@@ -240,7 +297,7 @@ def runScript():
 			return 128
 		else:
 			for folder in folders:
-				parse_folder(folder, actions=[integrate_all], verbose=verbose)
+				parse_folder(folder, actions=[integrate_all(composer)], verbose=verbose)
 			return
 
 if __name__ == "__main__": 
