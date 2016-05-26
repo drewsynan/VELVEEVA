@@ -29,6 +29,7 @@ def transformer_(soup, selector, transform):
 	items = selector(soup)
 	transform(items, soup)
 
+@curry
 def attribute_transform(attribute, transform):
 	@curry
 	def transformed(composer, items, soup):
@@ -105,7 +106,8 @@ def fix_veev_2_rel(composer, href):
 def fix_rel_2_veev(composer, href):
 	return fix_hyperlink_protocol(composer, fix_relative_path(composer, href))
 
-def mv_rel(old_slide_name, new_slide_name, href):
+@curry
+def mv_rel(old_slide_name, new_slide_name):
 
 	@curry
 	def closure(composer, href):
@@ -121,8 +123,8 @@ def mv_rel(old_slide_name, new_slide_name, href):
 
 	return closure
 
-
-def mv_veev(old_slide_name, new_slide_name, href):
+@curry
+def mv_veev(old_slide_name, new_slide_name):
 
 	@curry
 	def closure(composer, href):
