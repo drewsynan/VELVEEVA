@@ -8,7 +8,7 @@ class Deployment:
 		self.matrix = adj
 		self.nodes = lookup
 
-	def push_to_self(self, val):
+	def push_parent(self, val):
 		found = None
 		for chain in range(len(self.chains)):
 			for subchain in range(len(self.chains[chain])):
@@ -18,7 +18,7 @@ class Deployment:
 		if found is None:
 			self.chains.append([[self.nodes[val]]])
 
-	def push_to_sibling(self, val, sibs):
+	def push_sibling(self, val, sibs):
 		found = None
 		for chain in range(len(self.chains)):
 			for subchain in range(len(self.chains[chain])):
@@ -31,7 +31,7 @@ class Deployment:
 		else:
 			self.chains[found].append([self.nodes[val]])
 
-	def push_to_parent(self, val, parent):
+	def push_child(self, val, parent):
 
 		found = None
 		for chain in range(len(self.chains)):
@@ -101,11 +101,11 @@ class Depgraph:
 				more_than_one_parent = self.parent_counts[0][val] > 1
 				
 				if has_siblings:
-					d.push_to_sibling(val, current)
+					d.push_sibling(val, current)
 				elif more_than_one_parent:
-					d.push_to_self(val)
+					d.push_parent(val)
 				else:
-					d.push_to_parent(val, parents[0])
+					d.push_child(val, parents[0])
 
 		self.__plan = d.get_deployment()
 		return self.__plan
