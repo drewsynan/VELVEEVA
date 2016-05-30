@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from lib import activate_venv
 from lib.veevutils import banner
+from lib import build
 
 from painter import paint
 from progressbar import ProgressBar, Percentage, Bar
@@ -137,12 +138,9 @@ def doScript():
 		sys.exit(0)
 
 	args = parser.parse_args()
-	flags = filter(lambda kvpair: kvpair[1] == True, (vars(args).items()))
+	flags = [x[0] for x in filter(lambda kvpair: kvpair[1] == True, (vars(args).items()))]
 
-	print(list(flags))
-	return
-
-	ENV = create_environment(parse_config())
+	# ENV = create_environment(parse_config())
 
 
 	def nuke(env, i):
@@ -238,30 +236,60 @@ def doScript():
 
 	### build planner ###
 	def build_planner(flags):
-		tasks = {
-			"nuke": [nuke],
-			"bake": [scaffold, inline_local, inline_global, render_sass, render_templates],
-			"screenshots": [take_screenshots],
-			"package": [package_slides],
-			"controls": [generate_ctls],
-			"publish": [ftp_upload],
+		idx = {
+			"nuke": nuke,
+			"scaffold": scaffold,
+			"locals": inline_local,
+			"globals": inline_global,
+			"sass": render_sass,
+			"templates": render_templates,
+			"screenshots": take_screenshots,
+			"package": package_slides,
+			"controls": generate_ctls,
+			"publish": ftp_upload
+		}
+
+		requires = {
+			"scaffold": ["nuke"],
+			"locals": ["scaffold"],
+			"globals": ["scaffold"],
+			"sass": ["locals", "globals"],
+			"templates": ["locals", "globals"],
+			"screenshots": ["sass", "templates"],
+			"package": ["screenshots"],
+			"controls": ["package"],
+			"publish": ["controls"]
+		}
+
+		plans = {
+			"nuke": ["nuke"],
+			"bake": ["scaffold", "locals", "globals", "sass", "templates"],
+			"screenshots": ["screenshots"],
+			"package": ["package"],
+			"controls": ["controls"],
+			"publish": ["publish"],
 			"relink": [],
 			"veev2rel": [],
 			"rel2veev": []
 		}
 
-		task_dependencies = {
-			nuke: 				None,
-			scaffold: 			{"soft": [nuke]}, ## how to show hard vs soft dependency? Doesn't need nuke, but can't be run before nuke
-			inline_local: 		{"hard": [scaffold]},
-			inline_global: 		{"hard": [scaffold]},
-			render_sass:  		{"hard": [inline_local, inline_global]},
-			render_templates:	{"hard": [inline_local, inline_global]},
-			take_screenshots:	{"hard": [render_sass, render_templates]},
-			package_slides:		{"hard": [take_screenshots]},
-			generate_ctls:		{"hard": [package_slides]},
-			ftp_upload:			{"hard": [generate_ctls]}
-		}
+		def replace_with_function(plan):
+			if type(plan) is list:
+				return [replace_with_function(x) for x in plan]
+			else:
+				return idx.get(plan)
+
+		selected_tasks = []
+		for flag in flags:
+			tasks = plans.get(flag, [])
+			selected_tasks = selected_tasks + tasks
+
+		unique_tasks = list(set(selected_tasks))
+
+		constraints = [(task, requires.get(task, None)) for task in unique_tasks if requires.get(task, None) is not None]
+		depgraph = build.Depgraph(constraints)
+		build_plan = depgraph.build_plan()
+		return replace_with_function(build_plan)
 
 		# for each flag, loop up tasks and concat them together from the task list
 		# filter out unique tasks
@@ -269,7 +297,8 @@ def doScript():
 		# figure out which tasks can be run in parallel at different stages in the graph (topological sorting)
 		# return a build plan
 
-	def build_runner(build, env):
+	def build_runner(build_plan, env):
+		STEPS = len(build_plan)
 
 		if env['PREFLIGHT_HOOK'] is not None: execute([ENV['PREFLIGHT_HOOK']])
 
@@ -277,9 +306,27 @@ def doScript():
 		print("👉  %s 👈\n" % paint.bold.yellow(ENV['PROJECT_NAME']))
 
 		try:
-			with ProgressBar(max_value=11, widgets=[Bar(marker="🍕"),Percentage()], redirect_stdout=True) as progress:
-		
-				progress.update(11)
+			with ProgressBar(max_value=STEPS, 
+					widgets=[Bar(marker="🍕"),Percentage()], 
+					redirect_stdout=True) as progress, concurrent.futures.ProcessPoolExecutor() as executor:
+				
+				env['progress'] = progress
+
+				i = 0
+				for step in build_plan:
+					if len(step) == 0:
+						i = i + 1
+					elif len(step) == 1:
+						step[0](env, i)
+						i = i + 1
+					else:
+						futures = []
+						for func in step:
+							futures.append(executor.submit(func, env, i))
+						synchronize_and_wait = [f.result() for f in futures]
+						i = i + 1
+
+				progress.update(STEPS) # finish up
 
 			if env['POSTFLIGHT_HOOK'] is not None: execute([ENV['POSTFLIGHT_HOOK']])
 				
@@ -290,6 +337,8 @@ def doScript():
 
 		print(paint.bold.green("\n🍕  Yum!"))
 	
+	print(flags)
+	print(build_planner(flags))
 
 if __name__ == '__main__':
 	doScript()

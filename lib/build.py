@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import networkx as nx
 import numpy as np
 
@@ -103,6 +104,8 @@ class Depgraph:
 				if has_siblings:
 					d.push_sibling(val, current)
 				elif more_than_one_parent:
+					d.push_parent(val)
+				elif parent is None:
 					d.push_parent(val)
 				else:
 					d.push_child(val, parents[0])
