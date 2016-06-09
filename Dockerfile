@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
 	zlib1g-dev\
 	build-essential \
 	git \
+	nodejs-legacy \
 	python3-pip \
 	virtualenv \
 	libxml2-dev \
