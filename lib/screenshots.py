@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import activate_venv
 
-from veevutils import banner
+from veevutils import banner, is_slide
 from prefix import parse_slide_folders
 
 from selenium import webdriver
@@ -158,8 +158,8 @@ def take_screenshots_async(source_folder, config_path, verbose=False):
 	sizes = load_ss_config(config_path)
 	slides = parse_slide_folders(source_folder)
 
-	dests = list(map(lambda pair: pair[0], slides[0]))
-	urls = list(map(lambda pair: os.path.join(pair[0], pair[1]), slides[0]))
+	dests = [slide[0] for slide in slides[0]]
+	urls = [os.path.join(slide[0],slide[1]) for slide in slides[0]]
 
 	shots = list(gen_configs(urls, dests, sizes, local_slide_name))
 
@@ -200,6 +200,7 @@ def runScript():
 		if args.root is not None:
 			source_folder = os.path.join(args.root[0], args.source[0])
 			config_path = os.path.join(args.root[0], args.config[0])
+
 		else:
 			source_folder = args.source[0]
 			config_path = args.config[0]

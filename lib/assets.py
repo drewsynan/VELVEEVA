@@ -72,7 +72,7 @@ def inject_async(root, srcs, dests, verbose=False):
 def runScript(ASYNC=False):
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-		description = banner(subtitle=".ctl File Generator"))
+		description = banner(subtitle="Asset Inliner"))
 
 	parser.add_argument("source", help="Source folder")
 	parser.add_argument("destination", help="Destination folder")
@@ -97,10 +97,12 @@ def runScript(ASYNC=False):
 		else:
 			root = args.root[0]
 
-		src = args.source[0]
-		dest = args.destination[0]
+		src = args.source ### arg! positional arguments don't return lists... oops!
+		dest = args.destination ### ^ saem
+		
 
 		if not os.path.exists(os.path.join(root,src)):
+			print(os.path.join(root,src))
 			print("Source does not exist!")
 			sys.exit(1)
 

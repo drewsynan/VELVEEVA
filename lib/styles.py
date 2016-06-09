@@ -9,6 +9,8 @@ import sys
 import textwrap
 import fnmatch
 import concurrent.futures
+import sass
+import sassutils
 
 from sassutils import builder
 

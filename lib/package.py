@@ -13,13 +13,14 @@ import functools
 import concurrent.futures
 
 def zip_slides(root_dir, slides, dest, verbose=False):
-	if not os.path.exists(dest): os.makedirs(dest)
+	if not os.path.exists(os.path.join(root_dir,dest)): os.makedirs(os.path.join(root_dir,dest))
 
 	for slide in slides:
 		zip_one(root_dir, slide, dest, verbose)
 
 def zip_slides_async(root_dir, slides, dest, verbose=False):
-	if not os.path.exists(dest): os.makedirs(dest)
+
+	if not os.path.exists(os.path.join(root_dir,dest)): os.makedirs(os.path.join(root_dir,dest))
 
 	with concurrent.futures.ProcessPoolExecutor() as executor:
 		futures = {executor.submit(zip_one, root_dir, slide, dest, verbose): slide for slide in slides}
@@ -33,13 +34,14 @@ def zip_slides_async(root_dir, slides, dest, verbose=False):
 def zip_one(root_dir, slide, dest, verbose=False):
 	slide_name = os.path.basename(slide)
 	zip_name = slide_name + ".zip"
+	zip_path = os.path.join(root_dir,dest,zip_name)
 
 	if verbose: print("Creating %s \n======================" % zip_name)
 
-	with zipfile.ZipFile(os.path.join(dest,zip_name), 'w', zipfile.ZIP_DEFLATED) as zf:
-		for root, dirs, files in os.walk(slide):
+	with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+		for root, dirs, files in os.walk(os.path.join(root_dir,slide)):
 			for file in files:
-				root_pieces = root_dir.split(os.sep)
+				root_pieces = os.path.join(root_dir, dest).split(os.sep)
 				slide_pieces = root.split(os.sep)
 
 				no_enclosing_folders = os.sep.join(slide_pieces[len(root_pieces):])
@@ -75,18 +77,26 @@ def runScript(ASYNC=False):
 		VERBOSE = args.verbose
 		ASYNC = (not args.notparallel)
 
+		SOURCE = args.source[0]
+
 		if args.destination is None:
-			dest = os.path.join(args.source[0],"_zips")
+			dest = os.path.join(SOURCE,"_zips")
 		else:
-			dest = args.destination[0]
+			dest = args.destination #?? oh god this isn't a list!
 
 
-		if args.root is not None:
-			root_dir = os.path.join(args.root[0],args.source[0])
+		if args.root is None:
+			root_dir = os.getcwd()
 		else:
-			root_dir = args.source[0]
+			root_dir = args.root[0]
 
-		srcs = [os.path.join(root_dir,sd) for sd in next(os.walk(root_dir))[1] if okay_to_add(sd)]
+		DEST = dest
+		ROOT = root_dir
+
+		SOURCE_PATH = os.path.abspath(os.path.join(ROOT,SOURCE))
+
+		srcs = [os.path.join(SOURCE,sd) for sd in next(os.walk(SOURCE_PATH))[1] if okay_to_add(sd)]
+
 		if len(srcs) < 1:
 			print("No slides found!")
 			sys.exit(1)

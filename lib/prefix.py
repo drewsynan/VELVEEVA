@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import activate_venv
 
-from veevutils import banner, is_slide, safe_rename
+from veevutils import banner, is_slide, parse_slide, safe_rename
 from functools import reduce
 from relink import parse_folder, mv_refs
 
@@ -35,12 +35,18 @@ def parse_slide_folders(path):
 
 	for root, dirnames, filenames in os.walk(path):
 		if root.count(os.sep) - base_depth <= CUTOFF:
-			for filename in filenames:
-				parent_path, parent_name = os.path.split(root)
+			parsed = parse_slide(root)
+			if parsed is not None:
+				slide_filename = parsed[0]
+				filepaths.append(os.path.split(slide_filename))
+				dirs.add(root)
 
-				if is_slide(filename):
-					filepaths.append((root, filename))
-					dirs.add(root)
+			# for filename in filenames:
+			# 	parent_path, parent_name = os.path.split(root)
+
+			# 	if is_slide(filename):
+			# 		filepaths.append((root, filename))
+			# 		dirs.add(root)
 
 	return filepaths, list(dirs)
 
@@ -89,7 +95,7 @@ def runScript():
 		return reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True)
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-		description = banner(subtitle="(PRE)-fixer")
+		description = banner(subtitle="(PRE)-fixer"))
 
 	parser.add_argument("prefix", nargs=1, help="prefix string")
 	parser.add_argument("source", nargs="+", help="folder(s) to process")
