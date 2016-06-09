@@ -170,13 +170,9 @@ def parse_slide(folder_path):
 		pattern = PATH_REGEX % {'slide_name': slide_name, 'extension_regex': EXTENSION_REGEX, 'os_sep': os.sep}
 		matcher = re.compile(pattern)
 
-		print(pattern)
-
 		with zipfile.ZipFile(folder_path, 'r') as z:
 			files_in_zip = z.namelist()
 			files_sharing_parent_name = []
-
-			print(files_in_zip)
 
 			for file in files_in_zip:
 				match = matcher.match(file)
