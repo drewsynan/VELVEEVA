@@ -141,30 +141,34 @@ def createRecordString(filename, version=None, email=None, username=None, passwo
 
 	return {"filename": new_filename, "record": ("\n").join(pieces)}
 
-def parseFolder(path, **kwargs):
+def parseFolder(src, **kwargs):
 	actions = kwargs.get("actions", [])
 	CUTOFF = kwargs.get("cutoff", float("inf"))
 	root = kwargs["root"]
+	out = kwargs["out"]
+
 	username = kwargs["username"]
 	password = kwargs["password"]
-	out = kwargs["out"]
 	email = kwargs.get("email", None)
 
 	version = parseCurrentVersion(root)
 
-	if not os.path.exists(out): os.mkdir(out)
+	source_path = os.path.join(root, src)
+	dest_path = os.path.join(root, out)
+
+	if not os.path.exists(dest_path): os.makedirs(dest_path)
+
 
 	matches = []
-	for root, dirnames, filenames in os.walk(path):
-		if root.count(os.sep) - path.count(os.sep) <= CUTOFF:
-			for filename in fnmatch.filter(filenames, "*.zip"):
-				if is_slide(os.path.join(root,filename)): matches.append(os.path.join(root, filename))
+	for root, dirnames, filenames in os.walk(source_path):
+		for filename in fnmatch.filter(filenames, "*.zip"):
+			if is_slide(os.path.join(root,filename)): matches.append(os.path.join(root,filename))
 
 
 	control_files = [createRecordString(m, version=version, username=username, password=password, email=email) for m in matches]
 
 	for control in control_files:
-		with open(os.path.join(out, control['filename']), 'w') as f:
+		with open(os.path.join(dest_path, control['filename']), 'w') as f:
 			f.write(control['record'])
 
 def runScript():
@@ -187,16 +191,17 @@ def runScript():
 	else:
 		args = parser.parse_args()
 
-	print(args)
-
 	email = None
 	if args.email is not None: email = args.email[0]
 	if args.root is None:
-		root = os.getcwd()
+		ROOT = os.getcwd()
 	else:
-		root = args.root[0]
+		ROOT = args.root[0]
 
-	parseFolder(args.source[0], out=args.destination[0], root=root, username=args.u[0], password=args.pwd[0], email=email)
+	SOURCE = args.source[0]
+	DEST = args.destination[0]
+
+	parseFolder(SOURCE, out=DEST, root=ROOT, username=args.u[0], password=args.pwd[0], email=email)
 
 if __name__ == "__main__":
 	sys.exit(runScript())

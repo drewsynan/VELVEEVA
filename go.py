@@ -222,10 +222,10 @@ def ACTION_generate_ctls(env, i):
 	flags = ["python3"
 				, cmd
 				, "--root", env['ROOT_DIR']
-				, "--src", os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['ZIPS_DIR']))
-				, "--out", os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['CTLS_DIR']))
 				, "--u", env['VEEVA_USERNAME']
 				, "--pwd", env['VEEVA_PASSWORD']
+				, os.path.abspath(os.path.join(env['DEST_DIR'],env['ZIPS_DIR']))
+				, os.path.abspath(os.path.join(env['DEST_DIR'],env['CTLS_DIR']))
 			]
 
 	if env.get('VEEVA_EMAIL', None) is not None: flags = flags + ["--email", env['VEEVA_EMAIL']]

@@ -44,7 +44,7 @@ def zip_one(root_dir, slide, dest, verbose=False):
 				root_pieces = os.path.join(root_dir, dest).split(os.sep)
 				slide_pieces = root.split(os.sep)
 
-				no_enclosing_folders = os.sep.join(slide_pieces[len(root_pieces):])
+				no_enclosing_folders = os.sep.join(slide_pieces[len(root_pieces)-1:])
 				archive_name = os.path.join(no_enclosing_folders, file)
 
 				if verbose: print("Adding %s..." % archive_name)
