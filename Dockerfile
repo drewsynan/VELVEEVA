@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y \
 	libxml2-dev \
 	libxslt-dev \
 	libjpeg-dev \
-	libexempi-dev
+	libexempi-dev \
+	libblas-dev \
+	liblapack-dev \
+	gfortran
 
 RUN git clone -b nojs --single-branch https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install
 
