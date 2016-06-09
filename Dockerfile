@@ -2,21 +2,16 @@ FROM ubuntu:15.10
 MAINTAINER Drew Synan "dsynan@sandboxww.com"
 
 RUN apt-get update && apt-get install -y \
-	zip \
 	build-essential \
 	git \
-	nodejs-legacy \
-	npm \
 	python3-pip \
 	virtualenv \
-	phantomjs \
-	imagemagick \
 	libxml2-dev \
 	libxslt-dev \
 	libjpeg-dev \
 	libexempi-dev
 
-RUN git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install
+RUN git clone https://github.com/gacomm/VELVEEVA.git && cd VELVEEVA && git checkout nojs && cd .. && VELVEEVA/install
 
 VOLUME /home/project
 WORKDIR /home/project

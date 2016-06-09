@@ -43,33 +43,33 @@ command -v gcc >/dev/null 2>&1 || {
 }
 
 command -v python3 >/dev/null 2>&1 || { printf "💩 python 3 not found\n👉 try $pkgman python3\n\n" >&2; exitstatus=1; }
-command -v node >/dev/null 2>&1 || {
-	if [[ "$platform" == 'OSX' ]]
-	then
-		printf "💩 nodejs not found\n👉 try installing the package from nodejs.org/en/download\n\n" >&2 
-	elif [[ "$platform" == 'Ubuntu' ]]
-	then
-		printf "💩 nodejs not found\n👉 try $pkgman nodejs-legacy\n\n" >&2 
-	else
-		printf "💩 nodejs not found\n👉 try $pkgman node\n\n" >&2
-	fi
+# command -v node >/dev/null 2>&1 || {
+# 	if [[ "$platform" == 'OSX' ]]
+# 	then
+# 		printf "💩 nodejs not found\n👉 try installing the package from nodejs.org/en/download\n\n" >&2 
+# 	elif [[ "$platform" == 'Ubuntu' ]]
+# 	then
+# 		printf "💩 nodejs not found\n👉 try $pkgman nodejs-legacy\n\n" >&2 
+# 	else
+# 		printf "💩 nodejs not found\n👉 try $pkgman node\n\n" >&2
+# 	fi
 
-	exitstatus=1
-}
+# 	exitstatus=1
+# }
 
-command -v npm >/dev/null 2>&1 || {
-	if [[ "$platform" == 'OSX' ]]
-	then
-		printf "💩 npm not found\n👉 try installing the nodejs package from nodejs.org/en/download\n\n" >&2 
-	elif [[ "$platform" == 'Ubuntu' ]]
-	then
-		printf "💩 npm not found\n👉 try $pkgman npm\n\n" >&2 
-	else
-		printf "💩 npm not found\n👉 try $pkgman npm\n\n" >&2
-	fi
+# command -v npm >/dev/null 2>&1 || {
+# 	if [[ "$platform" == 'OSX' ]]
+# 	then
+# 		printf "💩 npm not found\n👉 try installing the nodejs package from nodejs.org/en/download\n\n" >&2 
+# 	elif [[ "$platform" == 'Ubuntu' ]]
+# 	then
+# 		printf "💩 npm not found\n👉 try $pkgman npm\n\n" >&2 
+# 	else
+# 		printf "💩 npm not found\n👉 try $pkgman npm\n\n" >&2
+# 	fi
 
-	exitstatus=1
-}
+# 	exitstatus=1
+# }
 
 command -v pip3 >/dev/null 2>&1 || { printf "💩 pip3 not found\n👉 try $pkgman python3-pip\n\n" >&2; exitstatus=1; }
 command -v virtualenv >/dev/null 2>&1 || { 
@@ -82,10 +82,10 @@ command -v virtualenv >/dev/null 2>&1 || {
 
 	exitstatus=1
 }
-command -v phantomjs >/dev/null 2>&1 || { printf "💩 phantomjs not found\n👉 try $pkgman phantomjs\n\n" >&2; exitstatus=1; }
+# command -v phantomjs >/dev/null 2>&1 || { printf "💩 phantomjs not found\n👉 try $pkgman phantomjs\n\n" >&2; exitstatus=1; }
 
-command -v convert >/dev/null 2>&1 || { printf "💩 ImageMagick (convert) not found\n👉 try $pkgman imagemagick\n\n" >&2; exitstatus=1; }
-command -v mogrify >/dev/null 2>&1 || { printf "💩 ImageMagick (mogrify) not found\n👉 try $pkgman imagemagick\n\n" >&2; exitstatus=1; }
+# command -v convert >/dev/null 2>&1 || { printf "💩 ImageMagick (convert) not found\n👉 try $pkgman imagemagick\n\n" >&2; exitstatus=1; }
+# command -v mogrify >/dev/null 2>&1 || { printf "💩 ImageMagick (mogrify) not found\n👉 try $pkgman imagemagick\n\n" >&2; exitstatus=1; }
 
 # check python, node versions
 if [[ -z `command -v python3 >/dev/null 2>&1` ]]
