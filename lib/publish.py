@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 import activate_venv
 
-from veevutils import banner
+from veevutils import banner, is_slide
 
 from ftplib import FTP
-from genctls import isSlide
 from functools import reduce
 
 import argparse
@@ -39,7 +38,7 @@ def match_zips_to_ctls(zip_path, ctl_path):
 	zips = glob_walk(zip_path, '.zip')
 	ctls = glob_walk(ctl_path, '.ctl')
 
-	good_zips = [x for x in zips if does_file_exist(x) and isSlide(x)]
+	good_zips = [x for x in zips if does_file_exist(x) and is_slide(x)]
 	good_ctls = [x for x in ctls if does_file_exist(x)]
 
 	both = list(set([base_filename(x) for x in good_zips]) & set([base_filename(x) for x in good_ctls]))
