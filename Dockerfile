@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
 	build-essential \
 	git \
 	nodejs-legacy \
+	phantomjs \
 	python3-pip \
 	virtualenv \
 	libxml2-dev \
