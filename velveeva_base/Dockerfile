@@ -19,3 +19,4 @@ RUN apt-get update && apt-get install -y \
 	python-numpy \
 	python-scipy \
 	gfortran
+RUN git clone -b nojs --single-branch https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install
