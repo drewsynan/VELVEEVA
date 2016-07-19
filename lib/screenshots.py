@@ -32,20 +32,23 @@ def ss_(url, dest, sizes, filename, driver, verbose=False):
 
 		if verbose: print(url + ": " + str(w)+"x"+str(h))
 
-		driver.set_window_size(int(h), int(w))
-		driver.get(url)
+		try:
+			driver.set_window_size(int(h), int(w))
+			driver.get(url)
 
-		pieces = list(splitter.search(fname).groups())
-		new_fname = os.path.join(dest, pieces[0] + suffix + "".join(pieces[1:]))
+			pieces = list(splitter.search(fname).groups())
+			new_fname = os.path.join(dest, pieces[0] + suffix + "".join(pieces[1:]))
 
-		png = io.BytesIO(driver.get_screenshot_as_png())
-		img = Image.open(png)
-		cropped = img.resize((int(w), int(h)), Image.BILINEAR)
+			png = io.BytesIO(driver.get_screenshot_as_png())
+			img = Image.open(png)
+			cropped = img.resize((int(w), int(h)), Image.BILINEAR)
 
-		bg = Image.new('RGB', cropped.size, BACKGROUND_COLOR)
-		bg.paste(cropped, mask=cropped.split()[3])
+			bg = Image.new('RGB', cropped.size, BACKGROUND_COLOR)
+			bg.paste(cropped, mask=cropped.split()[3])
 		
-		bg.save(new_fname, 'jpeg')
+			bg.save(new_fname, 'jpeg')
+		except Exception as e:
+			print(e)
 	
 	[__snap(driver, x['width'], x['height'], filename, x.get('suffix', None)) for x in sizes]
 
