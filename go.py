@@ -142,6 +142,7 @@ def create_parser():
 	parser.add_argument("--go", 			action="store_true", help="Use a quick-bake recipe -> nuke, bake, screenshots, package, clean")
 	parser.add_argument("--init",			action="store_true", help="Initialize a new VELVEEVA project")
 	parser.add_argument("--inline", 		action="store_true", help="Inline globals")
+	parser.add_argument("--integrate",	 	action="store_true", help="Integrate relative assets and hyperlinks (useful for packaging from static development")
 	parser.add_argument("--nuke", 			action="store_true", help="Nuke old builds and temp files")
 	parser.add_argument("--scaffold",		action="store_true", help="Set up build and temp folders")
 	parser.add_argument("--package",		action="store_true", help="Wrap it up [Selected when no options are given]")
@@ -150,6 +151,7 @@ def create_parser():
 	parser.add_argument("--rel2veev", 		action="store_true", help="Convert relative links to veeva: protocol")
 	parser.add_argument("--sass", 			action="store_true", help="Compile Sass")
 	parser.add_argument("--screenshots",	action="store_true", help="Include Screenshots")
+	parser.add_argument("--ssonly", 		action="store_true", help="As-is screenshots (no dependencies)")
 	parser.add_argument("--templates", 		action="store_true", help="Compile Templates")
 	parser.add_argument("--veev2rel",		action="store_true", help="Convert veeva: hrefs to relative links")
 	parser.add_argument("--verbose",		action="store_true", help="Chatty Cathy")
@@ -255,12 +257,21 @@ def ACTION_ftp_upload(env, i):
 
 @action("📼  %s " % paint.gray("Converting relative links to Veeva links..."))
 def ACTION_rel_2_veev(env, i):
-	# env ['progress'].update(i)
+	# env['progress'].update(i)
 
 	cmd = os.path.join(env['VELVEEVA_DIR'],"lib","relink.py")
 	for out in execute(["python3", cmd 
 		, "--root", env['ROOT_DIR']
 		, "--rel2veev", env['DEST_DIR'] ]):
+		print(out)
+
+@action("➿  %s " % paint.gray("Integrating assets and links..."))
+def ACTION_integrate_all(env, i):
+	#env['progress'].update(i)
+	cmd = os.path.join(env['VELVEEVA_DIR'],"lib","relink.py")
+	for out in execute(["python3", cmd
+		, "--root", env['ROOT_DIR']
+		, "--integrate-all", env['DEST_DIR'] ]):
 		print(out)
 
 def doScript():
@@ -287,10 +298,12 @@ def doScript():
 			"sass": ACTION_render_sass,
 			"templates": ACTION_render_templates,
 			"screenshots": ACTION_take_screenshots,
+			"ssonly": ACTION_take_screenshots,
 			"package": ACTION_package_slides,
 			"controls": ACTION_generate_ctls,
 			"publish": ACTION_ftp_upload,
-			"rel2veev": ACTION_rel_2_veev
+			"rel2veev": ACTION_rel_2_veev,
+			"integrate": ACTION_integrate_all
 		}
 
 		requires = {
@@ -308,9 +321,11 @@ def doScript():
 		plans = {
 			"nuke": ["nuke"],
 			"scaffold": ["nuke", "scaffold", "locals"],
+			"integrate": ["integrate"],
 			"inline": ["scaffold","globals","templates"],
 			"bake": ["scaffold", "locals", "globals", "sass", "templates"],
 			"screenshots": ["screenshots"],
+			"ssonly": ["ssonly"],
 			"package": ["package"],
 			"controls": ["controls"],
 			"publish": ["publish"],
@@ -351,7 +366,9 @@ def doScript():
 	def run_build(build_plan, env):
 		STEPS = len(build_plan)
 
-		if env['PREFLIGHT_HOOK'] is not None: execute([ENV['PREFLIGHT_HOOK']])
+		if env['PREFLIGHT_HOOK'] is not None: 
+			for out in execute([ENV['PREFLIGHT_HOOK']]):
+				print(out)
 
 		print(banner())
 		print("👉  %s 👈\n" % paint.bold.yellow(ENV['PROJECT_NAME']))
@@ -385,7 +402,9 @@ def doScript():
 
 				# progress.update(STEPS) # finish up
 
-			if env['POSTFLIGHT_HOOK'] is not None: execute([ENV['POSTFLIGHT_HOOK']])
+			if env['POSTFLIGHT_HOOK'] is not None: 
+				for out in execute([ENV['POSTFLIGHT_HOOK']]):
+					print(out)
 				
 		except Exception as e:
 			print(paint.bold.red("\n💩  there was an error:"))
