@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import activate_venv
-from veevutils import banner, VALID_SLIDE_EXTENSIONS, parse_slide_name_from_href
+from veevutils import banner, VALID_SLIDE_EXTENSIONS, parse_slide_name_from_href, veeva_composer, path_composer
 
 from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
@@ -15,12 +15,12 @@ import sys
 import textwrap
 
 @curry
-def action(name, selector, action, composer, source):
+def action(name, selector, action_closure, composer, source):
 
 	@State
 	def closure(old_state):
 		b = BeautifulSoup(source, "lxml")
-		transformer_(b, selector, action(composer))
+		transformer_(b, selector, action_closure(composer))
 		
 		return (b.prettify(), old_state + 1)
 	return closure
@@ -29,14 +29,18 @@ def transformer_(soup, selector, transform):
 	items = selector(soup)
 	transform(items, soup)
 
-@curry
+
 def attribute_transform(attribute, transform):
 	@curry
 	def transformed(composer, items, soup):
 		if items == []: return
 
 		for item in items:
-			item[attribute] = transform(item[attribute])
+			try:
+				transformed = transform(composer, item[attribute])
+				item[attribute] = transformed
+			except KeyError:
+				pass #items might not have the attribute we're looking for
 	return transformed
 
 def add_meta(**kwargs):
@@ -140,6 +144,7 @@ def mv_veev(old_slide_name, new_slide_name):
 def run_actions(actions, src):
 	return reduce(lambda prev, new: prev >> new, actions, unit(State, src)).getResult(-1)
 
+@curry
 def integrate_all(composer, src):
 	actions = [
 		action(
@@ -181,7 +186,8 @@ def integrate_all(composer, src):
 
 	return run_actions(actions, src)
 
-def veev2rel(src):
+@curry
+def veev2rel(composer,src):
 	actions = [
 		action(
 			"veeva to relative",
@@ -191,13 +197,14 @@ def veev2rel(src):
 	]
 	return run_actions(actions, src)
 
-def rel2veev(src):
+@curry
+def rel2veev(composer, src):
 	actions = [
 		action(
 			"relative to veeva",
 			lambda soup: soup.find_all("a", href=True),
 			attribute_transform("href", fix_rel_2_veev),
-			veeva_composer("veeva:"))
+			composer)
 	]
 	return run_actions(actions, src)
 

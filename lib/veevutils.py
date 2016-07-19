@@ -207,6 +207,15 @@ def parse_slide(folder_path):
 def is_slide(slide_path):
 	return parse_slide(slide_path) is not None
 
+def get_slides_in_folder(folder_path):
+	root_1, dirs_1, files_1 = next(os.walk(folder_path))
+	folders = [os.path.join(root_1,subdir) for subdir in dirs_1]
+	slides = []
+	for d in dirs_1:
+		if is_slide(os.path.join(root_1,d)):
+			slides.append(d)
+	return slides
+
 def parse_slide_name_from_href(href):
 	veeva_matcher = re.compile(get_veeva_slide_regex('gotoSlide'))
 	path_matcher = re.compile(get_path_regex())

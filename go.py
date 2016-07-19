@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from lib import activate_venv
-from lib.veevutils import banner
+from lib.veevutils import banner, get_slides_in_folder
 from lib import build
 
 from painter import paint
@@ -51,15 +51,19 @@ def parse_config(config_file="VELVEEVA-config.json"):
 def scaffold(root, config, verbose=False):
 	folders = config["MAIN"]
 
-	def mine(p):
+	def mk(p):
 		if not os.path.exists(os.path.join(root,p)): os.makedirs(os.path.join(root, p))
 
-	mine(folders["source_dir"])
-	mine(folders["output_dir"])
-	mine(folders["temp_dir"])
+	mk(folders["source_dir"])
+	mk(folders["output_dir"])
+	mk(folders["temp_dir"])
 
-	#mine(os.path.join(folders["output_dir"], folders["zips_dir"]))
-	#mine(os.path.join(folders["output_dir"], folders["ctls_dir"]))
+	# create empty built slide folders
+	for s in get_slides_in_folder(folders["source_dir"]):
+		mk(os.path.join(folders["output_dir"],s))
+
+	#mk(os.path.join(folders["output_dir"], folders["zips_dir"]))
+	#mk(os.path.join(folders["output_dir"], folders["ctls_dir"]))
 
 def nuke(root, config, verbose=False):
 	folders = config["MAIN"]
@@ -137,13 +141,16 @@ def create_parser():
 	parser.add_argument("--dev",			action="store_true", help="Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using --nuke --bake --watch --veev2rel")
 	parser.add_argument("--go", 			action="store_true", help="Use a quick-bake recipe -> nuke, bake, screenshots, package, clean")
 	parser.add_argument("--init",			action="store_true", help="Initialize a new VELVEEVA project")
+	parser.add_argument("--inline", 		action="store_true", help="Inline globals")
 	parser.add_argument("--nuke", 			action="store_true", help="Nuke old builds and temp files")
 	parser.add_argument("--scaffold",		action="store_true", help="Set up build and temp folders")
 	parser.add_argument("--package",		action="store_true", help="Wrap it up [Selected when no options are given]")
 	parser.add_argument("--publish", 		action="store_true", help="Ship it off to market")
 	parser.add_argument("--relink", 		action="store_true", help="Make some href saussage (replace relative links with global and convert to veeva: protocol)")
 	parser.add_argument("--rel2veev", 		action="store_true", help="Convert relative links to veeva: protocol")
+	parser.add_argument("--sass", 			action="store_true", help="Compile Sass")
 	parser.add_argument("--screenshots",	action="store_true", help="Include Screenshots")
+	parser.add_argument("--templates", 		action="store_true", help="Compile Templates")
 	parser.add_argument("--veev2rel",		action="store_true", help="Convert veeva: hrefs to relative links")
 	parser.add_argument("--verbose",		action="store_true", help="Chatty Cathy")
 	parser.add_argument("--notparallel", 	action="store_true", help="Only run things one after another")
@@ -181,7 +188,7 @@ def ACTION_render_sass(env, i):
 	for out in execute(["python3", cmd, "--root", env['ROOT_DIR'], env['DEST_DIR'], "--remove"]):
 		print(out)
 
-@action("📝  %s " % paint.gray("Rendering templates..."))
+@action("📝  %s " % paint.gray("Rendering slides..."))
 def ACTION_render_templates(env, i):
 	# env['progress'].update(i)
 	cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "templates.py")
@@ -246,6 +253,16 @@ def ACTION_ftp_upload(env, i):
 		, "--pwd", env['VEEVA_PASSWORD'] ]):
 		print(out)	
 
+@action("📼  %s " % paint.gray("Converting relative links to Veeva links..."))
+def ACTION_rel_2_veev(env, i):
+	# env ['progress'].update(i)
+
+	cmd = os.path.join(env['VELVEEVA_DIR'],"lib","relink.py")
+	for out in execute(["python3", cmd 
+		, "--root", env['ROOT_DIR']
+		, "--rel2veev", env['DEST_DIR'] ]):
+		print(out)
+
 def doScript():
 	VERBOSE = False
 
@@ -272,7 +289,8 @@ def doScript():
 			"screenshots": ACTION_take_screenshots,
 			"package": ACTION_package_slides,
 			"controls": ACTION_generate_ctls,
-			"publish": ACTION_ftp_upload
+			"publish": ACTION_ftp_upload,
+			"rel2veev": ACTION_rel_2_veev
 		}
 
 		requires = {
@@ -290,6 +308,7 @@ def doScript():
 		plans = {
 			"nuke": ["nuke"],
 			"scaffold": ["nuke", "scaffold", "locals"],
+			"inline": ["scaffold","globals","templates"],
 			"bake": ["scaffold", "locals", "globals", "sass", "templates"],
 			"screenshots": ["screenshots"],
 			"package": ["package"],
@@ -297,7 +316,7 @@ def doScript():
 			"publish": ["publish"],
 			"relink": [],
 			"veev2rel": [],
-			"rel2veev": []
+			"rel2veev": ["rel2veev"]
 		}
 
 		def replace_with_function(plan):
