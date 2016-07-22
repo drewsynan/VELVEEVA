@@ -329,7 +329,7 @@ def doScript():
 			"package": ["package"],
 			"controls": ["controls"],
 			"publish": ["publish"],
-			"relink": [],
+			"relink": ["rel2veev"],
 			"veev2rel": [],
 			"rel2veev": ["rel2veev"]
 		}
