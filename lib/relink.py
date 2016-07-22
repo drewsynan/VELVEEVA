@@ -95,6 +95,7 @@ def fix_hyperlink_protocol(composer, href):
 	if urlparse(href).netloc != '': return href
 	
 	match = parse_slide_name_from_href(href)
+
 	if match is None:
 		return href
 	else:
@@ -108,6 +109,9 @@ def fix_veev_2_rel(composer, href):
 		return composer(match, ".html")
 @curry
 def fix_rel_2_veev(composer, href):
+	print(href)
+	print(fix_relative_path(composer,href))
+
 	return fix_hyperlink_protocol(composer, fix_relative_path(composer, href))
 
 @curry

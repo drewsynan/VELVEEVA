@@ -224,7 +224,7 @@ def parse_slide_name_from_href(href):
 
 	for matcher in matchers:
 		if matcher is not None:
-			return matcher.group(1).split(".zip")[0]
+			return matcher.group(2) # (parent_path, slide_name, extension)
 
 	# nothing!?
 	return None
