@@ -22,7 +22,7 @@ def action(name, selector, action_closure, composer, source):
 		b = BeautifulSoup(source, "lxml")
 		transformer_(b, selector, action_closure(composer))
 		
-		return (b.prettify(), old_state + 1)
+		return (str(b), old_state + 1)
 	return closure
 
 def transformer_(soup, selector, transform):
