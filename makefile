@@ -1,11 +1,11 @@
 BASEIMAGENAME = drewsynan/velveeva_base
-BASEDOCKERFILE = velveeva_base
+BASEDOCKERFILE = dockerfiles/velveeva_base
 CLIIMAGENAME = drewsynan/velveeva
-CLIDOCKERFILE = .
+CLIDOCKERFILE = dockerfiles/velveeva_cli
 
 .PHONY : install
 install :
-	python3 install
+	./install
 
 .PHONY : docker_base
 docker_base :
