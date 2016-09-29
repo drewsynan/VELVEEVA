@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import activate_venv
-
-from veevutils import banner
+from veevutils import banner, VALID_SLIDE_EXTENSIONS, parse_slide_name_from_href, veeva_composer, path_composer
 
 from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
 from pymonad import *
 from urllib.parse import urlparse
+
 import argparse
 import fnmatch
 import os
@@ -15,30 +15,37 @@ import sys
 import textwrap
 
 @curry
-def action(name, selector, action, source):
+def action(name, selector, action_closure, composer, source):
 
 	@State
 	def closure(old_state):
 		b = BeautifulSoup(source, "lxml")
-		transformer_(b, selector, action)
+		transformer_(b, selector, action_closure(composer))
 		
-		return (b.prettify(), old_state + 1)
+		return (str(b), old_state + 1)
 	return closure
 
 def transformer_(soup, selector, transform):
 	items = selector(soup)
 	transform(items, soup)
 
-def attributeTransform(attribute, transform):
-	def transformed(items, soup):
+
+def attribute_transform(attribute, transform):
+	@curry
+	def transformed(composer, items, soup):
 		if items == []: return
 
 		for item in items:
-			item[attribute] = transform(item[attribute])
+			try:
+				transformed = transform(composer, item[attribute])
+				item[attribute] = transformed
+			except KeyError:
+				pass #items might not have the attribute we're looking for
 	return transformed
 
-def addMeta(**kwargs):
-	def transformed(items, soup):
+def add_meta(**kwargs):
+	@curry
+	def transformed(composer, items, soup):
 		nonlocal kwargs
 
 		if soup.html is None: return #empty dom
@@ -54,115 +61,175 @@ def addMeta(**kwargs):
 
 	return transformed
 
-def fixRelativePath(path):
+@curry
+def veeva_href_to_onclick(composer, items, soup):
+	if soup.html is None: return #empty dom
+
+	for item in items:
+		current_href = item["href"]
+		veeva_match = parse_veeva_href(current_href)
+		if veeva_match is not None:
+			cmd = veeva_match.command_name
+			cmd_args = veeva_match.command_args
+			item["href"] = "javascript:void(0)"
+			item["onClick"] = composer(cmd, [cmd_args, "''"])
+
+@curry
+def veeva_onclick_to_href(composer, items, soup):
+	if soup.html is None: return
+
+	for item in items:
+		match = parse_veeva_onclick(item["onClick"])
+		if match is not None:
+			cmd = match.command_name
+			cmd_args = match.command_args
+			item["href"] = composer(cmd, cmd_args)
+			item["onClick"] = None
+
+@curry
+def fix_relative_path(composer, path):
 	return re.sub("(\.\.\/)*", "", path)
 
-def fixHyperlinkProtocol(href):
+@curry
+def fix_hyperlink_protocol(composer, href):
 	if urlparse(href).netloc != '': return href
 	
-	match = re.search("(?P<slide_name>[^/]+)\/(?P=slide_name)\.htm(l)?", href)
+	match = parse_slide_name_from_href(href)
+
 	if match is None:
 		return href
 	else:
-		slide_name = match.group(1)
-		return "veeva:gotoSlide(%s.zip)" % slide_name
-
-def fixVeev2Rel(href):
-	match = re.search("veeva:gotoSlide\((.+)\.zip\)", href)
+		return composer("gotoSlide", match + ".zip")
+@curry
+def fix_veev_2_rel(composer, href):
+	match = parse_slide_name_from_href(href)
 	if match is None:
 		return href
 	else:
-		return "../" + match.group(1) + "/" + match.group(1) + ".html"
-
-def fixRel2Veev(href):
-	return fixHyperlinkProtocol(fixRelativePath(href))
+		return composer(match, ".html")
+@curry
+def fix_rel_2_veev(composer, href):
+	return fix_hyperlink_protocol(composer, fix_relative_path(composer, href))
 
 @curry
-def mvRel(old_slide_name, new_slide_name, href):
-	if urlparse(href).netloc == '':
-		oldSlide = re.compile("((?:[^/]*\/)*)(?P<slide_name>" + old_slide_name + ")\/(?P=slide_name)(\.htm(?:l)?)")
-		return oldSlide.sub(r"\g<1>" + new_slide_name + "/" + new_slide_name + r"\g<3>", href)
-	else:
-		return href
+def mv_rel(old_slide_name, new_slide_name):
+
+	@curry
+	def closure(composer, href):
+		if urlparse(href).netloc == '':
+			old_slide = parse_slide_path(href, slide_name=old_slide_name)
+			if old_slide is not None:
+				#return old_slide.parent_path + new_slide_name + "/" + new_slide_name + old_slide.extension
+				return composer(new_slide_name, old_slide.extension)
+			else:
+				return href
+		else:
+			return href
+
+	return closure
 
 @curry
-def mvVeev(old_slide_name, new_slide_name, href):
-	oldSlide = re.compile("veeva:([^(]+)\(" + old_slide_name + ".zip\)")
-	return oldSlide.sub(r"veeva:\g<1>" + "(" + new_slide_name + ".zip)", href)
+def mv_veev(old_slide_name, new_slide_name):
 
-def runActions(actions, src):
+	@curry
+	def closure(composer, href):
+		old_slide = parse_veeva_href(href, command_args=old_slide_name+".zip")
+
+		if old_slide is not None:
+			return composer(old_slide.command_name, new_slide_name+".zip")
+		else:
+			return href
+
+	return closure
+
+def run_actions(actions, src):
 	return reduce(lambda prev, new: prev >> new, actions, unit(State, src)).getResult(-1)
 
-def integrateAll(src):
+@curry
+def integrate_all(composer, src):
 	actions = [
 		action(
 			"stylesheets",
 			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
-			attributeTransform("href", fixRelativePath)),
+			attribute_transform("href", fix_relative_path),
+			composer),
 		action(
 			"scripts",
 			lambda soup: soup.find_all("script", src=True),
-			attributeTransform("src", fixRelativePath)),
+			attribute_transform("src", fix_relative_path),
+			composer),
 		action(
 			"images",
 			lambda soup: soup.find_all("img"),
-			attributeTransform("src", fixRelativePath)),
+			attribute_transform("src", fix_relative_path),
+			composer),
 		action(
 			"iframes",
 			lambda soup: soup.find_all("iframe"),
-			attributeTransform("src", fixRelativePath)),
+			attribute_transform("src", fix_relative_path),
+			composer),
 		action(
 			"hyperlink_paths",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixRelativePath)),
+			attribute_transform("href", fix_relative_path),
+			composer),
 		action(
 			"hyperlink_protocols",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixHyperlinkProtocol)),
+			attribute_transform("href", fix_hyperlink_protocol),
+			veeva_composer("veeva:")),
 		action(
 			"utf",
 			lambda soup: soup.find_all("meta", charset=True),
-			addMeta(charset="utf-8"))
+			add_meta(charset="utf-8"),
+			veeva_composer("veeva:"))
 	]
 
-	return runActions(actions, src)
+	return run_actions(actions, src)
 
-def veev2rel(src):
+@curry
+def veev2rel(composer,src):
 	actions = [
 		action(
 			"veeva to relative",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixVeev2Rel))
+			attribute_transform("href", fix_veev_2_rel),
+			path_composer("../"))
 	]
-	return runActions(actions, src)
+	return run_actions(actions, src)
 
-def rel2veev(src):
+@curry
+def rel2veev(composer, src):
 	actions = [
 		action(
 			"relative to veeva",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", fixRel2Veev))
+			attribute_transform("href", fix_rel_2_veev),
+			composer)
 	]
-	return runActions(actions, src)
+	return run_actions(actions, src)
 
 @curry
-def mvRefs(old_slide_name, new_slide_name, src):
+def mv_refs(old_slide_name, new_slide_name, src):
 	actions = [
 		action(
 			"old rel to old rel",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", mvRel(old_slide_name, new_slide_name) )),
+			attribute_transform("href", mv_rel(old_slide_name, new_slide_name)),
+			veeva_composer("veeva:")),
 		action(
 			"old veeva to new veeva",
 			lambda soup: soup.find_all("a", href=True),
-			attributeTransform("href", mvVeev(old_slide_name, new_slide_name) ))
+			attribute_transform("href", mv_veev(old_slide_name, new_slide_name)),
+			veeva_composer("veeva:"))
 	]
 
-	return runActions(actions, src)
+	return run_actions(actions, src)
 
-def parseFolder(path, **kwargs):
+def parse_folder(path, **kwargs):
 	actions = kwargs.get("actions", [])
 	CUTOFF = kwargs.get("cutoff", float("inf"))
+	verbose = kwargs.get("verbose", False)
 
 	matches = []
 	for root, dirnames, filenames in os.walk(path):
@@ -171,69 +238,78 @@ def parseFolder(path, **kwargs):
 				matches.append(os.path.join(root, filename))
 
 	for filename in matches:
-		print("Re-linking %s" % filename)
+		if verbose: print("Re-linking %s" % filename)
 		for action in actions:
 			clean = action(open(filename, 'rb'))
 			with open(filename, 'wb') as f:
 				f.write(clean.encode('utf-8'))
 
 def runScript():
-	def doesFileExist(fname):
+	## TODO: make work with --root flag
+	def does_file_exist(fname):
 		exists = os.path.exists(fname)
 		if not exists: print("%s does not exist!" % fname)
 		return exists
 
-	def allExists(folders):
-		return reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True)
+	def all_exists(folders):
+		return reduce(lambda acc, arg: acc and does_file_exist(arg), folders, True)
 
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
 		description = banner(subtitle="Re-Linker"))
 
-	parser.add_argument("--mv", nargs=3, help="recursively rename slide refs", metavar=("OLD_NAME", "NEW_NAME", "FOLDER"))
-	parser.add_argument("--veev2rel", nargs="+", help="recursively replace veeva links with relative links", metavar="FOLDER")
-	parser.add_argument("--rel2veev", nargs="+", help="recursively replace relative links with veeva links", metavar="FOLDER")
-	parser.add_argument("--integrate_all", nargs="+", help="recursively resolve relative links and replace hrefs with veeva", metavar="FOLDER")
-	
+	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
+	parser.add_argument("--verbose", action="store_true", required=False, help="Chatty Cathy")
+
+	group = parser.add_mutually_exclusive_group()
+	group.add_argument("--mv", nargs=3, metavar=("old_name", "new_name", "source"), help="recursively rename references to an old slide name with a new slide name")
+	group.add_argument("--veev2rel", nargs="+", metavar="source", help="recursively replace veeva links with relative links")
+	group.add_argument("--rel2veev", nargs="+", metavar="source", help="recursively replace relative links with veeva link")
+	group.add_argument("--integrate-all", nargs="+", metavar="source", help="recursively resolve relative links and replace hrefs with veeva")
+
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
-	else:
-		args = parser.parse_args()
+		return 2
+
+	args = parser.parse_args()
+	verbose = args.verbose
+
+	composer = veeva_composer("veeva:")
 
 	if args.mv is not None:
 		old, new, folder = args.mv
-		if not allExists([folder]): 
-			return
+		if not all_exists([folder]): 
+			return 128
 		else:
-			return parseFolder(folder, actions=[mvRefs(old, new)])
+			return parse_folder(folder, actions=[mv_refs(composer, old, new)], verbose=verbose)
 
 	if args.veev2rel is not None:
 		folders = args.veev2rel
-		if not allExists(folders):
-			return
+		if not all_exists(folders):
+			return 128
 		else:
 			for folder in folders:
-				parseFolder(folder, actions=[veev2rel])
+				parse_folder(folder, actions=[veev2rel(composer)], verbose=verbose)
 			return
 
 	if args.rel2veev is not None:
 		folders = args.rel2veev
-		if not allExists(folders):
-			return
+		if not all_exists(folders):
+			return 128
 		else:
 			for folder in folders:
-				parseFolder(folder, actions=[rel2veev])
+				parse_folder(folder, actions=[rel2veev(composer)], verbose=verbose)
 			return
 
 	if args.integrate_all is not None:
 		folders = args.integrate_all
-		if not allExists(folders):
-			return
+		if not all_exists(folders):
+			return 128
 		else:
 			for folder in folders:
-				parseFolder(folder, actions=[integrateAll])
+				parse_folder(folder, actions=[integrate_all(composer)], verbose=verbose)
 			return
 
-if __name__ == "__main__": runScript()
+if __name__ == "__main__": 
+	sys.exit(runScript())
 

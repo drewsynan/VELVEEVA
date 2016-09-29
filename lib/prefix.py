@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import activate_venv
 
-from veevutils import banner
-
+from veevutils import banner, is_slide, parse_slide, safe_rename
 from functools import reduce
-from relink import parseFolder, mvRefs
+from relink import parse_folder, mv_refs
+
+import argparse
 import os
 import sys
 import argparse
@@ -18,11 +19,8 @@ def find_slides(path, cutoff = 1):
 	for root, dirnames, filenames in os.walk(path):
 		if root.count(os.sep) <= cutoff:
 			for filename in filenames:
-				parentPath, parent_name = os.path.split(root)
-				matcher = re.compile(parent_name + "(?:(-thumb)|(-full))?\.[^.]+$")
-
-				if matcher.match(filename) is not None:
-					slides.add(parent_name)
+				parent_path, parent_name = os.path.split(root)
+				if is_slide(filename): slides.add(parent_name)
 
 	return list(slides)
 
@@ -37,13 +35,18 @@ def parse_slide_folders(path):
 
 	for root, dirnames, filenames in os.walk(path):
 		if root.count(os.sep) - base_depth <= CUTOFF:
-			for filename in filenames:
-				parentPath, parent_name = os.path.split(root)
+			parsed = parse_slide(root)
+			if parsed is not None:
+				slide_filename = parsed[0]
+				filepaths.append(os.path.split(slide_filename))
+				dirs.add(root)
 
-				matcher = re.compile(parent_name + "(?:(-thumb)|(-full))?\.[^.]+$")
-				if matcher.match(filename) is not None:
-					filepaths.append((root, filename))
-					dirs.add(root)
+			# for filename in filenames:
+			# 	parent_path, parent_name = os.path.split(root)
+
+			# 	if is_slide(filename):
+			# 		filepaths.append((root, filename))
+			# 		dirs.add(root)
 
 	return filepaths, list(dirs)
 
@@ -64,7 +67,7 @@ def prefix_folder(prefix, path):
 		print("Renaming slide %s to %s" % (old_file, new_file))
 		sys.stdout.flush()
 
-		os.rename(old_file, new_file)
+		safe_rename(old_file, new_file)
 
 	for parentdir in parentdirs:
 		parent_pieces = os.path.split(parentdir)
@@ -72,16 +75,17 @@ def prefix_folder(prefix, path):
 		print("Renaming container %s to %s" % (parentdir, new_folder))
 		sys.stdout.flush()
 
-		os.rename(parentdir, new_folder)
+		safe_rename(parentdir, new_folder)
 
 def prefix_refs(prefix, slidelist, root):
 	for slide in slidelist:
 		print("Changing all references to slide %s" % slide)
 		sys.stdout.flush()
 
-		parseFolder(root, actions=[mvRefs(slide, prefix + slide)], cutoff=1)
+		parse_folder(rmv_refsctions=[mv_refs(slide, prefix + slide)], cutoff=1)
 
 def runScript():
+	## TODO make work with --root flag
 	def doesFileExist(fname):
 		exists = os.path.exists(fname)
 		if not exists: print("%s does not exist!" % fname)
@@ -91,40 +95,27 @@ def runScript():
 		return reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True)
 
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
-		description = banner(subtitle="(PRE)-fixer") + textwrap.dedent('''\
-			WARNING: DO NOT USE ON SOURCE FILES
-			         UNDER GIT SOURCE CONTROL!
-			         THIS UTILITY DOES NOT USE
-			         GIT MV (yet) AND IT =WILL=
-			         FUCK UP YOUR REPO
+		description = banner(subtitle="(PRE)-fixer"))
 
-			         Use on built files, thx.
-			'''))
-
-	parser.add_argument("prefix", nargs=1, help="prefix string", required=True)
-	parser.add_argument("folder", nargs="+", help="folder(s) to process", required=True)
+	parser.add_argument("prefix", nargs=1, help="prefix string")
+	parser.add_argument("source", nargs="+", help="folder(s) to process")
+	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
+	parser.add_argument("--verbose", action="store_true", required=False)
 
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
+		return 2
 	else:
 		args = parser.parse_args()
 
-	if args.prefix is None:
-		return
-
-	if args.folder is not None:
-		if not allExists(args.folder):
+		the_prefix = args.prefix[0]
+		folders = args.source
+		if not allExists(folders):
 			return
-	else:
-		return
 
-	the_prefix = args.prefix[0]
-	folders = args.folder
-
-	for folder in folders:
-		prefix_refs(the_prefix, find_slides(folder), folder)
-		prefix_folder(the_prefix, folder)
+		for folder in folders:
+			prefix_refs(the_prefix, find_slides(folder), folder)
+			prefix_folder(the_prefix, folder)
 
 if __name__ == "__main__":
-	runScript()
+	sys.exit(runScript())

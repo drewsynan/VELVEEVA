@@ -6,6 +6,7 @@ from painter import paint
 
 import json
 import os
+import stat
 import sys
 import textwrap
 import pprint
@@ -203,6 +204,24 @@ def runScript():
 			}
 		]
 	}
+
+	hooks = {
+		'key': 'HOOKS',
+		'subkeys': [
+			{
+				'key': 'pre',
+				'prompt': 'Pre-flight script filename',
+				'default': './pre.sh',
+				'parser': string_parser
+			},
+			{
+				'key': 'post',
+				'prompt': 'Post-flight script filename',
+				'default': './post.sh',
+				'parser': string_parser
+			}
+		]
+	}
 	
 	
 	config = {}
@@ -219,6 +238,9 @@ def runScript():
 	print("\n" + paint.bold.yellow("Slide Thumbnails"))
 	promptRuleset(ss_thumb, ss)
 	config['SS'] = ss
+
+	print("\n" + paint.bold.yellow("HOOKS"))
+	promptRuleset(hooks, config)
 
 	print("\n" + paint.bold.yellow("VEEVA DEPLOYMENT"))
 	promptRuleset(veeva, config)
@@ -238,6 +260,32 @@ def runScript():
 			if k.get('generate', False):
 				print(config['MAIN'][k['key']])
 				os.makedirs(config['MAIN'][k['key']], exist_ok=True)
+
+	if confirm("Create scripts"):
+		for k in hooks['subkeys']:
+			current_script = config['HOOKS'][k['key']]
+			ext = os.path.splitext(current_script)[1].lower()
+			shebang = ""
+
+			if ext == ".bat" or ext == ".cmd" or ext == ".ps1":
+				shebang = "" #lol windows
+			elif ext == ".js":
+				shebang = "#!/usr/bin/env node"
+			elif ext == ".pl":
+				shebang = "#!/usr/bin/env perl"
+			elif ext == ".py":
+				shebang = "#!/usr/bin/env python3"
+			elif ext == ".rb":
+				shebang = "#!/usr/bin/env ruby"
+			elif ext == ".sh":
+				shebang = "#!/bin/bash"
+
+			with open(current_script, 'w') as f:
+				print("Writing %s..." % current_script)
+				f.write(shebang + "\n")
+
+			st = os.stat(current_script)
+			os.chmod(current_script, st.st_mode | stat.S_IEXEC)
 		
 
 	print("\n👋  " + paint.bold.yellow("Bye!"))

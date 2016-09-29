@@ -3,6 +3,7 @@ import activate_venv
 
 from veevutils import banner
 
+import argparse
 import glob
 import os
 import sys
@@ -122,23 +123,43 @@ def render_slides_async(src, dest, templates_dir, partials_dir, verbose=True):
 		
 
 def runScript(ASYNC=False):
-	VERBOSE = False
-	args = sys.argv
+	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+		description = banner(subtitle="Template Renderer"))
 
-	if "--verbose" in args:
-		VERBOSE = True
-		args.remove("--verbose")
+	parser.add_argument("source", nargs=1, help="Source folder")
+	parser.add_argument("destination", nargs=1, help="Destination folder")
+	parser.add_argument("templates", nargs=1, help="Templates folder")
+	parser.add_argument("partials", nargs=1, help="Partials folder")
+	parser.add_argument("--notparallel", action="store_true", help="Run without concurrency")
+	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy", required=False)
 
-	if len(args) < 5:
-		print(banner(subtitle="Template Renderer"))
-		print("USAGE: ")
-		print("   %s [--verbose] source_folder dest_folder templates_dir partials_dir" % args[0])
-		sys.exit(0)
-
+	if len(sys.argv) == 1:
+		parser.print_help()
+		return 2
 	else:
-		if ASYNC:
-			render_slides_async(args[1], args[2], args[3], args[4], VERBOSE)
-		else:
-			render_slides(args[1], args[2], args[3], args[4], VERBOSE)
+		args = parser.parse_args()
 
-if __name__ == '__main__': runScript(ASYNC=True)
+		VERBOSE = args.verbose
+		ASYNC = (not args.notparallel)
+
+		SOURCE = args.source[0]
+		DEST = args.destination[0]
+		TEMPS = args.templates[0]
+		PARTS = args.partials[0]
+
+		if args.root is not None:
+			ROOT = args.root[0]
+			SOURCE = os.path.join(ROOT,SOURCE)
+			DEST = os.path.join(ROOT,DEST)
+			TEMPS = os.path.join(ROOT,TEMPS)
+			PARTS = os.path.join(ROOT,PARTS)
+
+
+		if ASYNC:
+			render_slides_async(SOURCE, DEST, TEMPS, PARTS, VERBOSE)
+		else:
+			render_slides(SOURCE, DEST, TEMPS, PARTS, VERBOSE)
+
+if __name__ == '__main__': 
+	sys.exit(runScript())

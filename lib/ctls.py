@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import activate_venv
 
-from veevutils import banner
+from veevutils import banner, parse_slide, is_slide
 
 from zipfile import ZipFile
 from functools import reduce
@@ -21,35 +21,35 @@ import textwrap
 import fnmatch
 import uuid
 
-def isSlide(filename):
-	return parseSlide(filename) is not None
+# def isSlide(filename):
+# 	return parseSlide(filename) is not None
 
-def parseSlide(filename):
-	baseName = os.path.split(os.path.splitext(filename)[0])[-1]
-	matcher = re.compile("(?:" + baseName + "/)(" + baseName + "(.htm(?:l)?|.pdf|.jpg|.jpeg))$")
+# def parseSlide(filename):
+# 	baseName = os.path.split(os.path.splitext(filename)[0])[-1]
+# 	matcher = re.compile("(?:" + baseName + "/)(" + baseName + "(.htm(?:l)?|.pdf|.jpg|.jpeg))$")
+
+# 	with ZipFile(filename, 'r') as z:
+# 		results = [x for x in z.namelist() if matcher.match(x) is not None]
+
+# 		if len(results) > 0:
+# 			slideNames = [(matcher.match(x).group(0), matcher.match(x).group(2)) for x in results]
+# 			return slideNames[0]
+
+# 	return None
+
+def parse_meta(filename):
+	slide_file = parse_slide(filename)
+	if slide_file is None: return None
+
 
 	with ZipFile(filename, 'r') as z:
-		results = [x for x in z.namelist() if matcher.match(x) is not None]
-
-		if len(results) > 0:
-			slideNames = [(matcher.match(x).group(0), matcher.match(x).group(2)) for x in results]
-			return slideNames[0]
-
-	return None
-
-def parseMeta(filename):
-	slideFile = parseSlide(filename)
-	if slideFile is None: return None
-
-
-	with ZipFile(filename, 'r') as z:
-		with(z.open(slideFile[0])) as f:
-			slideType = slideFile[1]
+		with(z.open(slide_file[0])) as f:
+			slide_type = slide_file[1]
 
 			title_string = None
 			description_string = None
 
-			if slideType == ".htm" or slideType == ".html":
+			if slide_type == ".htm" or slide_type == ".html":
 				soup = BeautifulSoup(f.read(), "lxml")
 
 				title = soup.find('meta', {'name':'veeva_title'})
@@ -60,7 +60,7 @@ def parseMeta(filename):
 				if description is not None:
 					description_string = description.get('content', None)
 
-			if slideType == ".pdf":
+			if slide_type == ".pdf":
 				doc = PDFDocument()
 				parser = PDFParser(f)
 
@@ -81,7 +81,7 @@ def parseMeta(filename):
 					except KeyError:
 						description_string = None
 
-			if slideType == ".jpg" or slideType == ".jpeg":
+			if slide_type == ".jpg" or slide_type == ".jpeg":
 				tmp_file_name = str(uuid.uuid1()) + ".jpg"
 				with open(tmp_file_name, 'wb') as tf:
 					tf.write(f.read())
@@ -120,7 +120,7 @@ def parseCurrentVersion(root_path):
 
 def createRecordString(filename, version=None, email=None, username=None, password=None):
 
-	meta = parseMeta(filename)
+	meta = parse_meta(filename)
 	pieces = []
 
 	pieces.append("USER="+str(username))
@@ -141,53 +141,67 @@ def createRecordString(filename, version=None, email=None, username=None, passwo
 
 	return {"filename": new_filename, "record": ("\n").join(pieces)}
 
-def parseFolder(path, **kwargs):
+def parseFolder(src, **kwargs):
 	actions = kwargs.get("actions", [])
 	CUTOFF = kwargs.get("cutoff", float("inf"))
 	root = kwargs["root"]
+	out = kwargs["out"]
+
 	username = kwargs["username"]
 	password = kwargs["password"]
-	out = kwargs["out"]
 	email = kwargs.get("email", None)
 
 	version = parseCurrentVersion(root)
 
-	if not os.path.exists(out): os.mkdir(out)
+	source_path = os.path.join(root, src)
+	dest_path = os.path.join(root, out)
+
+	if not os.path.exists(dest_path): os.makedirs(dest_path)
+
 
 	matches = []
-	for root, dirnames, filenames in os.walk(path):
-		if root.count(os.sep) - path.count(os.sep) <= CUTOFF:
-			for filename in fnmatch.filter(filenames, "*.zip"):
-				if isSlide(os.path.join(root,filename)): matches.append(os.path.join(root, filename))
+	for root, dirnames, filenames in os.walk(source_path):
+		for filename in fnmatch.filter(filenames, "*.zip"):
+			if is_slide(os.path.join(root,filename)): matches.append(os.path.join(root,filename))
 
 
 	control_files = [createRecordString(m, version=version, username=username, password=password, email=email) for m in matches]
 
 	for control in control_files:
-		with open(os.path.join(out, control['filename']), 'w') as f:
+		with open(os.path.join(dest_path, control['filename']), 'w') as f:
 			f.write(control['record'])
 
 def runScript():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
 		description = banner(subtitle=".ctl File Generator"))
 
-	parser.add_argument("--src", nargs=1, help="path to folder containing zip files to process", required=True)
-	parser.add_argument("--out", nargs=1, help="path for output ctl files (will be created if it does not exist)", required=True)
-	parser.add_argument("--root", nargs=1, help="root directory for the project (used for versioning)", required=True)
-	parser.add_argument("--u", nargs=1, help="Veeva username", required=True)
-	parser.add_argument("--pwd", nargs=1, help="Veeva password", required=True)
-	parser.add_argument("--email", nargs=1, help="Optional email for errors")
+	parser.add_argument("source", nargs=1, help="path to folder containing zip files to process")
+	parser.add_argument("destination", nargs=1, help="path for output ctl files (will be created if it does not exist)")
+	parser.add_argument("--u", metavar="USERNAME", nargs=1, help="Veeva username", required=True)
+	parser.add_argument("--pwd", metavar="PASSWORD", nargs=1, help="Veeva password", required=True)
+	parser.add_argument("--email", nargs=1, help="Optional email for errors", required=False)
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy", required=False)
+	parser.add_argument("--root", nargs=1,
+		 help="Optional root directory for the project (used for versioning) current working directory used if none specified", 
+		 required=False)
 
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
+		return 2
 	else:
 		args = parser.parse_args()
 
 	email = None
 	if args.email is not None: email = args.email[0]
+	if args.root is None:
+		ROOT = os.getcwd()
+	else:
+		ROOT = args.root[0]
 
-	parseFolder(args.src[0], out=args.out[0], root=args.root[0], username=args.u[0], password=args.pwd[0], email=email)
+	SOURCE = args.source[0]
+	DEST = args.destination[0]
+
+	parseFolder(SOURCE, out=DEST, root=ROOT, username=args.u[0], password=args.pwd[0], email=email)
 
 if __name__ == "__main__":
-	runScript()
+	sys.exit(runScript())

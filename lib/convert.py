@@ -3,6 +3,7 @@ import activate_venv
 
 from veevutils import banner
 
+import argparse
 import os
 import sys
 import glob
@@ -27,14 +28,21 @@ def convertPDFs(source, dest, density=72):
 			os.path.join(dest, bare_name + ".jpg")])
 
 def runScript():
-	args = sys.argv
+	parser = argparse.ArgumentParser(
+		formatter_class=argparse.RawDescriptionHelpFormatter,
+		description=banner(subtitle="PDF Rasterizer"))
 
-	if len(args) < 3:
-		print(banner(subtitle="PDF Rasterizer"))
-		print("USAGE: ")
-		print("   %s source_folder dest_folder" % args[0])
-		return
+	parser.add_argument("source", nargs=1, help="Source folder")
+	parser.add_argument("destination", nargs=1, help="Destination folder")
+	parser.add_argument("--root", nargs=1, help="Project root directory")
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
 
-	convertPDFs(args[1], args[2])
+	if len(sys.argv) == 1:
+		parser.print_help()
+		return 2
+	else:
+		args = parser.parse_args()
+		convertPDFs(args.source[0], args.destination[0])
 
-if __name__ == '__main__': runScript()
+if __name__ == '__main__': 
+	sys.exit(runScript())

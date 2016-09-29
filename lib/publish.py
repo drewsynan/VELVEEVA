@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import activate_venv
 
-from veevutils import banner
+from veevutils import banner, is_slide
 
 from ftplib import FTP
-from genctls import isSlide
 from functools import reduce
+
 import argparse
 import textwrap
 import fnmatch
@@ -15,33 +15,33 @@ import sys
 
 def match_zips_to_ctls(zip_path, ctl_path):
 
-	def globWalk(path, ext):
+	def glob_walk(path, ext):
 		matches = []
 		for root, dirnames, filenames in os.walk(path):
 			for filename in fnmatch.filter(filenames, "*"+ext):
 				matches.append(os.path.join(root, filename))
 		return matches
 
-	def doesFileExist(fname):
+	def does_file_exist(fname):
 		exists = os.path.exists(fname)
 		if not exists: 
 			print("%s does not exist!" % fname)
 			sys.stdout.flush()
 		return exists
 
-	def allExists(folders):
-		return reduce(lambda acc, arg: acc and doesFileExist(arg), folders, True)
+	def all_exists(folders):
+		return reduce(lambda acc, arg: acc and does_file_exist(arg), folders, True)
 
-	def baseFilename(path):
+	def base_filename(path):
 		return os.path.splitext(os.path.split(path)[-1])[0]
 
-	zips = globWalk(zip_path, '.zip')
-	ctls = globWalk(ctl_path, '.ctl')
+	zips = glob_walk(zip_path, '.zip')
+	ctls = glob_walk(ctl_path, '.ctl')
 
-	goodZips = [x for x in zips if doesFileExist(x) and isSlide(x)]
-	goodCtls = [x for x in ctls if doesFileExist(x)]
+	good_zips = [x for x in zips if does_file_exist(x) and is_slide(x)]
+	good_ctls = [x for x in ctls if does_file_exist(x)]
 
-	both = list(set([baseFilename(x) for x in goodZips]) & set([baseFilename(x) for x in goodCtls]))
+	both = list(set([base_filename(x) for x in good_zips]) & set([base_filename(x) for x in good_ctls]))
 
 	return [os.path.join(zip_path, x + ".zip") for x in both], [os.path.join(ctl_path, x + ".ctl") for x in both]
 
@@ -123,11 +123,12 @@ def runScript(verbose=False):
 	parser.add_argument("--host", nargs=1, help="server name", required=True)
 	parser.add_argument("--u", nargs=1, help="Veeva username", required=True)
 	parser.add_argument("--pwd", nargs=1, help="Veeva password", required=True)
-	parser.add_argument("--verbose", action="store_true", help="verbose output")
+	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
+	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
 
 	if len(sys.argv) == 1:
 		parser.print_help()
-		return
+		return 2
 	else:
 		args = parser.parse_args()
 
@@ -138,7 +139,7 @@ def runScript(verbose=False):
 	except Exception as e:
 		print(e)
 		sys.stdout.flush()
-		return
+		return 128
 
 if __name__ == "__main__":
-	runScript()
+	sys.exit(runScript())

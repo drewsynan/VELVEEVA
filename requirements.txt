@@ -18,4 +18,7 @@ PyExecJs==1.4.0
 coffeescript==1.1.2
 painter==0.3.1
 progressbar2==3.6.2
+numpy>=1.11.0
+scipy>=0.17.1
+networkx==1.11
 git+git://github.com/ikeikeikeike/python-eco#egg=eco
