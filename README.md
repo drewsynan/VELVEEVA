@@ -39,12 +39,8 @@ VELVEEVA has several dependencies needing to be met before installing
 💣 If installing on **Windows**
 * good luck! Probably your best bet is using velveeva-cli, but bash for Windows could also be an option.
 
-## Installation
-```bash
-git clone https://github.com/gacomm/VELVEEVA.git && cd VELVEEVA && make install
-```
 
-## Quick Start: Creating a new project
+## Quick Start: Installation/Creating a new project
 In an empty folder (or empty git repo), run
 ```bash
 git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install && VELVEEVA/init
