@@ -2,7 +2,7 @@
 
 An easier way to manage, maintain, and build Veeva iRep presentations
 
-**You Probably want [velveeva-cli](http://www.github.com/gacomm/velveeva-cli).** It's a lot easier to use (especially now that there are native Docker clients on OSX and Windows (!) as well as Linux), and handles all the dependency headaches for you. However, if you're feeling adventurous, or you don't want the container overhead, press on...
+**🎉UPDATE: You Probably want [velveeva-cli](http://www.github.com/gacomm/velveeva-cli).** It's a lot easier to use (especially now that there are native Docker clients on OSX and Windows (!) as well as Linux), and handles all the dependency headaches for you. However, if you're feeling adventurous, or you don't want the container overhead, press on...
 
 ## Features
 * 📷 Automatic screenshot, thumbnail, and zip file generation
