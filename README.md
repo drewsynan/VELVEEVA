@@ -2,12 +2,13 @@
 
 An easier way to manage, maintain, and build Veeva iRep presentations
 
+**You Probably want [velveeva-cli](http://www.github.com/gacomm/velveeva-cli).** It's a lot easier to use (especially now that there are native Docker clients on OSX and Windows (!) as well as Linux), and handles all the dependency headaches for you. However, if you're feeling adventurous, or you don't want the container overhead, press on...
+
 ## Features
 * 📷 Automatic screenshot, thumbnail, and zip file generation
 * 💉 Support for static asset inlining
 * ☕️ Template and partial system (Embedded CoffeeScript)
 * 💅 SASS compilation
-* 👀 Dev environment with re-build on change watcher
 * 🍻 Automatic project scaffolding
 * 🔀 Convert relative links to veeva protocol links on the fly (both during dev and for a final build)
 * 🔁 Convert veeva protocol links back to relative links on the fly
@@ -16,24 +17,15 @@ An easier way to manage, maintain, and build Veeva iRep presentations
 * 🔎 Smart metadata extraction from HTML (using meta tags, or eco template fields) or XMP data from PDF and JPEG files to easily maintain slide titles and descriptions within source files
 * 🚀 Integrated slide uploading to iRep FTP server
 
-## Quick Start: Creating a new project
-In an empty folder (or empty git repo), run
-```bash
-git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install && VELVEEVA/init
-```
-This will install the required components for VELVEEVA, and launch a wizard to create a new project.
-🍕yum!
-
 ## Requirements
 Needed before running the install command given above
 * [ImageMagick](http://www.imagemagick.org/script/binary-releases.php)
-* [Node.js (12+)](https://nodejs.org/en/download/) **IMPORTANT: don't use homebrew-installed node.js on OS-X**
 * [Phantomjs](http://phantomjs.org/download.html)
 * [Python (3.4+) with pip](https://www.python.org/downloads/)
 * virtualenv (install using `pip install virtualenv`)
 
  If installing on **OS-X**
-* Xcode command line tools (for [Mavericks](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2.dmg), for [El Capitan](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2.dmg). Requires free Apple Developer ID and sign-in to Apple Developer Center.)
+* Xcode command line tools (for [Mavericks](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2.dmg), for [El Capitan](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2.dmg), for [Sierra](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_macOS_10.12_for_Xcode_8/Command_Line_Tools_macOS_10.12_for_Xcode_8.dmg). Requires free Apple Developer ID and sign-in to Apple Developer Center.)
 * libxml2 (`brew install libxml2`)
 * libexempi (`brew install exempi)
 
@@ -45,7 +37,15 @@ Needed before running the install command given above
 * libexempi (ubuntu: `sudo apt-get install libexempi-dev`)
 
 💣 If installing on **Windows**
-* good luck! Let me know how it goes? Definitly possible, but I haven't looked into it at all.
+* good luck! Probably your best bet is using velveeva-cli, but bash for Windows could also be an option.
+
+## Quick Start: Creating a new project
+In an empty folder (or empty git repo), run
+```bash
+git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install && VELVEEVA/init
+```
+This will install the required components for VELVEEVA, and launch a wizard to create a new project.
+🍕yum!
 
 ## Directories
 * |-`src` **source files for each slide**. Create a new subdirectory for each Veeva slide. There must be one file inside the slide that has the same name as its enclosing folder (for example a slide named 01_intro must have a file called 01_intro.html or 01_intro.jpg (for image slides) to be a valid Veeva slide)
@@ -77,15 +77,6 @@ to upload files. To upload with more progress and status information, you can us
 ```bash
 project-root$ VELVEEVA/go --nobake --controls --publishonly --verbose
 ```
-# Development environment
-To launch the quick-building development (no packaging or screenshots, etc) environment with a file watcher, run
-```bash
-project-root$ VELVEEVA/go --dev
-```
-(note that this is the same as running `VELVEEVA/go --clean --watch --veev2rel`)
-The development environment automatically resolves veeva:() urls to their relative counterparts, to make in-browser testing easier. (No simulator required! Hooray!)
-
-If you would prefer to develop using relative urls, and only later convert them to veeva: protocol links, omit the `--veev2rel` flag when developing, and build using the `--relink` flag.
 
 # Other Topics
 ## Prefixing slide names
@@ -131,12 +122,11 @@ Control files can also be generated on arbitrary folders of zip files using the 
 project-root$ VELVEEVA/lib/genctls.py ./arbitrary_zips ./out_folder_for_ctls --u username --pwd password --email contactemail
 ```
 ## Build scripts
-Although VELVEEVA currently has a lot of useful pieces, it is likely that you'll still want to create a basic build script to automate building, renaming, packaging, etc. of the slides. Here's an example of an actual build script below, that gives a feel for this process
+Although VELVEEVA currently has a lot of useful pieces, it is likely that you'll still want to create a basic build script to automate building, renaming, packaging, etc. of the slides. VELVEEVA provides pre-flight and post-flight hooks that can run before and after VELVEEVA for any setup and teardown that might be necessary.
+
+Here's an example of a post-flight script
 ```bash
 #!/bin/bash
-
-# build the slides and generate screenshots
-./VELVEEVA/go --screenshots --clean
 
 # prefix the built slides
 ./VELVEEVA/lib/prefix.py Digital_Sales_Aid_2016_ build
@@ -162,4 +152,19 @@ cp -r ./build/_zips ./build/Digital_Sales_Aid_2016
 
 # combine all zips into one file
 zip -r ./build/Digital_Sales_Aid_2016.zip ./build/Digital_Sales_Aid_2016
+```
+
+When used with a makefile, and `velveeva-cli`, the process can be made as simple as running `make` in the project directory.
+
+An example makefile below
+
+```makefile
+.PHONY : build
+build :
+	velveeva update
+	velveeva go --nuke
+	velveeva go --inline
+	velveeva go --integrate
+	velveeva go --rel2veev
+	velveeva go --package --controls
 ```
