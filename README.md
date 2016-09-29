@@ -27,7 +27,7 @@ Needed before running the install command given above
  If installing on **OS-X**
 * Xcode command line tools (for [Mavericks](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2/Command_Line_Tools_OS_X_10.10_for_Xcode_7.2.dmg), for [El Capitan](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2/Command_Line_Tools_OS_X_10.11_for_Xcode_7.2.dmg), for [Sierra](http://adcdownload.apple.com/Developer_Tools/Command_Line_Tools_macOS_10.12_for_Xcode_8/Command_Line_Tools_macOS_10.12_for_Xcode_8.dmg). Requires free Apple Developer ID and sign-in to Apple Developer Center.)
 * libxml2 (`brew install libxml2`)
-* libexempi (`brew install exempi)
+* libexempi (`brew install exempi`)
 
 🐧 If installing on **Linux**
 * gcc toolchain and headers (ubuntu: `sudo apt-get install build-essential`)
@@ -38,6 +38,11 @@ Needed before running the install command given above
 
 💣 If installing on **Windows**
 * good luck! Probably your best bet is using velveeva-cli, but bash for Windows could also be an option.
+
+## Installation
+```bash
+git clone https://github.com/gacomm/VELVEEVA.git && cd VELVEEVA && make install
+```
 
 ## Quick Start: Creating a new project
 In an empty folder (or empty git repo), run
@@ -169,3 +174,6 @@ build :
 	velveeva go --rel2veev
 	velveeva go --package --controls
 ```
+
+## velveeva-cli utility images
+The docker container used by velveeva-cli can be created by running `make docker_base` and `make docker`
