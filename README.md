@@ -18,7 +18,7 @@ An easier way to manage, maintain, and build Veeva iRep presentations
 * 🚀 Integrated slide uploading to iRep FTP server
 
 ## Requirements
-Needed before running the install command given above
+VELVEEVA has several dependencies needing to be met before installing
 * [ImageMagick](http://www.imagemagick.org/script/binary-releases.php)
 * [Phantomjs](http://phantomjs.org/download.html)
 * [Python (3.4+) with pip](https://www.python.org/downloads/)
