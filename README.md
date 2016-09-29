@@ -122,7 +122,8 @@ Control files can also be generated on arbitrary folders of zip files using the 
 project-root$ VELVEEVA/lib/genctls.py ./arbitrary_zips ./out_folder_for_ctls --u username --pwd password --email contactemail
 ```
 ## Build scripts
-Although VELVEEVA currently has a lot of useful pieces, it is likely that you'll still want to create a basic build script to automate building, renaming, packaging, etc. of the slides. VELVEEVA provides pre-flight and post-flight hooks that can run before and after VELVEEVA for any setup and teardown that might be necessary.
+Although VELVEEVA currently has a lot of useful pieces, it is likely that you'll still want to create a few basic build scripts and a makefile to automate building, renaming, packaging, etc. of the slides. VELVEEVA provides pre-flight and post-flight hooks that can run before and after VELVEEVA for any setup and teardown that might be necessary. (By default, the scaffolder creates `pre.sh` and `post.sh`
+scripts for you. These can be anything besides bash, just update the shebang and change the filenames in `VELVEEVA-config.json`.)
 
 Here's an example of a post-flight script
 ```bash
