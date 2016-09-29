@@ -41,7 +41,7 @@ VELVEEVA has several dependencies needing to be met before installing
 
 
 ## Quick Start: Installation/Creating a new project
-In an empty folder (or empty git repo), run
+In your new project's empty root directory, run
 ```bash
 git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install && VELVEEVA/init
 ```
