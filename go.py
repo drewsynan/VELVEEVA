@@ -157,6 +157,7 @@ def create_parser():
 	parser.add_argument("--verbose",		action="store_true", help="Chatty Cathy")
 	parser.add_argument("--notparallel", 	action="store_true", help="Only run things one after another")
 	parser.add_argument("--watch",			action="store_true", help="Watch for changes and re-build on change")
+	parser.add_argument("--packageonly",	action="store_true", help="Zip as-is")
 
 	return parser
 
@@ -284,7 +285,7 @@ def doScript():
 		sys.exit(0)
 
 	args = parser.parse_args()
-	flags = [x[0] for x in filter(lambda kvpair: kvpair[1] == True, (vars(args).items()))]
+	flags = [name for name, value in vars(args).items() if value == True]
 
 	ENV = create_environment(parse_config())	
 
@@ -300,6 +301,7 @@ def doScript():
 			"screenshots": ACTION_take_screenshots,
 			"ssonly": ACTION_take_screenshots,
 			"package": ACTION_package_slides,
+			"packageonly": ACTION_package_slides,
 			"controls": ACTION_generate_ctls,
 			"publish": ACTION_ftp_upload,
 			"rel2veev": ACTION_rel_2_veev,
@@ -327,6 +329,7 @@ def doScript():
 			"screenshots": ["screenshots"],
 			"ssonly": ["ssonly"],
 			"package": ["package"],
+			"packageonly": ["packageonly"],
 			"controls": ["controls"],
 			"publish": ["publish"],
 			"relink": ["rel2veev"],
