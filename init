@@ -51,7 +51,7 @@ def confirm(prompt, default="y"):
 
 	confirm = input("\n%s%s? " % (prompt, default))
 
-	return not (confirm.upper() == 'N' or confirm.upper == 'NO')
+	return not (confirm.upper() == 'N' or confirm.upper() == 'NO')
 
 def write_config(config, filename="VELVEEVA-config.json"):
 	with open(filename, 'w') as f:
