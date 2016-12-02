@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from lib import activate_venv
-from lib.veevutils import banner, get_slides_in_folder
+from lib.veevutils import banner, get_slides_in_folder, index_file_rename
 from lib import build
 
 from painter import paint
@@ -92,8 +92,14 @@ def copy_locals(root_dir, src, dest, verbose=False):
 				for file in files:
 					if not os.path.splitext(os.path.basename(file))[0] == current_relative_folder:
 						s = os.path.abspath(os.path.join(root,file))
+
+						needs_rename = index_file_rename(s)
+						adjusted_filename = file
+						if needs_rename is not None:
+							adjusted_filename = needs_rename.new
+
 						dest_dir = os.path.abspath(os.path.join(root_dir,dest,current_relative_folder))
-						d = os.path.abspath(os.path.join(root_dir,dest,current_relative_folder,file))
+						d = os.path.join(dest_dir, adjusted_filename)
 
 						if not os.path.exists(dest_dir): os.makedirs(dest_dir)
 						futures[executor.submit(shutil.copy,s,d)] = s+d
