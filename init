@@ -1,293 +1,461 @@
 #!/usr/bin/env python3
 import lib.activate_venv
-
 from lib.veevutils import banner
 from painter import paint
 
-import json
-import os
-import stat
-import sys
-import textwrap
-import pprint
+import copy, json, os, pprint, stat, sys, uuid
+from abc import ABCMeta, abstractmethod
+from collections import OrderedDict, Iterable
+from functools import wraps
 
-def string_parser(input, default):
-	converted = str(input)
-	if converted == '':
-		return default
-	else:
-		return converted
+def make_default_parser(parser, empty=lambda x: False):
+	"""Create a parser that returns a default if parsing fails
+	
+	Args:
+		parser (function): the parser function
+		empty (function): a function to check if the value returned from the parser
+						  is empty (i.e. the empty string). Defaults to never marking
+						  parsed output as empty.
 
-def int_parser(input, default):
-	try:
-		converted = int(input)
-		return converted
-	except ValueError:
-		return default
+	Returns:
+		function: (str -> parser)
+				  A parser creator function that takes a default string argument
+				  and returns a parser that returns the default specified
+				  if parsing fails, or is found to be empty
+	"""
 
-def promptRuleset(ruleset, configState):
-	section_name = ruleset['key']
-	prompts = ruleset['subkeys']
+	class DefaultParser:
+		"""A callable class that represents a parser with default fallback"""
 
-	configState[section_name] = {}
+		def __init__(self, parser, default, empty=lambda x: False):
+			"""Initialize a new default parser.
 
-	def makequery(name, default):
-		if str(default) != '':
-			default = " [%s]" % paint.bold.yellow(str(default))
+			Args:
+				parser (function): (string -> a) A parser function that takes a string
+					and returns a value of another type
+				default: the default value to be returned if the parser fails,
+					or if the default value is found to be empty
+				empty (function): (a -> bool) A function that returns true if the value
+					returned by the parser is "empty" (like the empty string, or None).
+					The default is to not mark any parser output as empty.
 
-		return ("What is the %s%s? " % (name, default))
+			"""
+			self.parser = parser
+			self.default = default
+			self.empty = empty
 
-	for prompt in prompts:
-		query = makequery(prompt['prompt'], prompt['default'])
-		parsed = prompt['parser'](input(query), prompt['default'])
+		def __str__(self):
+			"""String representation of the default parser.
 
-		configState[section_name][prompt['key']] = parsed
+			Returns: 
 
-	return configState
+				the default value surrounded by square brackets,
+				e.g. " [My Default]"
+
+				If no default is set, it calls the default __str__ method
+				of the Object class.
+			"""
+			if self.default is not None and not self.empty(self.default):
+				return " [%s]" % self.default
+			else:
+				#return super(DefaultParser, self).__str__()
+				#Nope, just total silence
+				return ""
+
+		def __call__(self, input=None):
+			"""Parse some input.
+			
+			Args:
+				input: the input to parse, if none is specified, defaults to None
+
+			Returns:
+				parsed input of type determined by self.parser
+				If parsing fails, or is determined to be "empty" (by the function
+				specified in self.empty), the default value (self.defaulf) is returned
+			"""
+			try:
+				parsed = self.parser(input)
+			except (ValueError,TypeError):
+				return self.default
+
+			if not (self.empty(input) or input is None):
+				return parsed
+			else:
+				return self.default
+
+	def the_parser(default=None):
+		"""The parser creator function.
+
+		Args:
+			default: the default value to be returned by the parser
+
+		Returns:
+			function: the fully composed default parser function
+		"""
+		return DefaultParser(parser, default, empty)
+	
+	return the_parser
+
+default_parsers = {
+	"string": make_default_parser(str, lambda x: x == ''),
+	"int": make_default_parser(int)
+}
+"""parsers: A dictionary of parser creators that accept a default value, and return a parser
+	
+	Parser creators are functions of type: default -> (string -> a)
+"""
+
+# IO
+
 
 def confirm(prompt, default="y"):
+	"""Ask the user to interactively confirm a prompt.
+
+	If a default value is specified, it is displayed after the prompt
+	in square brackets. E.g.
+
+	"Delete all files [n]?"
+
+	If the user hits return, the default value is used.
+
+	Args:
+		prompt (string): The prompt text to display (omitting the ending '?')
+		default (string): the default choice
+
+	Returns:
+		bool: true if the prompt was confirmed, false if not
+	"""
 	if default != '':
-		default = " [%s]" % paint.bold.yellow(default)
+		default = " [%s]" % default
 
 	confirm = input("\n%s%s? " % (prompt, default))
 
 	return not (confirm.upper() == 'N' or confirm.upper() == 'NO')
 
-def write_config(config, filename="VELVEEVA-config.json"):
+
+# Spec
+str_default = default_parsers['string']
+int_default = default_parsers['int']
+
+class Spec:
+	__metaclass__ = ABCMeta
+
+	def __init__(self):
+		self.checkSilence = lambda x: x
+
+	@abstractmethod
+	def __call___(self, silent=False): pass
+
+	def silence(self):
+		self.checkSilence = lambda x: True
+
+	def unsilence(self):
+		self.checkSilence = lambda x: x
+
+class Announce(Spec):
+	"""Callable spec for printing to the screen.
+
+	After printing the banner, the value given by self.val is returned.
+	"""
+	def __init__(self,val=None,banner=None):
+		"""Initialize a new announcer
+			
+		Args:
+			val: the value to be returned after the announcement, defaults to None.
+			banner: the message to display on the screen, defaults to None
+		"""
+		self.val = val
+		self.banner = banner
+		super().__init__()
+
+	def __call__(self,silent=False):
+		"""Execute the announcer.
+
+		If the class's banner is set, and the call is not made silently, 
+		the message will be printed, and the return value returned.
+
+		Args:
+			silent (bool): should the banner be displayed? If not, the class's return value
+				is returned without printing the message to screen.
+		"""
+		if self.checkSilence(silent) or self.banner is None:
+			return self.val
+		else:
+			print(self.banner)
+			return self.val
+
+def announce(val=None,banner=None):
+	"""Factory function for announcers"""
+	return Announce(val,banner)
+
+class Prompt(Spec):
+	"""Callable spec for prompting user input
+
+	Prompts the user for input, parses the input, and returns the parse results.
+	"""
+	def __init__(self, prompt, parser=str_default('')):
+		"""Initialize a new prompt spec.
+
+		Args:
+			prompt (string): the message to prompt the user with
+			parser (function): the parser to use to parse user input. Defaults to a string parser
+				with a default value of the empty string ('')
+		"""
+		self.prompt = prompt
+		self.parser = parser
+		
+		super().__init__()
+
+	def __call__(self, silent=False):
+		"""Execute the prompter.
+		
+		Args:
+			silent (bool): should the prompt be displayed? If false, no message is displayed
+				and the parser is called with None as input.
+		"""
+		if self.checkSilence(silent):
+			return self.parser()
+		else:
+			return self.parser(input("What is the %s%s? " % (self.prompt, str(self.parser))))
+
+def prompt(prompt, parser=str_default('')):
+	"""Factory function for prompters"""
+	return Prompt(prompt, parser)
+
+def silence(f):
+	"""Silence a spec.
+
+	Args:
+		f (function): the spec to silence
+
+	Returns:
+		A wrapped spec function that ensures silent execution of the spec
+	"""
+	silenced = copy.deepcopy(f)
+	silenced.silence()
+	# def wrap(silent=False):
+	# 	return f(silent=True)
+	# return wrap
+	return silenced
+
+def load_config(config_filename):
+	"""Load a JSON config file from disk.
+
+	Args:
+		config_filename (string): a path to the config file
+
+	Returns:
+		A dictionary representation of the JSON file, or None if the file could
+		not be found.
+	"""
+	if os.path.exists(config_filename):
+		with open(config_filename) as f:
+			return json.loads(f.read())
+
+def apply_previous_config(spec,old_config):
+	"""Apply a values from a config file to the default values in a spec
+
+	Args:
+		spec (dict): the spec dict to apply defaults to
+		old_config (dict): a dictionary of old config values
+
+	Returns:
+		A spec dict with default values set to values found in the old config.
+	"""
+	def apply(spec,old_config):
+		to_change = [key for key in spec.keys() if key in old_config.keys()]
+		for key in to_change:
+			spec_val = spec[key]
+			old_val = old_config[key]
+
+			if isinstance(spec_val, dict) and isinstance(old_val, dict):
+				apply(spec_val, old_val)
+			else:
+				spec_val.parser.default = old_val
+
+	applied = copy.deepcopy(spec)
+	apply(applied,old_config)
+
+	return applied
+
+def parse_spec(spec):
+	"""Parse a spec discription and create an executable spec"""
+	if type(spec) is list:
+		return OrderedDict([parse_spec(x) if isinstance(x,Iterable) else (uuid.uuid4(), x) for x in spec])
+	if type(spec) is tuple:
+		return tuple([parse_spec(x) for x in spec])
+	return spec
+
+def exec_spec(xs, silent=False):
+	"""Execute a spec.
+
+	Args:
+		xs (spec): the spec to execute
+		silent (boolean): should the spec execute silently?
+
+	Returns:
+		A data structure with specs replaced with filled-in values.
+	"""
+	if type(xs) is list:
+		executed = [exec_spec(x, silent=silent) for x in xs]
+		return dict([e for e in executed if e is not None])
+	if type(xs) is tuple and len(xs) == 2:
+		return (exec_spec(xs[0], silent=silent), exec_spec(xs[1], silent=silent))
+	if isinstance(xs,dict): # superclass of OrderedDict
+		executed = [(exec_spec(key, silent=silent), exec_spec(value, silent=silent)) for key, value in xs.items()]
+		return dict([(key,value) for key, value in executed if key is not None])
+	if callable(xs):
+		return exec_spec(xs(silent=silent))
+	if isinstance(xs,uuid.UUID):
+		return None
+	return xs
+
+def write_config(config, filename):
+	"""Convert a config dictionary to JSON and write to disk.
+
+	Args:
+		config (dict): the config dictionary
+		filename (string): path and name of the JSON file to write to
+	"""
 	with open(filename, 'w') as f:
 		f.write(json.dumps(config))
 
-def runScript():
-	main = {
-		'key': 'MAIN',
-		'subkeys' : [
-			{
-				'key' : 'name',
-				'prompt': 'project name', 
-				'default': 'untitled', 
-				'parser': string_parser
-			},
-			{
-				'key' : 'source_dir',
-				'prompt':'source directory',
-				'default': './src',
-				'parser': string_parser,
-				'generate': True
-			},
-			{	'key' : 'output_dir', 
-				'prompt':'build directory',
-				'default': './build',
-				'parser': string_parser,
-				'generate': True
-			},
-			{
-				'key' : 'globals_dir',
-				'prompt':'globals directory', 
-				'default': './global', 
-				'parser': string_parser,
-				'generate': True
-			},
-			{
-				'key' : 'templates_dir', 
-				'prompt':'templates directory', 
-				'default': './templates', 
-				'parser': string_parser,
-				'generate': True
-			},
-			{
-				'key' : 'temp_dir',
-				'prompt' : 'temp directory',
-				'default' :'./temp',
-				'parser': string_parser,
-			},
-			{
-				'key' : 'partials_dir',
-				'prompt': 'partials directory',
-				'default': './partials',
-				'parser': string_parser,
-				'generate': True
-			},
-			{
-				'key' : 'zips_dir',
-				'prompt' : 'built zips sub-directory',
-				'default' : '_zips',
-				'parser' : string_parser
-			},
-			{
-				'key' : 'ctls_dir',
-				'prompt': 'control files sub-directory',
-				'default' : "_ctls",
-				'parser' : string_parser
-			}
-		]
+def create_directories(config):
+	"""Create empty directories required by a configuration.
+
+	Args:
+		config (dict): the configuration dictionary
+
+	"""
+	dirs = ["source_dir", "output_dir", "globals_dir", "templates_dir",
+		"temp_dir", "partials_dir", "zips_dir", "ctls_dir"]
+
+	for name, path in config['MAIN'].items():
+		if name in dirs:
+			print(name)
+			os.makedirs(path, exist_ok=True)
+
+def create_scripts(config):
+	"""Create empty, placeholder scripts required by a configuration.
+
+	Args:
+		config (dict): the configuration dictionary
+	"""
+	shebangs = {
+		# '.ps1': '',
+		".js": "#!/usr/bin/env node\n",
+		".pl": "#!/usr/bin/env perl\n",
+		".py": "#!/usr/bin/env python3\n",
+		".rb": "#!/usr/bin/env ruby\n",
+		".sh": "#!/bin/bash\n"
 	}
 
-	ss_full = {
-		'key' : 'full',
-		'subkeys' : [
-			{
-				'key' : 'width',
-				'prompt' : 'width',
-				'default': 1024, 
-				'parser': int_parser
-			},
-			{
-				'key' : 'height',
-				'prompt' : 'height', 
-				'default': 768, 
-				'parser': int_parser
-			},
-			{
-				'key' : 'name',
-				'prompt' : 'file suffix',
-				'default' : '-full.jpg',
-				'parser': string_parser 
-			}
-		]
-	}
+	for hook, script_name in config['HOOKS'].items():
+		extension = os.path.splitext(script_name)[1].lower()
 
-	ss_thumb = {
-		'key' : 'thumb',
-		'subkeys' : [
-			{
-				'key' : 'width',
-				'prompt' : 'width',
-				'default': 200, 
-				'parser': int_parser
-			},
-			{
-				'key' : 'height',
-				'prompt' : 'height', 
-				'default': 150, 
-				'parser': int_parser
-			},
-			{
-				'key' : 'name',
-				'prompt' : 'file suffix',
-				'default' : '-thumb.jpg',
-				'parser': string_parser 
-			}
-		]
-	}
+		with open(script_name, 'w') as f:
+			print("Writing %s..." % script_name)
+			f.write(shebangs.get(extension,""))
 
-	ss = {
-		'key' : 'SS',
-		'subkeys' : [ss_full, ss_thumb]
-	}
+		script_permissions = os.stat(script_name)
+		os.chmod(script_name, script_permissions.st_mode | stat.S_IEXEC)
 
-	veeva = {
-		'key': 'VEEVA',
-		'subkeys': [
-			{
-				'key' : 'server',
-				'prompt' : 'Veeva ftp server',
-				'default' : '',
-				'parser' : string_parser
-			},
-			{
-				'key' : 'username',
-				'prompt' : 'ftp username',
-				'default' : '',
-				'parser' : string_parser
-			},
-			{
-				'key' : 'password',
-				'prompt' : 'ftp password',
-				'default' : '',
-				'parser' : string_parser
-			},
-			{
-				'key' : 'email',
-				'prompt' : 'Veeva notification email',
-				'default' : '',
-				'parser' : string_parser	
-			}
-		]
-	}
+VELVEEVA_CONFIG = [
+	announce(banner="\nGENERAL CONFIGURATION"),
+	("MAIN", [
+		("name", 			prompt('project name', parser=str_default('untitled'))),
+		("source_dir", 		prompt('source directory', parser=str_default('./src'))),
+		("output_dir", 		prompt('build directory', parser=str_default('./build'))),
+		("globals_dir", 	prompt('globals directory', parser=str_default('./global'))),
+		("templates_dir", 	prompt('templates directory', parser=str_default('./templates'))),
+		("temp_dir", 		prompt('temp directory', parser=str_default('./tmp'))),
+		("partials_dir", 	prompt('partials directory', parser=str_default('./partials'))),
+		("zips_dir", 		prompt('built zips sub-directory (relative to build dir)', parser=str_default('_zips'))),
+		("ctls_dir", 		prompt('control files sub-directory (relative to build dir)', parser=str_default('_zips')))
+	]),
+	announce(banner="\nSCREENSHOTS"),
+	("SS", [
+		announce(banner="Slide Thumbnails"),
+		("thumb", [
+			("width", 		prompt('width', parser=int_default(200))),
+			("height", 		prompt('height', parser=int_default(150))),
+			("name", 		prompt('file suffix', parser=str_default('-thumb.jpg')))
+		]),
+		announce(banner="\nFull-Size Screenshots"),
+		("full", [
+			("width", 		prompt('width', parser=int_default(1024))),
+			("height", 		prompt('height', parser=int_default(768))),
+			("name", 		prompt('file suffix', parser=str_default('-full.jpg')))
+		])
+	]),
+	announce(banner="\nVEEVA DEPLOYMENT"),
+	("VEEVA", [
+		("server", 			prompt('Veeva ftp server', parser=str_default(''))),
+		("username", 		prompt('username', parser=str_default(''))),
+		("password", 		prompt('password', parser=str_default(''))),
+		("email", 			prompt('email', parser=str_default('')))
+	]),
+	announce(banner="\nHOOKS"),
+	("HOOKS", [
+		("pre", 			prompt('Pre-flight script filename', parser=str_default('./pre.sh'))),
+		("post", 			prompt('Post-flight script filename', parser=str_default('./post.sh')))
+	])
+]
+"""Spec for VELVEEVA configuration"""
 
-	hooks = {
-		'key': 'HOOKS',
-		'subkeys': [
-			{
-				'key': 'pre',
-				'prompt': 'Pre-flight script filename',
-				'default': './pre.sh',
-				'parser': string_parser
-			},
-			{
-				'key': 'post',
-				'prompt': 'Post-flight script filename',
-				'default': './post.sh',
-				'parser': string_parser
-			}
-		]
-	}
-	
-	
-	config = {}
+
+def main(project_name=None, config_filename="VELVEEVA-config.json", config_spec=VELVEEVA_CONFIG):
+	"""Scaffold a new VELVEEVA project.
+
+	Args:
+		project_name (string): The name of the project
+		config_filename (string): The path of the config file
+		config_spec: the spec to execute to generate the config file
+	"""
 
 	print(banner(subtitle="New Project Generator"))
-	
-	print(paint.bold.yellow("GENERAL CONFIGURATION"))
-	promptRuleset(main, config)
 
-	print("\n" + paint.bold.yellow("SCREENSHOTS"))
-	ss = {}
-	print(paint.bold.yellow("Full-Size Screenshots"))
-	promptRuleset(ss_full, ss)
-	print("\n" + paint.bold.yellow("Slide Thumbnails"))
-	promptRuleset(ss_thumb, ss)
-	config['SS'] = ss
+	executable_spec = parse_spec(config_spec)
 
-	print("\n" + paint.bold.yellow("HOOKS"))
-	promptRuleset(hooks, config)
+	if os.path.exists(config_filename) and confirm("Found previous configuration. Modify"):
+		old_config = load_config(config_filename)
+		executable_spec = apply_previous_config(executable_spec,old_config)
+		print("Modify settings for " + old_config['MAIN']['name'])
+	else:
+		print("New Project Generator")
 
-	print("\n" + paint.bold.yellow("VEEVA DEPLOYMENT"))
-	promptRuleset(veeva, config)
+	if project_name is not None:
+		executable_spec['MAIN']['name'].parser.default = project_name
+
+	# config_spec['VEEVA']['server'] = silence(config_spec['VEEVA']['server'])
 
 	
-	print("\n" + paint.bold.yellow("SUMAMRY"))
-	print(paint.bold.yellow("VELVEEVA-config.json"))
+	config = exec_spec(executable_spec)
+
+	print("Summary")
+	print(config_filename)
 	pprint.pprint(config)
 
 	if confirm("Write config file"):
 		print("\nWriting VELVEEVA-config.json file...")
-		write_config(config)
+		write_config(config, filename=config_filename)
 
 	if confirm("Create directories"):
 		print("\nCreating directory structure...")
-		for k in main['subkeys']:
-			if k.get('generate', False):
-				print(config['MAIN'][k['key']])
-				os.makedirs(config['MAIN'][k['key']], exist_ok=True)
+		create_directories(config)
 
 	if confirm("Create scripts"):
-		for k in hooks['subkeys']:
-			current_script = config['HOOKS'][k['key']]
-			ext = os.path.splitext(current_script)[1].lower()
-			shebang = ""
+		create_scripts(config)
 
-			if ext == ".bat" or ext == ".cmd" or ext == ".ps1":
-				shebang = "" #lol windows
-			elif ext == ".js":
-				shebang = "#!/usr/bin/env node"
-			elif ext == ".pl":
-				shebang = "#!/usr/bin/env perl"
-			elif ext == ".py":
-				shebang = "#!/usr/bin/env python3"
-			elif ext == ".rb":
-				shebang = "#!/usr/bin/env ruby"
-			elif ext == ".sh":
-				shebang = "#!/bin/bash"
+if __name__ == "__main__": 
+	try:
+		main()
+	except KeyboardInterrupt:
+		print("\n👋  " + "Bye!")
+		sys.exit(1)
+	except Exception as e:
+		print(e, file=sys.stderr)
+		sys.exit(2)
 
-			with open(current_script, 'w') as f:
-				print("Writing %s..." % current_script)
-				f.write(shebang + "\n")
-
-			st = os.stat(current_script)
-			os.chmod(current_script, st.st_mode | stat.S_IEXEC)
-		
-
-	print("\n👋  " + paint.bold.yellow("Bye!"))
-
-if __name__ == "__main__": runScript()
+	print("\n👋  " + "Bye!")
+	sys.exit(0)
