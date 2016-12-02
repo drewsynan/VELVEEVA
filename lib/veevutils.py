@@ -37,7 +37,7 @@ def parse_slide_path(p, slide_name=None):
 	if matcher is None: 
 		return None
 	else:
-		return SlidePath(parent_path=matcher.group(1), slide_name=matcher.group(2), extension=matcher.group(3))
+		return SlidePath(matcher.group(1), matcher.group(2), matcher.group(3))
 
 
 def get_veeva_command_regex(command_name=None, command_args=None):
@@ -177,7 +177,7 @@ def parse_slide(folder_path):
 			for file in files_in_zip:
 				match = matcher.match(file)
 				if match is not None:
-					results_tuple = Result(full_path=match.group(0), extension=match.group(2))
+					results_tuple = Result(match.group(0), match.group(2))
 					files_sharing_parent_name.append(results_tuple)
 			if len(files_sharing_parent_name) > 0:
 				return files_sharing_parent_name[0]
@@ -196,7 +196,7 @@ def parse_slide(folder_path):
 
 			if matcher.match(file_path) is not None:
 				match = matcher.match(file_path)
-				result_tuple = Result(full_path=match.group(0), extenstion=match.group(2))
+				result_tuple = Result(match.group(0), match.group(2))
 				files_sharing_parent_name.append(result_tuple)
 
 		if len(files_sharing_parent_name) > 0:
@@ -212,7 +212,7 @@ def index_file_rename(slide_path):
 	if matches is not None:
 		old_path = matches.group(0)
 		new_path = matches.group(2) + matches.group(3)
-		return Rename(old=old_path, new=new_path)
+		return Rename(old_path, new_path)
 	else:
 		return None
 
