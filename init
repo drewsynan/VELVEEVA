@@ -330,10 +330,19 @@ def create_directories(config):
 	dirs = ["source_dir", "output_dir", "globals_dir", "templates_dir",
 		"temp_dir", "partials_dir", "zips_dir", "ctls_dir"]
 
+	relative_to = {
+		"zips_dir": "output_dir",
+		"ctls_dir": "output_dir",
+	}
+
 	for name, path in config['MAIN'].items():
 		if name in dirs:
+			adjusted_path = path
+			relative = relative_to.get(name, None)
+			if relative is not None:
+				adjusted_path = os.path.join(config['MAIN'][relative],path)
 			print(name)
-			os.makedirs(path, exist_ok=True)
+			os.makedirs(adjusted_path, exist_ok=True)
 
 def create_scripts(config):
 	"""Create empty, placeholder scripts required by a configuration.
@@ -372,7 +381,7 @@ VELVEEVA_CONFIG = [
 		("temp_dir", 		prompt('temp directory', parser=str_default('./tmp'))),
 		("partials_dir", 	prompt('partials directory', parser=str_default('./partials'))),
 		("zips_dir", 		prompt('built zips sub-directory (relative to build dir)', parser=str_default('_zips'))),
-		("ctls_dir", 		prompt('control files sub-directory (relative to build dir)', parser=str_default('_zips')))
+		("ctls_dir", 		prompt('control files sub-directory (relative to build dir)', parser=str_default('_ctls')))
 	]),
 	announce(banner="\nSCREENSHOTS"),
 	("SS", [
