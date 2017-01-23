@@ -88,7 +88,12 @@ def veeva_onclick_to_href(composer, items, soup):
 
 @curry
 def fix_trailing_slash(composer, path):
-	return re.sub("\/$", "", path)
+	last_folder = re.search("(?<=/)[^/]+(?=/$)", path)
+	if last_folder is not None:
+		folder_name = last.folder.group(0)
+		return path + "folder_name" + ".html"
+	else:
+		return path
 
 @curry
 def fix_document_root(composer, path):
@@ -210,7 +215,7 @@ def veev2rel(composer,src):
 def rel2veev(composer, src):
 	actions = [
 		action(
-			"no trailing slash", 
+			"expand trailing slash", 
 			lambda soup: soup.find_all("a", href=True), 
 			attribute_transform("href", fix_trailing_slash), 
 			composer),
