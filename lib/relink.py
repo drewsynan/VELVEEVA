@@ -194,11 +194,6 @@ def integrate_all(composer, src):
 def veev2rel(composer,src):
 	actions = [
 		action(
-			"fix root linking",
-			lambda soub: soup.find_all("a", href=True),
-			attribute_transform("href", fix_document_root),
-			path_composer("../")),
-		action(
 			"veeva to relative",
 			lambda soup: soup.find_all("a", href=True),
 			attribute_transform("href", fix_veev_2_rel),
@@ -209,6 +204,11 @@ def veev2rel(composer,src):
 @curry
 def rel2veev(composer, src):
 	actions = [
+		action(
+			"fix root linking",
+			lambda soub: soup.find_all("a", href=True),
+			attribute_transform("href", fix_document_root),
+			composer),
 		action(
 			"relative to veeva",
 			lambda soup: soup.find_all("a", href=True),
