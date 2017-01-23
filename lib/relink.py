@@ -206,7 +206,7 @@ def rel2veev(composer, src):
 	actions = [
 		action(
 			"fix root linking",
-			lambda soub: soup.find_all("a", href=True),
+			lambda soup: soup.find_all("a", href=True),
 			attribute_transform("href", fix_document_root),
 			composer),
 		action(
