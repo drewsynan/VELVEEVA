@@ -88,7 +88,12 @@ def veeva_onclick_to_href(composer, items, soup):
 
 @curry
 def fix_relative_path(composer, path):
-	return re.sub("(^\/)?(\.\.\/)*", "", path)
+	no_leading_slash = re.sub("(^\/)?", "", path)
+	no_dots = re.sub("(\.\.\/)*", "", no_leading_slash)
+	no_current_dir = re.sub("(\.\/)*", "", no_dots)
+	no_trailing_slash = re.sub("\/$", "", no_current_dir)
+
+	return no_trailing_slash # TODO: make this deal with '//' implicit protocol and ./ current dir
 
 @curry
 def fix_hyperlink_protocol(composer, href):
