@@ -90,8 +90,7 @@ def veeva_onclick_to_href(composer, items, soup):
 def fix_trailing_slash(composer, path):
 	last_folder = re.search("(?<=/)[^/]+(?=/$)", path)
 	if last_folder is not None:
-		folder_name = last_folder.group(0)
-		return path + "folder_name" + ".html"
+		return path + last_folder.group(0) + ".html"
 	else:
 		return path
 
