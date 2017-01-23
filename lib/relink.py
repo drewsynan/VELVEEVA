@@ -85,15 +85,13 @@ def veeva_onclick_to_href(composer, items, soup):
 			cmd_args = match.command_args
 			item["href"] = composer(cmd, cmd_args)
 			item["onClick"] = None
+@curry
+def fix_document_root(composer, path):
+	return re.sub("^\/(?=[^\/])", "../", path)
 
 @curry
 def fix_relative_path(composer, path):
-	no_leading_slash = re.sub("(^\/)?", "", path)
-	no_dots = re.sub("(\.\.\/)*", "", no_leading_slash)
-	no_current_dir = re.sub("(\.\/)*", "", no_dots)
-	no_trailing_slash = re.sub("\/$", "", no_current_dir)
-
-	return no_trailing_slash # TODO: make this deal with '//' implicit protocol and ./ current dir
+	return re.sub("(\.\.\/)*", "", path)
 
 @curry
 def fix_hyperlink_protocol(composer, href):
@@ -195,6 +193,11 @@ def integrate_all(composer, src):
 @curry
 def veev2rel(composer,src):
 	actions = [
+		action(
+			"fix root linking",
+			lambda soub: soup.find_all("a", href=True),
+			attribute_transform("href", fix_document_root),
+			path_composer("../")),
 		action(
 			"veeva to relative",
 			lambda soup: soup.find_all("a", href=True),
