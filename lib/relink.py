@@ -88,7 +88,7 @@ def veeva_onclick_to_href(composer, items, soup):
 
 @curry
 def fix_relative_path(composer, path):
-	return re.sub("(\.\.\/)*", "", path)
+	return re.sub("(^\/)?(\.\.\/)*", "", path)
 
 @curry
 def fix_hyperlink_protocol(composer, href):
