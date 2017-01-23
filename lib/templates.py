@@ -19,8 +19,9 @@ def load_html_files(dir):
 
 	html_files = glob.glob(os.path.join(dir,'*.htm*'))
 	for file in html_files:
-		with open(file, 'r') as f:
-			html_dict[os.path.basename(file)] = f.read()
+		if not fnmatch.fnmatch(file, "index.*"):
+			with open(file, 'r') as f:
+				html_dict[os.path.basename(file)] = f.read()
 
 	return html_dict
 
@@ -78,19 +79,21 @@ def render_slide(file, templates, partials):
 
 def render_one(src, slide, dest, templates, partials, verbose=False):
 	html_files = glob.glob(os.path.join(src, slide, "*.htm*"))
+	print(html_files)
 
 	if not os.path.exists(os.path.join(dest,slide)):
 		os.makedirs(os.path.join(dest,slide))
 
 	for file in html_files:
-		if verbose: print("Rendering %s" % file)
-		html_basename = os.path.basename(file)
-		if verbose: print(os.path.join(dest,slide,html_basename))
-		rendered = render_slide(file, templates, partials)
+		if not fnmatch.fnmatch(file, "*/index.htm*"):
+			if verbose: print("Rendering %s" % file)
+			html_basename = os.path.basename(file)
+			if verbose: print(os.path.join(dest,slide,html_basename))
+			rendered = render_slide(file, templates, partials)
 
-		html_path = os.path.join(dest,slide,html_basename)
-		with open(html_path, 'w') as f:
-			f.write(rendered)
+			html_path = os.path.join(dest,slide,html_basename)
+			with open(html_path, 'w') as f:
+				f.write(rendered)
 
 def render_slides(src, dest, templates_dir, partials_dir, verbose=True):
 	if verbose: print("Loading templates...")

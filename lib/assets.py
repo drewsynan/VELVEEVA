@@ -34,7 +34,7 @@ def inject1(root_dir, src_dir, dest_dir, merge=True, filter="*", verbose=False):
 
 		# copy files
 		for file in files:
-			if fnmatch.fnmatch(file, filter):
+			if fnmatch.fnmatch(file, filter) and not fnmatch.fnmatch(file, "index.htm*"):
 				compiled_src = os.path.join(root,file)
 				compiled_dest = os.path.join(dest_dir,inner_dir,file)
 				
