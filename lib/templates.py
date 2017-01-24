@@ -79,7 +79,6 @@ def render_slide(file, templates, partials):
 
 def render_one(src, slide, dest, templates, partials, verbose=False):
 	html_files = glob.glob(os.path.join(src, slide, "*.htm*"))
-	print(html_files)
 
 	if not os.path.exists(os.path.join(dest,slide)):
 		os.makedirs(os.path.join(dest,slide))
