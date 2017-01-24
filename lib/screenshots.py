@@ -33,7 +33,7 @@ def ss_(url, dest, sizes, filename, driver, verbose=False):
 		if verbose: print(url + ": " + str(w)+"x"+str(h))
 
 		try:
-			driver.set_window_size(int(h), int(w))
+			driver.set_window_size(int(w), int(h))
 			driver.get(url)
 
 			pieces = list(splitter.search(fname).groups())
@@ -46,7 +46,8 @@ def ss_(url, dest, sizes, filename, driver, verbose=False):
 			bg = Image.new('RGB', cropped.size, BACKGROUND_COLOR)
 			bg.paste(cropped, mask=cropped.split()[3])
 		
-			bg.save(new_fname, 'jpeg')
+			if not os.path.exists(new_fname): # don't override user provided thumbs
+				bg.save(new_fname, 'jpeg')
 		except Exception as e:
 			print(e)
 	
