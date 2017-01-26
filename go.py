@@ -144,6 +144,7 @@ def create_parser():
 	parser.add_argument("--bake", 			action="store_true", help="Compile templates and SASS (yum!)")
 	parser.add_argument("--clean",			action="store_true", help="Clean up the mess (mom would be proud!)")
 	parser.add_argument("--controls",		action="store_true", help="Generate slide control files (gonna have something already baked)")
+	parser.add_argument("--controlsonly", 	action="store_true", help="Generate slide control files (no other steps)")
 	parser.add_argument("--dev",			action="store_true", help="Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using --nuke --bake --watch --veev2rel")
 	parser.add_argument("--go", 			action="store_true", help="Use a quick-bake recipe -> nuke, bake, screenshots, package, clean")
 	parser.add_argument("--init",			action="store_true", help="Initialize a new VELVEEVA project")
@@ -168,6 +169,7 @@ def create_parser():
 	parser.add_argument("--globals", 		action="store_true", help="Inline globals")
 	parser.add_argument("--locals",			action="store_true", help="Inline locals")
 	parser.add_argument("--render-slides", 	action="store_true", help="Render/Copy slides into dest")
+	parser.add_argument("--publishonly", 	action="store_true", help="FTP upload slide and control files (no other steps)")
 
 	return parser
 
@@ -341,7 +343,9 @@ def doScript():
 			"rel2veev": ACTION_rel_2_veev,
 			"integrate": ACTION_integrate_all,
 			"share_assets": ACTION_share_assets,
-			"render_slides": ACTION_render_templates
+			"render_slides": ACTION_render_templates,
+			"controlsonly": ACTION_generate_ctls,
+			"publishonly": ACTION_ftp_upload
 		}
 
 		requires = {
@@ -374,7 +378,9 @@ def doScript():
 			"share_assets": ["share_assets"],
 			"locals": ["localsonly"],
 			"globals": ["globalsonly"],
-			"render_slides": ["render_slides"]
+			"render_slides": ["render_slides"],
+			"controlsonly": ["controlsonly"],
+			"publishonly": ["publishonly"]
 		}
 
 		def replace_with_function(plan):
