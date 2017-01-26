@@ -39,7 +39,10 @@ import uuid
 
 def parse_meta(filename):
 	slide_file = parse_slide(filename)
-	if slide_file is None: return {'filename': os.path.basename(filename), 'veeva_title': os.path.basename(filename), 'veeva_description': os.path.basename(filename)}
+	if slide_file is None: 
+		return { 'filename': os.path.basename(filename), 
+				 'veeva_title': os.path.splitext(os.path.basename(filename))[0], 
+				 'veeva_description': os.path.splitext(os.path.basename(filename))[0] }
 
 
 	with ZipFile(filename, 'r') as z:
@@ -125,7 +128,7 @@ def createRecordString(filename, version=None, email=None, username=None, passwo
 
 	pieces.append("USER="+str(username))
 	pieces.append("PASSWORD="+str(password))
-	pieces.append("FILENAME="+os.path.split(meta['filename'])[-1])
+	pieces.append("FILENAME="+os.path.basename(meta['filename']))
 
 	if email is not None: pieces.append("EMAIL="+str(email))
 	if version is not None: pieces.append("Slide_Version_vod__c=" + str(version))
@@ -134,6 +137,8 @@ def createRecordString(filename, version=None, email=None, username=None, passwo
 			pieces.append("Description_vod__c=" + str(meta['veeva_description']))
 		if meta['veeva_title'] is not None:
 			pieces.append("Name=" + str(meta['veeva_title']))
+		else:
+			pieces.append("Name=" + os.path.splitext(os.path.basename(meta[filename]))[0])
 
 	pieces.append('')
 
