@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import activate_venv
 
-from veevutils import banner, is_slide
+from veevutils import banner, is_slide, CONFIG_FILENAME
 from prefix import parse_slide_folders
 
 from selenium import webdriver
@@ -15,6 +15,7 @@ import re
 import io
 import json
 import os
+import shutil
 import sys
 import textwrap
 
@@ -185,32 +186,93 @@ def take_screenshots_async(source_folder, config_path, verbose=False):
 
 	for proc in procs: proc.join()
 
+def fake_shared_assets(config_path, root_dir):
+	if not os.path.exists(config_path): raise Exception('Config file not found!')
+	
+	with open(config_path) as f:
+		config = json.load(f)
+
+	dest_dir_name = os.path.relpath(config['MAIN']['output_dir'])
+	globals_dir_name = os.path.relpath(config['MAIN']['globals_dir'])
+
+	dest_path = os.path.join(root_dir, dest_dir_name)
+	built_globals_path = os.path.join(root_dir, dest_dir_name, globals_dir_name)
+	fake_shared_path = os.path.join(root_dir, dest_dir_name, "shared")
+	fake_globals_path = os.path.join(fake_shared_path, globals_dir_name)
+
+	# check to see if the globals dir exists inside the build dir
+	if os.path.exists(built_globals_path):
+		# if it does, make a 'shared' folder, and copy the globals inside of that
+		if not os.path.exists(fake_shared_path): os.mkdir(fake_shared_path)
+		try:
+			shutil.copytree(built_globals_path, fake_globals_path)
+		except Exception as e:
+			# ignore it if it's already been created
+			print(e, file=sys.stderr)
+
+def cleanup_fake_shared_assets(config_path, root_dir):
+	if not os.path.exists(config_path): raise Exception('Config file not found!')
+	
+	with open(config_path) as f:
+		config = json.load(f)
+
+	dest_dir_name = os.path.relpath(config['MAIN']['output_dir'])
+	globals_dir_name = os.path.relpath(config['MAIN']['globals_dir'])
+
+	dest_path = os.path.join(root_dir, dest_dir_name)
+	built_globals_path = os.path.join(root_dir, dest_dir_name, globals_dir_name)
+	fake_shared_path = os.path.join(root_dir, dest_dir_name, "shared")
+	fake_globals_path = os.path.join(fake_shared_path, globals_dir_name)
+
+	# check to see if a fake globals dir exists
+	if os.path.exists(fake_globals_path):
+		shutil.rmtree(fake_globals_path)
+
+		#delete the 'shared' fake directory if it's empty (i.e. not used by the user)
+		for dir_path, dir_names, files in os.walk(fake_shared_path):
+			if not files and not dir_names:
+				shutil.rmtree(dir_path)
+
 def runScript():
 	parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
 		description = banner(subtitle="Screenshot Generator"))
 
 	parser.add_argument("source", nargs=1, help="Source folder")
-	parser.add_argument("config", nargs=1, help="Path to config file")
+	parser.add_argument("config", nargs='?', help="Path to config file", default=CONFIG_FILENAME)
 	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
 	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy", required=False)
+	parser.add_argument("--shared-assets", action="store_true", help="Use Veeva shared assets", required=False)
+
 
 	if len(sys.argv) == 1:
 		parser.print_help()
 		return 2
+	
+	args = parser.parse_args()
+	VERBOSE = args.verbose
+
+	# parse the root filder
+	if args.root is not None:
+		root_dir = args.root[0]
 	else:
-		args = parser.parse_args()
-		VERBOSE = args.verbose
+		root_dir = os.getcwd()
 
-		if args.root is not None:
-			source_folder = os.path.join(args.root[0], args.source[0])
-			config_path = os.path.join(args.root[0], args.config[0])
+	# parse config filename
+	if args.config is not None:
+		config_file_name = args.config
+	else:
+		config_file_name = CONFIG_FILENAME
 
-		else:
-			source_folder = args.source[0]
-			config_path = args.config[0]
+	#parse config file path
+	config_path = os.path.join(root_dir, config_file_name)
+	source_path = os.path.join(root_dir, args.source[0])
 
-		take_screenshots_async(source_folder, config_path, VERBOSE)
+	# fake Veeva shared assets for the screenshots
+	if args.shared_assets: fake_shared_assets(config_path, root_dir)
 
+	take_screenshots_async(source_path, config_path, VERBOSE)
+
+	if args.shared_assets: cleanup_fake_shared_assets(config_path, root_dir)
 
 if __name__ == "__main__":
 	sys.exit(runScript())

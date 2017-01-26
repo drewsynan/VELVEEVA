@@ -105,7 +105,9 @@ def fix_relative_path(composer, path):
 
 @curry
 def fix_shared_asset_path(globals_dir, composer, path):
-	return re.sub("(?<=\.\./" + globals_dir + "/", "shared" + "/" + globals_dir, path)
+	new_path = os.path.relpath(os.path.join('shared',globals_dir))
+	patched = re.sub("(?<=\.\./)" + os.path.relpath(globals_dir) + "(?=/)", new_path, path)
+	return patched
 
 @curry
 def fix_hyperlink_protocol(composer, href):
@@ -254,7 +256,7 @@ def mv_refs(old_slide_name, new_slide_name, src):
 	return run_actions(actions, src)
 
 @curry
-def share_assets(globals_dir, src):
+def share_assets(globals_dir, composer, src):
 	actions = [
 		action(
 			"stylesheets",
@@ -386,13 +388,13 @@ def runScript():
 
 	if args.share_assets is not None:
 		if args.root:
-			veeva_root = args.root
+			veeva_root = args.root[0]
 		else:
 			veeva_root = os.getcwd()
 
 		config_file = os.path.join(veeva_root, CONFIG_FILENAME)
 
-		if not os.exists(config_file):
+		if not os.path.exists(config_file):
 			print("Relink.py: could not load config file", file=sys.stderr)
 			return 128
 		else:
@@ -406,7 +408,7 @@ def runScript():
 			return 128
 		else:
 			for folder in folders:
-				parse_folder(folder, actions=[share_assets(global_assets)], verbose=verbose)
+				parse_folder(folder, actions=[share_assets(global_assets,composer)], verbose=verbose)
 
 
 if __name__ == "__main__": 

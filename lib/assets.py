@@ -12,35 +12,36 @@ import textwrap
 import concurrent.futures
 
 def inject1(root_dir, src_dir, dest_dir, merge=True, filter="*", verbose=False):
-	s_walk = os.walk(os.path.abspath(os.path.join(root_dir,src_dir)))
+	root_dir = os.path.relpath(root_dir)
+	src_dir = os.path.relpath(src_dir)
+	dest_dir = os.path.relpath(dest_dir)
 
-	for root, dirs, files in s_walk:
-
-		# get the current directory relative to the root
-		split_root = os.path.abspath(root_dir).split(os.sep)
-		split_global = os.path.abspath(root).split(os.sep)
+	abs_src_path = os.path.abspath(os.path.join(root_dir,src_dir))
+	abs_dest_path = os.path.abspath(os.path.join(root_dir,dest_dir))
 
 
-		stripped_path = root.split(os.sep)[len(split_root)+1:]
-		if len(stripped_path) > 1:
-			inner_dir = os.path.join(root_dir,dest_dir,os.sep.join(stripped_path))
-		else:
-			inner_dir= os.path.join(root_dir,dest_dir,''.join(stripped_path))
-			
-		# check to see if the enclosing directory exists
-		if not os.path.exists(os.path.join(dest_dir,inner_dir)):
-			if verbose: print("Creating %s" % inner_dir)
-			os.mkdir(os.path.join(dest_dir,inner_dir))
+	s_walk = os.walk(abs_src_path)
 
-		# copy files
+	for current_dir_path, dirs, files in s_walk:
+
+		#get current parent dir relative to the src directory
+		relative_current_folder = os.path.relpath(os.path.abspath(current_dir_path), abs_src_path)
+
+		# see if the relative directory exists inside of the destination
+		dest_folder = os.path.join(abs_dest_path, relative_current_folder)
+		if not os.path.exists(dest_folder):
+			if verbose: print("Creating %s" % dest_folder)
+			os.mkdir(dest_folder)
+
+		# copy each source file
 		for file in files:
 			if fnmatch.fnmatch(file, filter) and not fnmatch.fnmatch(file, "index.htm*"):
-				compiled_src = os.path.join(root,file)
-				compiled_dest = os.path.join(dest_dir,inner_dir,file)
-				
-				if verbose: print("Copying %s to %s" % (compiled_src, compiled_dest))
-				
-				shutil.copy2(compiled_src,compiled_dest)
+				src_path = os.path.join(current_dir_path, file)
+				dest_path = os.path.join(abs_dest_path, relative_current_folder, file)
+
+				if verbose: print("Copying %s to %s" % (src_path, dest_path))
+
+				shutil.copy2(src_path, dest_path)
 
 def inject(root, srcs, dests, verbose=False):
 	if not type(srcs) == list:
@@ -114,7 +115,10 @@ def runScript(ASYNC=False):
 
 		if ROOT_ONLY or VEEVA_SHARED:
 			# dump files into the root, or shared assets subfolder
-			inject(root, src, dest, verbose=VERBOSE)
+			if ASYNC:
+					inject_async(root, src, dest, verbose=VERBOSE)
+			else:
+				inject(root, src, dest, verbose=VERBOSE)
 		else:
 			subdirs = [os.path.join(dest,sd) for sd in next(os.walk(os.path.join(root,dest)))[1]]
 			if ASYNC:

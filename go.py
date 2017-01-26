@@ -164,6 +164,10 @@ def create_parser():
 	parser.add_argument("--notparallel", 	action="store_true", help="Only run things one after another")
 	parser.add_argument("--watch",			action="store_true", help="Watch for changes and re-build on change")
 	parser.add_argument("--packageonly",	action="store_true", help="Zip as-is")
+	parser.add_argument("--share-assets",	action="store_true", help="Use Veeva's shared asset feature for globals")
+	parser.add_argument("--globals", 		action="store_true", help="Inline globals")
+	parser.add_argument("--locals",			action="store_true", help="Inline locals")
+	parser.add_argument("--render-slides", 	action="store_true", help="Render/Copy slides into dest")
 
 	return parser
 
@@ -189,20 +193,21 @@ def ACTION_inline_global(env, i):
 	for out in execute(["python3", cmd, "--root", env['ROOT_DIR'], env['GLOBALS_DIR'], env['DEST_DIR']]):
 		print(out)
 
-@action()
-def ACTION_share_globals(env, i):
+@action("🗄  %s " % paint.gray("Creating shared Veeva assets..."))
+def ACTION_share_assets(env, i):
 	# MUST BE LAST LINKING SCRIPT RUN D:
 
 	# relink asset refs to use '../shared/' veeva notation
 	relink_cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "relink.py")
 	for out in execute(["python3", relink_cmd
-					   , "--root", env['ROOT_DIR'],
+					   , "--root", env['ROOT_DIR']
 					   , "--share-assets", env['DEST_DIR'] ]):
 		print(out)
 
 	# copy globals into build
 	copy_cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "assets.py")
 	for out in execute(["python3", copy_cmd, 
+						"--use-shared",
 						"--root", env['ROOT_DIR'], 
 						env['GLOBALS_DIR'], 
 						os.path.join(env['DEST_DIR'], env['GLOBALS_DIR']) ]):
@@ -235,7 +240,7 @@ def ACTION_take_screenshots(env, i):
 	folder = env['DEST_DIR']
 	config = env['CONFIG_FILE_NAME']
 
-	for out in execute(["python3", cmd, "--root", root, folder, config]):
+	for out in execute(["python3", cmd, "--shared-assets", "--root", root, folder, config]):
 		print(out)
 
 @action("📬  %s " % paint.gray("Packaging slides..."))
@@ -320,7 +325,9 @@ def doScript():
 			"nuke": ACTION_nuke,
 			"scaffold": ACTION_scaffold,
 			"locals": ACTION_inline_local,
+			"localsonly": ACTION_inline_local,
 			"globals": ACTION_inline_global,
+			"globalsonly": ACTION_inline_global,
 			"sass": ACTION_render_sass,
 			"templates": ACTION_render_templates,
 			"screenshots": ACTION_take_screenshots,
@@ -330,7 +337,9 @@ def doScript():
 			"controls": ACTION_generate_ctls,
 			"publish": ACTION_ftp_upload,
 			"rel2veev": ACTION_rel_2_veev,
-			"integrate": ACTION_integrate_all
+			"integrate": ACTION_integrate_all,
+			"share_assets": ACTION_share_assets,
+			"render_slides": ACTION_render_templates
 		}
 
 		requires = {
@@ -359,7 +368,11 @@ def doScript():
 			"publish": ["publish"],
 			"relink": ["rel2veev"],
 			"veev2rel": [],
-			"rel2veev": ["rel2veev"]
+			"rel2veev": ["rel2veev"],
+			"share_assets": ["share_assets"],
+			"locals": ["localsonly"],
+			"globals": ["globalsonly"],
+			"render_slides": ["render_slides"]
 		}
 
 		def replace_with_function(plan):
