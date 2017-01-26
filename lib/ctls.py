@@ -138,7 +138,7 @@ def createRecordString(filename, version=None, email=None, username=None, passwo
 		if meta['veeva_title'] is not None:
 			pieces.append("Name=" + str(meta['veeva_title']))
 		else:
-			pieces.append("Name=" + os.path.splitext(os.path.basename(meta[filename]))[0])
+			pieces.append("Name=" + os.path.splitext(os.path.basename(meta['filename']))[0])
 
 	pieces.append('')
 
