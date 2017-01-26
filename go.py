@@ -261,6 +261,7 @@ def ACTION_generate_ctls(env, i):
 
 	flags = ["python3"
 				, cmd
+				, "--novalidate"
 				, "--root", env['ROOT_DIR']
 				, "--u", env['VEEVA_USERNAME']
 				, "--pwd", env['VEEVA_PASSWORD']
@@ -279,6 +280,7 @@ def ACTION_ftp_upload(env, i):
 	
 	cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "publish.py")
 	for out in execute(["python3", cmd
+		, "--novalidate"
 		, "--zip", os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['ZIPS_DIR']))
 		, "--ctl", os.path.abspath(os.path.join(env['ROOT_DIR'],env['DEST_DIR'],env['CTLS_DIR']))
 		, "--host", env['VEEVA_SERVER']

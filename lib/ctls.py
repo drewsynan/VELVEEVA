@@ -39,7 +39,7 @@ import uuid
 
 def parse_meta(filename):
 	slide_file = parse_slide(filename)
-	if slide_file is None: return None
+	if slide_file is None: return {'filename': os.path.basename(filename), 'veeva_title': os.path.basename(filename), 'veeva_description': os.path.basename(filename)}
 
 
 	with ZipFile(filename, 'r') as z:
@@ -156,13 +156,18 @@ def parseFolder(src, **kwargs):
 	source_path = os.path.join(root, src)
 	dest_path = os.path.join(root, out)
 
+	novalidate = kwargs["novalidate"]
+
 	if not os.path.exists(dest_path): os.makedirs(dest_path)
 
 
 	matches = []
 	for root, dirnames, filenames in os.walk(source_path):
 		for filename in fnmatch.filter(filenames, "*.zip"):
-			if is_slide(os.path.join(root,filename)): matches.append(os.path.join(root,filename))
+			if novalidate:
+				matches.append(os.path.join(root,filename))
+			else:
+				if is_slide(os.path.join(root,filename)): matches.append(os.path.join(root,filename))
 
 
 	control_files = [createRecordString(m, version=version, username=username, password=password, email=email) for m in matches]
@@ -184,6 +189,7 @@ def runScript():
 	parser.add_argument("--root", nargs=1,
 		 help="Optional root directory for the project (used for versioning) current working directory used if none specified", 
 		 required=False)
+	parser.add_argument("--novalidate", action="store_true", help="Don't check to see if each zip file is a slide")
 
 	if len(sys.argv) == 1:
 		parser.print_help()
@@ -201,7 +207,7 @@ def runScript():
 	SOURCE = args.source[0]
 	DEST = args.destination[0]
 
-	parseFolder(SOURCE, out=DEST, root=ROOT, username=args.u[0], password=args.pwd[0], email=email)
+	parseFolder(SOURCE, out=DEST, root=ROOT, username=args.u[0], password=args.pwd[0], email=email, novalidate=args.novalidate)
 
 if __name__ == "__main__":
 	sys.exit(runScript())

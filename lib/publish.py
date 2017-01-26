@@ -13,7 +13,7 @@ import re
 import os
 import sys
 
-def match_zips_to_ctls(zip_path, ctl_path):
+def match_zips_to_ctls(zip_path, ctl_path, novalidate=False):
 
 	def glob_walk(path, ext):
 		matches = []
@@ -38,7 +38,11 @@ def match_zips_to_ctls(zip_path, ctl_path):
 	zips = glob_walk(zip_path, '.zip')
 	ctls = glob_walk(ctl_path, '.ctl')
 
-	good_zips = [x for x in zips if does_file_exist(x) and is_slide(x)]
+	if novalidate:
+		good_zips = [x for x in zips if does_file_exist(x)]
+	else:
+		good_zips = [x for x in zips if does_file_exist(x) and is_slide(x)]
+
 	good_ctls = [x for x in ctls if does_file_exist(x)]
 
 	both = list(set([base_filename(x) for x in good_zips]) & set([base_filename(x) for x in good_ctls]))
@@ -125,6 +129,7 @@ def runScript(verbose=False):
 	parser.add_argument("--pwd", nargs=1, help="Veeva password", required=True)
 	parser.add_argument("--root", nargs=1, help="Project root folder", required=False)
 	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
+	parser.add_argument("--novalidate", action="store_true", help="Don't check to see if zip files are slides")
 
 	if len(sys.argv) == 1:
 		parser.print_help()
@@ -132,7 +137,7 @@ def runScript(verbose=False):
 	else:
 		args = parser.parse_args()
 
-	zips, ctls = match_zips_to_ctls(args.zip[0], args.ctl[0])
+	zips, ctls = match_zips_to_ctls(args.zip[0], args.ctl[0], args.novalidate)
 
 	try:
 		ftp_publish(zips=zips, ctls=ctls, username=args.u[0], password=args.pwd[0], server=args.host[0], verbose=args.verbose)
