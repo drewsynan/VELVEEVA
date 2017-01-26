@@ -419,8 +419,8 @@ def doScript():
 			for out in execute([ENV['PREFLIGHT_HOOK']]):
 				print(out)
 
-		print(banner())
-		print("👉  %s 👈\n" % paint.bold.yellow(ENV['PROJECT_NAME']))
+		#print(banner())
+		#print("👉  %s 👈\n" % paint.bold.yellow(ENV['PROJECT_NAME']))
 
 		try:
 			with concurrent.futures.ProcessPoolExecutor() as executor:
@@ -460,7 +460,7 @@ def doScript():
 			print(e)
 			sys.exit(1)
 
-		print(paint.bold.green("\n🍕  Yum!"))
+		#print(paint.bold.green("\n🍕  Yum!"))
 	
 	#print(flags)
 	plan = build_planner(flags)
