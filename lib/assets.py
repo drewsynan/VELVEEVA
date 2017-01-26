@@ -80,6 +80,8 @@ def runScript(ASYNC=False):
 		help="Only inject files in the root of the destination (don't look for slide folders)")
 	parser.add_argument("--notparallel", action="store_true", help="Run without concurrency")
 	parser.add_argument("--root", nargs=1, help="Project root directory (current directory is used if nont is specified")
+	parser.add_argument("--use-shared", action="store_true", 
+		help="Use Veeva's shared asset feature")
 	parser.add_argument("--verbose", action="store_true", help="Chatty Cathy")
 
 	if len(sys.argv) == 1:
@@ -90,6 +92,7 @@ def runScript(ASYNC=False):
 
 		VERBOSE = args.verbose
 		ROOT_ONLY = args.inject_root_only
+		VEEVA_SHARED = args.use_shared
 		ASYNC = (not args.notparallel)
 
 		if args.root is None:
@@ -109,8 +112,8 @@ def runScript(ASYNC=False):
 		if not os.path.exists(os.path.join(root,dest)):
 			os.makedirs(os.path.join(root,dest))
 
-		if ROOT_ONLY:
-			# dump files into the root
+		if ROOT_ONLY or VEEVA_SHARED:
+			# dump files into the root, or shared assets subfolder
 			inject(root, src, dest, verbose=VERBOSE)
 		else:
 			subdirs = [os.path.join(dest,sd) for sd in next(os.walk(os.path.join(root,dest)))[1]]

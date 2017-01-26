@@ -189,6 +189,25 @@ def ACTION_inline_global(env, i):
 	for out in execute(["python3", cmd, "--root", env['ROOT_DIR'], env['GLOBALS_DIR'], env['DEST_DIR']]):
 		print(out)
 
+@action()
+def ACTION_share_globals(env, i):
+	# MUST BE LAST LINKING SCRIPT RUN D:
+
+	# relink asset refs to use '../shared/' veeva notation
+	relink_cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "relink.py")
+	for out in execute(["python3", relink_cmd
+					   , "--root", env['ROOT_DIR'],
+					   , "--share-assets", env['DEST_DIR'] ]):
+		print(out)
+
+	# copy globals into build
+	copy_cmd = os.path.join(env['VELVEEVA_DIR'], "lib", "assets.py")
+	for out in execute(["python3", copy_cmd, 
+						"--root", env['ROOT_DIR'], 
+						env['GLOBALS_DIR'], 
+						os.path.join(env['DEST_DIR'], env['GLOBALS_DIR']) ]):
+		print(out)
+
 @action("💅  %s " % paint.gray("Compiling SASS..."))
 def ACTION_render_sass(env, i):
 	# env['progress'].update(i)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import activate_venv
-from veevutils import banner, VALID_SLIDE_EXTENSIONS, parse_slide_name_from_href, veeva_composer, path_composer
+from veevutils import banner, VALID_SLIDE_EXTENSIONS, parse_slide_name_from_href, veeva_composer, path_composer, CONFIG_FILENAME
 
 from bs4 import BeautifulSoup # also requires lxml
 from functools import reduce
@@ -13,6 +13,7 @@ import os
 import re
 import sys
 import textwrap
+import json
 
 @curry
 def action(name, selector, action_closure, composer, source):
@@ -101,6 +102,10 @@ def fix_document_root(composer, path):
 @curry
 def fix_relative_path(composer, path):
 	return re.sub("(\.\.\/)*", "", path)
+
+@curry
+def fix_shared_asset_path(globals_dir, composer, path):
+	return re.sub("(?<=\.\./" + globals_dir + "/", "shared" + "/" + globals_dir, path)
 
 @curry
 def fix_hyperlink_protocol(composer, href):
@@ -248,6 +253,52 @@ def mv_refs(old_slide_name, new_slide_name, src):
 
 	return run_actions(actions, src)
 
+@curry
+def share_assets(globals_dir, src):
+	actions = [
+		action(
+			"stylesheets",
+			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
+			attribute_transform("href", fix_shared_asset_path(globals_dir)),
+			composer),
+		action(
+			"scripts",
+			lambda soup: soup.find_all("script", src=True),
+			attribute_transform("src", fix_shared_asset_path(globals_dir)),
+			composer),
+		action(
+			"images",
+			lambda soup: soup.find_all("img"),
+			attribute_transform("src", fix_shared_asset_path(globals_dir)),
+			composer),
+		action(
+			"iframes",
+			lambda soup: soup.find_all("iframe"),
+			attribute_transform("src", fix_shared_asset_path(globals_dir)),
+			composer),
+		action(
+			"videos",
+			lambda soup: soup.find_all("video", src=True),
+			attribute_transform("src", fix_shared_asset_path(globals_dir)),
+			composer),
+		action(
+			"hyperlink_paths",
+			lambda soup: soup.find_all("a", href=True),
+			attribute_transform("href", fix_shared_asset_path(globals_dir)),
+			composer),
+		action(
+			"hyperlink_protocols",
+			lambda soup: soup.find_all("a", href=True),
+			attribute_transform("href", fix_hyperlink_protocol),
+			veeva_composer("veeva:")),
+		action(
+			"utf",
+			lambda soup: soup.find_all("meta", charset=True),
+			add_meta(charset="utf-8"),
+			veeva_composer("veeva:"))
+	]
+	return run_actions(actions, src)
+
 def parse_folder(path, **kwargs):
 	actions = kwargs.get("actions", [])
 	CUTOFF = kwargs.get("cutoff", float("inf"))
@@ -288,6 +339,7 @@ def runScript():
 	group.add_argument("--veev2rel", nargs="+", metavar="source", help="recursively replace veeva links with relative links")
 	group.add_argument("--rel2veev", nargs="+", metavar="source", help="recursively replace relative links with veeva link")
 	group.add_argument("--integrate-all", nargs="+", metavar="source", help="recursively resolve relative links and replace hrefs with veeva")
+	group.add_argument("--share-assets", nargs="+", metavar="source", help="recursively replace links to global assets with veeva ../shared/ prefix")
 
 	if len(sys.argv) == 1:
 		parser.print_help()
@@ -331,6 +383,31 @@ def runScript():
 			for folder in folders:
 				parse_folder(folder, actions=[integrate_all(composer)], verbose=verbose)
 			return
+
+	if args.share_assets is not None:
+		if args.root:
+			veeva_root = args.root
+		else:
+			veeva_root = os.getcwd()
+
+		config_file = os.path.join(veeva_root, CONFIG_FILENAME)
+
+		if not os.exists(config_file):
+			print("Relink.py: could not load config file", file=sys.stderr)
+			return 128
+		else:
+			with open(config_file) as f:
+				config = json.load(f)
+
+		global_assets = config['MAIN']['globals_dir']
+
+		folders = args.share_assets
+		if not all_exists(folders):
+			return 128
+		else:
+			for folder in folders:
+				parse_folder(folder, actions=[share_assets(global_assets)], verbose=verbose)
+
 
 if __name__ == "__main__": 
 	sys.exit(runScript())

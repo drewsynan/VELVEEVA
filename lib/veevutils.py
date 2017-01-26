@@ -13,6 +13,7 @@ from pymonad import *
 import uuid
 
 VALID_SLIDE_EXTENSIONS = ['.htm', '.html', '.pdf', '.jpg', '.jpeg', '.mp4']
+CONFIG_FILENAME = "VELVEEVA-config.json"
 
 def get_extension_regex(exts=VALID_SLIDE_EXTENSIONS):
 	return "(%s)" % "|".join(exts)
