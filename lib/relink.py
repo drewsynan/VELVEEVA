@@ -274,6 +274,11 @@ def share_assets(globals_dir, composer, src):
 			attribute_transform("src", fix_shared_asset_path(globals_dir)),
 			composer),
 		action(
+			"inline background images",
+			lambda soup: soup.find_all(style=True),
+			attribute_transform("style", fix_shared_asset_path(globals_dir)),
+			composer),
+		action(
 			"iframes",
 			lambda soup: soup.find_all("iframe"),
 			attribute_transform("src", fix_shared_asset_path(globals_dir)),
