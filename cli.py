@@ -73,7 +73,8 @@ def dispatch(command_name, args):
 		elif callable(cmd):
 			cmd(args)
 		else:
-			sys.exit(subprocess.call([os.path.join(BASE_DIR, cmd)] + args, shell=True))
+			call = [os.path.join(BASE_DIR, cmd)] + args
+			sys.exit(subprocess.call(' '.join(call), shell=True))
 	else:
 		print("'%s' is not a valid velveeva command" % command_name, file=sys.stderr)
 
