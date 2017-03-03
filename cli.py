@@ -67,13 +67,13 @@ def exec_util(args):
 
 def dispatch(command_name, args):
 	if COMMANDS.get(command_name, None) is not None:
-		cmd = os.path.join(BASE_DIR, COMMANDS[command_name]['command'])
+		cmd = COMMANDS[command_name]['command']
 		if cmd is None:
 			return
 		elif callable(cmd):
 			cmd(args)
 		else:
-			sys.exit(subprocess.call([cmd] + args, shell=True))
+			sys.exit(subprocess.call([os.path.join(BASE_DIR, cmd)] + args, shell=True))
 	else:
 		print("'%s' is not a valid velveeva command" % command_name, file=sys.stderr)
 
