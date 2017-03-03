@@ -67,7 +67,7 @@ def exec_util(args):
 
 def dispatch(command_name, args):
 	if COMMANDS.get(command_name, None) is not None:
-		cmd = COMMANDS[command_name]['command']
+		cmd = os.path.join(BASE_DIR, COMMANDS[command_name]['command'])
 		if cmd is None:
 			return
 		elif callable(cmd):
@@ -86,7 +86,8 @@ def main():
 	
 
 PROGNAME = 'velveeva'
-UTILS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),'lib')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UTILS_DIR = os.path.join(BASE_DIR,'lib')
 COMMANDS = {
 	'go': {
 		'command': './go.py',
