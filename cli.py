@@ -22,15 +22,15 @@ def usage():
 		return ' ' * (10 - len(name))
 
 	print("SYNPOSIS")
-	for command in COMMANDS:
+	for command in sorted(COMMANDS):
 		indented(PROGNAME + ' ' + command + ' ' + COMMANDS[command]['usage'])
 
 	print("\nDESCRIPTION")
 	indented("The combined cli utility for Velveeva")
 	indented("The following options are available\n\n")
 
-	for command in COMMANDS:
-		indented(command + pad(command) + COMMANDS[command]['help'])
+	for command in sorted(COMMANDS):
+		indented(PROGNAME + ' ' + command + pad(command) + COMMANDS[command]['help'])
 
 
 
@@ -40,6 +40,10 @@ def util_help():
 
 	for util in parseUtils():
 		indented(PROGNAME + " util " + util)
+
+def help(args):
+	print(banner())
+	usage()
 
 def exec_util(args):
 	if not args:
@@ -109,6 +113,11 @@ COMMANDS = {
 		'command': None,
 		'usage': '',
 		'help': 'update to the latest VELVEEVA-cli utility docker image'
+	},
+	'help': {
+		'command': help,
+		'usage': '',
+		'help': 'display this message'
 	}
 }
 
