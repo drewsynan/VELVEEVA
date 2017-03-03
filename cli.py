@@ -49,7 +49,6 @@ def exec_util(args):
 
 	util = args[0]
 	util_args = args[1:]
-
 	utils = parseUtils()
 
 	if util is None:
@@ -57,7 +56,8 @@ def exec_util(args):
 		util_help()
 	elif util in utils:
 		script = os.path.join(UTILS_DIR,util+".py")
-		sys.exit(subprocess.call([script] + util_args, shell=True))
+		call = [script] + util_args
+		sys.exit(subprocess.call(' '.join(call), shell=True))
 
 	else:
 		print(util + ' is not a recognized Velveeva util command')
