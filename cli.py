@@ -86,7 +86,7 @@ def main():
 	
 
 PROGNAME = 'velveeva'
-UTILS_DIR = 'lib'
+UTILS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),'lib')
 COMMANDS = {
 	'go': {
 		'command': './go.py',
