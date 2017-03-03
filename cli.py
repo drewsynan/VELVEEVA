@@ -36,7 +36,7 @@ def usage():
 
 def util_help():
 	print("UTILS")
-	indented("(For more information use: velveeva util util_name --help)")
+	indented("(For more information use: velveeva util util_name --help)\n")
 
 	for util in parseUtils():
 		indented(PROGNAME + " util " + util)
