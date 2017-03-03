@@ -61,7 +61,7 @@ def exec_util(args):
 
 	else:
 		print(util + ' is not a recognized Velveeva util command')
-		logo()
+		print(banner())
 		util_help()
 
 
