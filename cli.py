@@ -3,7 +3,7 @@ from lib import activate_venv
 from lib.veevutils import banner
 from painter import paint
 
-import sys, os, glob, stat, subprocess
+import sys, os, glob, stat, subprocess, pty
 
 def parseUtils():
 	def isExecutable(f):
@@ -45,6 +45,28 @@ def help(args):
 	print(banner())
 	usage()
 
+def exec_cmd(cmd, args=[]):
+	call = [os.path.join(BASE_DIR, cmd)] + args
+	process = subprocess.Popen([cmd] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+	while True:
+		try:
+			out = process.stdout.read(1).decode('utf-8')
+		except KeyboardInterrupt:
+			sys.stdout.write("\n")
+			return 1
+
+		if out == '' and process.poll() != None:
+			for err in process.stderr.readlines():
+				sys.stdout.write(err.decode('utf-8'))
+			sys.stderr.flush()
+			break
+		if out != '':
+			sys.stdout.write(out)
+			sys.stdout.flush()
+
+	return process.returncode
+
 def exec_util(args):
 	if not args:
 		print(banner())
@@ -58,15 +80,13 @@ def exec_util(args):
 	if util is None:
 		print(banner())
 		util_help()
+		return 1
 	elif util in utils:
 		script = os.path.join(UTILS_DIR,util+".py")
-		call = [script] + util_args
-		sys.exit(subprocess.call(' '.join(call), shell=True))
-
+		return exec_cmd(script, util_args)
 	else:
 		print(util + ' is not a recognized Velveeva util command')
-		print(banner())
-		util_help()
+		return 1
 
 
 def dispatch(command_name, args):
@@ -77,8 +97,9 @@ def dispatch(command_name, args):
 		elif callable(cmd):
 			cmd(args)
 		else:
-			call = [os.path.join(BASE_DIR, cmd)] + args
-			sys.exit(subprocess.call(' '.join(call), shell=True))
+			return exec_cmd(os.path.join(BASE_DIR, cmd), args)
+
+
 	else:
 		print("'%s' is not a valid velveeva command" % command_name, file=sys.stderr)
 
@@ -86,8 +107,9 @@ def main():
 	if len(sys.argv) < 2:
 		print(banner(subtitle='An easier way to manage, maintain,\n and build Veeva iRep presentations'))
 		usage()
+		return 1
 	else:
-		dispatch(sys.argv[1], sys.argv[2:])
+		return dispatch(sys.argv[1], sys.argv[2:])
 	
 
 PROGNAME = 'velveeva'
@@ -122,4 +144,4 @@ COMMANDS = {
 }
 
 if __name__ == '__main__':
-	main()
+	sys.exit(main())

@@ -36,7 +36,7 @@ def main():
 			config_value = reduce(focus, key_names, config)
 			print(config_value, file=sys.stdout)
 		except KeyError:
-			raise KeyError("Could not find key " + key_names + " in " + CONFIG_FILENAME)
+			raise KeyError("Could not find key " + sys.argv[1] + " in " + CONFIG_FILENAME)
 
 	return 0
 

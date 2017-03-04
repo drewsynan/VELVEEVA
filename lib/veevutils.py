@@ -12,6 +12,8 @@ import json
 from pymonad import *
 import uuid
 
+paint.enabled = True
+
 VALID_SLIDE_EXTENSIONS = ['.htm', '.html', '.pdf', '.jpg', '.jpeg', '.mp4']
 CONFIG_FILENAME = "VELVEEVA-config.json"
 
