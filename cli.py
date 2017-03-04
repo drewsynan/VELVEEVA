@@ -11,7 +11,7 @@ def parseUtils():
 	scripts = [util for util in glob.glob(os.path.join(UTILS_DIR, "*.py")) if isExecutable(util)]
 	names = [os.path.splitext(os.path.basename(script))[0] for script in scripts]
 
-	return names
+	return sorted(names)
 
 
 def indented(message):
