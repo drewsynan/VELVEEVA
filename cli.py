@@ -140,6 +140,11 @@ COMMANDS = {
 		'command': help,
 		'usage': '',
 		'help': 'display this message'
+	},
+	'version': {
+		'command': None,
+		'usage': '',
+		'help': 'velveeva-cli version info'
 	}
 }
 
