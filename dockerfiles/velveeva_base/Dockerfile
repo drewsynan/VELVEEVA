@@ -1,5 +1,5 @@
 FROM ubuntu:15.10
-MAINTAINER Drew Synan "dsynan@sandboxww.com"
+MAINTAINER Drew Synan "dsynan@gmail.com"
 
 RUN apt-get update && apt-get install -y \
 	zip \
@@ -19,4 +19,4 @@ RUN apt-get update && apt-get install -y \
 	python-numpy \
 	python-scipy \
 	gfortran
-RUN git clone -b master --single-branch https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install
+RUN git clone -b master --single-branch https://github.com/drewsynan/VELVEEVA.git && VELVEEVA/install

@@ -1,5 +1,5 @@
 FROM drewsynan/velveeva_base
-MAINTAINER Drew Synan "dsynan@sandboxww.com"
+MAINTAINER Drew Synan "dsynan@gmail.com"
 
 RUN cd /VELVEEVA && git pull
 RUN locale-gen en_US.UTF-8 && update-locale
