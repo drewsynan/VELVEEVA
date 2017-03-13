@@ -216,7 +216,7 @@ class Prompt(Spec):
 		if self.checkSilence(silent):
 			return self.parser()
 		else:
-			return self.parser(input("What is the %s%s? " % (self.prompt, str(self.parser))))
+			return self.parser(input("What is the %s%s? " % (self.prompt, str(self.parser))).replace("\r",""))
 
 def prompt(prompt, parser=str_default('')):
 	"""Factory function for prompters"""
