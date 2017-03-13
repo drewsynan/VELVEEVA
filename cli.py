@@ -51,14 +51,14 @@ def exec_cmd(cmd, args=[]):
 
 	while True:
 		try:
-			out = process.stdout.read(1).decode('utf-8')
+			out = process.stdout.read(1).decode('utf-8','replace')
 		except KeyboardInterrupt:
 			sys.stdout.write("\n")
 			return 1
 
 		if out == '' and process.poll() != None:
 			for err in process.stderr.readlines():
-				sys.stdout.write(err.decode('utf-8'))
+				sys.stdout.write(err.decode('utf-8','replace'))
 			sys.stderr.flush()
 			break
 		if out != '':
