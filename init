@@ -128,7 +128,7 @@ def confirm(prompt, default="y"):
 	if default != '':
 		default = " [%s]" % default
 
-	confirm = input("\n%s%s? " % (prompt, default))
+	confirm = input("\n%s%s? " % (prompt, default)).replace("\r", "")
 
 	return not (confirm.upper() == 'N' or confirm.upper() == 'NO')
 
