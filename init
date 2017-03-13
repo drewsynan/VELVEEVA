@@ -97,7 +97,7 @@ def make_default_parser(parser, empty=lambda x: False):
 	return the_parser
 
 default_parsers = {
-	"string": make_default_parser(str, lambda x: x == ''),
+	"string": make_default_parser(str, lambda x: x.replace('\r','') == ''), # strip out windows line endings
 	"int": make_default_parser(int)
 }
 """parsers: A dictionary of parser creators that accept a default value, and return a parser
