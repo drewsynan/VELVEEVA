@@ -3,7 +3,7 @@ from lib import activate_venv
 from lib.veevutils import banner
 from painter import paint
 
-import sys, os, glob, stat, subprocess, pty
+import codecs, sys, os, glob, stat, subprocess, pty
 
 def parseUtils():
 	def isExecutable(f):
@@ -104,6 +104,9 @@ def dispatch(command_name, args):
 		print("'%s' is not a valid velveeva command" % command_name, file=sys.stderr)
 
 def main():
+
+	sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+
 	if len(sys.argv) < 2:
 		print(banner(subtitle='An easier way to manage, maintain,\n and build Veeva iRep presentations'))
 		usage()
