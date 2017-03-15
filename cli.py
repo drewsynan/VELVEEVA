@@ -112,7 +112,7 @@ def main():
 		usage()
 		return 1
 	else:
-		return dispatch(sys.argv[1], sys.argv[2:])
+		return dispatch(sys.argv[1].decode('utf-8','replace'), sys.argv[2:].decode('utf-8','replace'))
 	
 
 PROGNAME = 'velveeva'
