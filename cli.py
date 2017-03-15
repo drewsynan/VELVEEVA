@@ -45,20 +45,52 @@ def help(args):
 	print(banner())
 	usage()
 
+def maybe_multibyte(b0, stream):
+	# todo: deal with unicode BOM
+	
+	if not len(b0): return ''
+
+	# from https://en.wikipedia.org/wiki/UTF-8#Description
+	ONE_BYTE     = 0b00000000
+	TWO_BYTES    = 0b11000000
+	THREE_BYTES  = 0b11100000
+	FOUR_BYTES   = 0b11110000
+	MAX          = 0b11110111
+
+	multibyte = False
+	char = b0
+	first_byte = int.from_bytes(b0, sys.byteorder)
+
+	if first_byte < TWO_BYTES:
+		pass
+	elif first_byte < THREE_BYTES:
+		multibyte = True
+		char = char + stream.read(1)
+	elif first_byte < FOUR_BYTES:
+		multibyte = True
+		char = char + stream.read(2)
+	elif first_byte < MAX:
+		multibyte = True
+		char = char + stream.read(3)
+
+	decoded = char.decode('utf-8')
+
+	return decoded
+
 def exec_cmd(cmd, args=[]):
 	call = [os.path.join(BASE_DIR, cmd)] + args
 	process = subprocess.Popen([cmd] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	while True:
 		try:
-			out = process.stdout.read(1).decode('utf-8','replace')
+			out = maybe_multibyte(process.stdout.read(1), process.stdout)
 		except KeyboardInterrupt:
 			sys.stdout.write("\n")
 			return 1
 
 		if out == '' and process.poll() != None:
 			for err in process.stderr.readlines():
-				sys.stdout.write(err.decode('utf-8','replace'))
+				sys.stdout.write(err.decode('utf-8'))
 			sys.stderr.flush()
 			break
 		if out != '':
@@ -105,14 +137,14 @@ def dispatch(command_name, args):
 
 def main():
 
-	sys.stdout = codecs.getwriter('utf-8')(sys.stdout)
+	sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
 
 	if len(sys.argv) < 2:
 		print(banner(subtitle='An easier way to manage, maintain,\n and build Veeva iRep presentations'))
 		usage()
 		return 1
 	else:
-		return dispatch(sys.argv[1].decode('utf-8','replace'), sys.argv[2:].decode('utf-8','replace'))
+		return dispatch(sys.argv[1], sys.argv[2:])
 	
 
 PROGNAME = 'velveeva'
