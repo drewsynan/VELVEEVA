@@ -45,9 +45,9 @@ def help(args):
 	print(banner())
 	usage()
 
-def maybe_multibyte(b0, stream):
+def maybe_multibyte(stream):
 	# todo: deal with unicode BOM
-	
+	b0 = stream.read(1)
 	if not len(b0): return ''
 
 	# from https://en.wikipedia.org/wiki/UTF-8#Description
@@ -83,7 +83,7 @@ def exec_cmd(cmd, args=[]):
 
 	while True:
 		try:
-			out = maybe_multibyte(process.stdout.read(1), process.stdout)
+			out = maybe_multibyte(process.stdout)
 		except KeyboardInterrupt:
 			sys.stdout.write("\n")
 			return 1
@@ -136,7 +136,6 @@ def dispatch(command_name, args):
 		print("'%s' is not a valid velveeva command" % command_name, file=sys.stderr)
 
 def main():
-
 	sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
 
 	if len(sys.argv) < 2:
