@@ -103,7 +103,7 @@ Sometimes it's useful to be able to create the surrounding folder around the sli
 
 The utility takes a path and an optional wild-card filter, and creates a folder with the same name (minus the extension) around the files it finds. For example, to create slide folders around all pdf files in the folder `example`:
 ```bash
-project-root$ VELVEEVA/lib/folders.py example "*.pdf"
+project-root$ VELVEEVA/lib/folders.py ./example_dir --filter "*.pdf"
 ```
 (Note the quotes around the wild-card string... this is used to keep bash from interpreting '*' as a special character)
 ## Taking Screenshots
