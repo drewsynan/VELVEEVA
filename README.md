@@ -69,24 +69,24 @@ from the project root directory. By default, the built files are created in `bui
 ## Publishing slides
 If you have configured your iRep FTP server login information, either in the setup phase, or by later editing the `VELVEEVA-config.json` file in the project's root directory, VELVEEVA can automatically generate any necessary control files and upload them to the server for you. To publish files, first run 
 ```bash
-project-root$ VELVEEVA/go
+project-root$ VELVEEVA/go.py
 ```
 to make the slides, and then
 ```bash
-project-root$ VELVEEVA/go --nobake --controls --publishonly
+project-root$ VELVEEVA/go.py --nobake --controls --publishonly
 ```
 to upload files. To upload with more progress and status information, you can use the command
 ```bash
-project-root$ VELVEEVA/go --nobake --controls --publishonly --verbose
+project-root$ VELVEEVA/go.py --nobake --controls --publishonly --verbose
 ```
 
 # Other Topics
 ## Prefixing slide names
 Since each slide must have a unique name on the Veeva server, it is often necessary to rename slides with a prefix or suffix to ensure uniqueness if two versions of a key message must exist simeltaneously. VELVEEVA provides tooling (`prefix.py`) to make this process eaiser. The tool works by renaming slide folders, and the internal slide file, and then changing any internal references in any of the slides in the folder specified to reflect the new name. Because the prefixing tool only works on built (but not zipped files) first run the build command (making sure to have resolved any relative links to veeva: links). For example, to prefix a presentation with **my_specific_prefix_**, it would look something like this
 ```bash
-project-root$ VELVEEVA/go --clean --screenshots
+project-root$ VELVEEVA/go.py --clean --screenshots
 project-root$ VELVEEVA/lib/prefix.py my_specific_prefix_ build
-project-root$ VELVEEVA/go --packageonly
+project-root$ VELVEEVA/go.py --packageonly
 (etc)
 ```
 👴 For further information, run `VELVEEVA/lib/prefix.py --help`.
@@ -159,7 +159,7 @@ zip -r ./build/Digital_Sales_Aid_2016.zip ./build/Digital_Sales_Aid_2016
 
 When used with a makefile, and `velveeva-cli`, the process can be made as simple as running `make` in the project directory, and `make publish` to deploy.
 
-An example makefile below
+An example makefile below using velveeva-cli
 
 ```makefile
 .PHONY : build
