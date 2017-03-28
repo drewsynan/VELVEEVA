@@ -75,7 +75,7 @@ command -v pip3 >/dev/null 2>&1 || { printf "💩 pip3 not found\n👉 try $pkgm
 command -v virtualenv >/dev/null 2>&1 || { 
 	if [[ "$platform" == 'Ubuntu' ]]
 	then
-		printf "💩 virtualenv not found\n👉 try $pkgman virtualenv\n\n" >&2
+		printf "💩 virtualenv not found\n👉 try pip3 install virtualenv\n\n" >&2
 	else
 		printf "💩 virtualenv not found\n👉 try pip3 install virtualenv\n\n" >&2
 	fi
@@ -147,6 +147,22 @@ then
 			printf "💩 libjpeg not found\n👉 try $pkgman libjpeg\n\n"
 		fi
 
+		exitstatus=1
+	fi
+fi
+
+# check for zlib on linus
+if [[ "$unamestring" == "Linux" ]]
+then
+	if [-z `find /usr/include -name zlib.h 2>/dev/null` \
+	then
+		if [[ "$platform" == 'Ubuntu' ]]
+		then
+			printf "💩 zlib not found\n👉 try $pkgman zlib1g-dev\n\n"
+		else
+			printf "💩 zlib not found\n👉 try $pkgman zlib-devel\n\n"
+		fi
+		
 		exitstatus=1
 	fi
 fi
