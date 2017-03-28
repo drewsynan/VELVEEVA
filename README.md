@@ -35,6 +35,7 @@ VELVEEVA has several dependencies needing to be met before installing
 * libxml2 headers (ubuntu: `sudo apt-get install libxml2-dev`)
 * libxslt headers (ubuntu: `sudo apt-get install libsxlt-dev`)
 * libexempi (ubuntu: `sudo apt-get install libexempi-dev`)
+* zlib (ubuntu: `sudo apt-get install zlib1g-dev`)
 
 💣 If installing on **Windows**
 * good luck! A version of velveeva-cli for windows is forthcoming. As of this writing, you might be able to install and run under the Windows Subsystem for Linux.
