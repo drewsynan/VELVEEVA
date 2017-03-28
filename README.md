@@ -2,7 +2,7 @@
 
 An easier way to manage, maintain, and build Veeva iRep presentations
 
-**🎉UPDATE: You Probably want [velveeva-cli](http://www.github.com/gacomm/velveeva-cli).** It's a lot easier to use (especially now that there are native Docker clients on OSX and Windows (!) as well as Linux), and handles all the dependency headaches for you. However, if you're feeling adventurous, or you don't want the container overhead, press on...
+**🎉UPDATE: You Probably want [velveeva-cli](http://www.github.com/drewsynan/velveeva-cli).** It's a lot easier to use (especially now that there are native Docker clients on OSX and Windows (!) as well as Linux), and handles all the dependency headaches for you. However, if you're feeling adventurous, or you don't want the container overhead, press on...
 
 ## Features
 * 📷 Automatic screenshot, thumbnail, and zip file generation
@@ -37,7 +37,7 @@ VELVEEVA has several dependencies needing to be met before installing
 * libexempi (ubuntu: `sudo apt-get install libexempi-dev`)
 
 💣 If installing on **Windows**
-* good luck! Probably your best bet is using velveeva-cli, but bash for Windows could also be an option.
+* good luck! A version of velveeva-cli for windows is forthcoming. As of this writing, you might be able to install and run under the Windows Subsystem for Linux.
 
 
 ## Quick Start: Installation/Creating a new project
@@ -99,11 +99,11 @@ To change references in only the built version of the presentation, first build 
 
 👴 For further information, run `VELVEEVA/lib/relink.py --help`
 ## Generating enclosing slide folders
-Sometimes it's useful to be able to create the surrounding folder around the slide file (in the case of JPEG or PDF slides). VELVEEVA has a utility (`make_enclosing_folders.py`) to quickly do this.
+Sometimes it's useful to be able to create the surrounding folder around the slide file (in the case of JPEG or PDF slides). VELVEEVA has a utility (`folders.py`) to quickly do this.
 
 The utility takes a path and an optional wild-card filter, and creates a folder with the same name (minus the extension) around the files it finds. For example, to create slide folders around all pdf files in the folder `example`:
 ```bash
-project-root$ VELVEEVA/lib/make_enclosing_folders.py example "*.pdf"
+project-root$ VELVEEVA/lib/folders.py example "*.pdf"
 ```
 (Note the quotes around the wild-card string... this is used to keep bash from interpreting '*' as a special character)
 ## Taking Screenshots
@@ -118,9 +118,9 @@ The FTP control file generator will only work on build (and zipped) slides. It c
 * For jpeg slides, the generator reads the title and description fields of the xmp metadata (editible within Photoshop or Adobe Bridge)
 If no metadata is found, the title and description fields are omitted altogether from the generated control files.
 
-Control files can also be generated on arbitrary folders of zip files using the `genctls.py` utility. For example, to generate control files for all zips within the `arbitrary_zips` folder:
+Control files can also be generated on arbitrary folders of zip files using the `ctls.py` utility. For example, to generate control files for all zips within the `arbitrary_zips` folder:
 ```bash
-project-root$ VELVEEVA/lib/genctls.py ./arbitrary_zips ./out_folder_for_ctls --u username --pwd password --email contactemail
+project-root$ VELVEEVA/lib/ctls.py ./arbitrary_zips ./out_folder_for_ctls --u username --pwd password --email contactemail
 ```
 ## Build scripts
 Although VELVEEVA currently has a lot of useful pieces, it is likely that you'll still want to create a few basic build scripts and a makefile to automate building, renaming, packaging, etc. of the slides. VELVEEVA provides pre-flight and post-flight hooks that can run before and after VELVEEVA for any setup and teardown that might be necessary. (By default, the scaffolder creates `pre.sh` and `post.sh`
@@ -156,7 +156,7 @@ cp -r ./build/_zips ./build/Digital_Sales_Aid_2016
 zip -r ./build/Digital_Sales_Aid_2016.zip ./build/Digital_Sales_Aid_2016
 ```
 
-When used with a makefile, and `velveeva-cli`, the process can be made as simple as running `make` in the project directory.
+When used with a makefile, and `velveeva-cli`, the process can be made as simple as running `make` in the project directory, and `make publish` to deploy.
 
 An example makefile below
 
@@ -168,7 +168,11 @@ build :
 	velveeva go --inline
 	velveeva go --integrate
 	velveeva go --rel2veev
-	velveeva go --package --controls
+	velveeva go --package
+
+publish :
+	velveeva go --controlsonly
+	velveeva go --publishonly
 ```
 
 ## velveeva-cli utility images
