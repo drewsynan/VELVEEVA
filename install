@@ -154,7 +154,7 @@ fi
 # check for zlib on linus
 if [[ "$unamestring" == "Linux" ]]
 then
-	if [-z `find /usr/include -name zlib.h 2>/dev/null` ]
+	if [ -z `find /usr/include -name zlib.h 2>/dev/null` ]
 	then
 		if [[ "$platform" == 'Ubuntu' ]]
 		then
