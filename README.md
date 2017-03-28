@@ -1,4 +1,4 @@
-![VELVEEVA logo](https://raw.githubusercontent.com/gacomm/VELVEEVA/master/velveeva_logo.png)
+![VELVEEVA logo](https://raw.githubusercontent.com/drewsynan/VELVEEVA/master/velveeva_logo.png)
 
 An easier way to manage, maintain, and build Veeva iRep presentations
 
@@ -43,7 +43,7 @@ VELVEEVA has several dependencies needing to be met before installing
 ## Quick Start: Installation/Creating a new project
 In your new project's empty root directory, run
 ```bash
-git clone https://github.com/gacomm/VELVEEVA.git && VELVEEVA/install && VELVEEVA/init
+git clone https://github.com/drewsynan/VELVEEVA.git && VELVEEVA/install && VELVEEVA/init
 ```
 This will install the required components for VELVEEVA, and launch a wizard to create a new project.
 🍕yum!
