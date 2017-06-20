@@ -14,7 +14,7 @@ import uuid
 
 paint.enabled = True
 
-VALID_SLIDE_EXTENSIONS = ['.htm', '.html', '.pdf', '.jpg', '.jpeg', '.mp4']
+VALID_SLIDE_EXTENSIONS = ['.html', '.htm', '.pdf', '.jpg', '.jpeg', '.mp4']
 CONFIG_FILENAME = "VELVEEVA-config.json"
 
 def get_extension_regex(exts=VALID_SLIDE_EXTENSIONS):
