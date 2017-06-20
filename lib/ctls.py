@@ -37,7 +37,7 @@ import uuid
 
 # 	return None
 
-def parse_meta(filename):
+def parse_meta(filename, htmlonly=False):
 	slide_file = parse_slide(filename)
 	if slide_file is None: 
 		return { 'filename': os.path.basename(filename), 
@@ -63,7 +63,7 @@ def parse_meta(filename):
 				if description is not None:
 					description_string = description.get('content', None)
 
-			if slide_type == ".pdf":
+			if slide_type == ".pdf" and not htmlonly:
 				doc = PDFDocument()
 				parser = PDFParser(f)
 
@@ -84,7 +84,7 @@ def parse_meta(filename):
 					except KeyError:
 						description_string = None
 
-			if slide_type == ".jpg" or slide_type == ".jpeg":
+			if slide_type == ".jpg" or slide_type == ".jpeg" and not htmlonly:
 				tmp_file_name = str(uuid.uuid1()) + ".jpg"
 				with open(tmp_file_name, 'wb') as tf:
 					tf.write(f.read())
@@ -121,9 +121,9 @@ def parseCurrentVersion(root_path):
 
 	return v
 
-def createRecordString(filename, version=None, email=None, username=None, password=None):
+def createRecordString(filename, version=None, email=None, username=None, password=None, htmlonly=False):
 
-	meta = parse_meta(filename)
+	meta = parse_meta(filename, htmlonly=htmlonly)
 	pieces = []
 
 	pieces.append("USER="+str(username))
@@ -162,6 +162,7 @@ def parseFolder(src, **kwargs):
 	dest_path = os.path.join(root, out)
 
 	novalidate = kwargs["novalidate"]
+	htmlonly = kwargs["htmlonly"]
 
 	if not os.path.exists(dest_path): os.makedirs(dest_path)
 
@@ -195,7 +196,7 @@ def runScript():
 		 help="Optional root directory for the project (used for versioning) current working directory used if none specified", 
 		 required=False)
 	parser.add_argument("--novalidate", action="store_true", help="Don't check to see if each zip file is a slide")
-
+	parser.add_argument("--htmlonly", action="store_true", help="Only check for metadata on html files")
 	if len(sys.argv) == 1:
 		parser.print_help()
 		return 2
@@ -212,7 +213,7 @@ def runScript():
 	SOURCE = args.source[0]
 	DEST = args.destination[0]
 
-	parseFolder(SOURCE, out=DEST, root=ROOT, username=args.u[0], password=args.pwd[0], email=email, novalidate=args.novalidate)
+	parseFolder(SOURCE, out=DEST, root=ROOT, username=args.u[0], password=args.pwd[0], email=email, novalidate=args.novalidate, htmlonly=args.htmlonly)
 
 if __name__ == "__main__":
 	sys.exit(runScript())
