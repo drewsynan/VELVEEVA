@@ -2,10 +2,12 @@
 import activate_venv
 
 from veevutils import banner
+from veevutils import parse_slide
 
 import argparse
 import glob
 import os
+import shutil
 import sys
 import textwrap
 import fnmatch
@@ -93,6 +95,13 @@ def render_one(src, slide, dest, templates, partials, verbose=False):
 			html_path = os.path.join(dest,slide,html_basename)
 			with open(html_path, 'w') as f:
 				f.write(rendered)
+
+	# make sure non-html slides get "rendered" too
+	slide_info = parse_slide(os.path.join(src,slide))
+	if slide_info is not None:
+		if slide_info.extension != ".htm" and slide_info.extension != ".html":
+			shutil.copy2(slide_info.full_path, os.path.join(dest,slide))
+			
 
 def render_slides(src, dest, templates_dir, partials_dir, verbose=True):
 	if verbose: print("Loading templates...")

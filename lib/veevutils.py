@@ -14,7 +14,7 @@ import uuid
 
 paint.enabled = True
 
-VALID_SLIDE_EXTENSIONS = ['.html', '.htm', '.pdf', '.jpg', '.jpeg', '.mp4']
+VALID_SLIDE_EXTENSIONS = ['.html', '.htm', '.pdf', '.jpg', '.jpeg', '.mp4'] #todo make regex deal with nested .htm(l) in extensions
 CONFIG_FILENAME = "VELVEEVA-config.json"
 
 def get_extension_regex(exts=VALID_SLIDE_EXTENSIONS):
