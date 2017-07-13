@@ -167,24 +167,29 @@ def run_actions(actions, src):
 @curry
 def integrate_all(composer, src):
 	actions = [
+		# action(
+		# 	"stylesheets",
+		# 	lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
+		# 	attribute_transform("href", fix_relative_path),
+		# 	composer),
+		# action(
+		# 	"scripts",
+		# 	lambda soup: soup.find_all("script", src=True),
+		# 	attribute_transform("src", fix_relative_path),
+		# 	composer),
+		# action(
+		# 	"images",
+		# 	lambda soup: soup.find_all("img"),
+		# 	attribute_transform("src", fix_relative_path),
+		# 	composer),
+		# action(
+		# 	"iframes",
+		# 	lambda soup: soup.find_all("iframe"),
+		# 	attribute_transform("src", fix_relative_path),
+		# 	composer),
 		action(
-			"stylesheets",
-			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
-			attribute_transform("href", fix_relative_path),
-			composer),
-		action(
-			"scripts",
-			lambda soup: soup.find_all("script", src=True),
-			attribute_transform("src", fix_relative_path),
-			composer),
-		action(
-			"images",
-			lambda soup: soup.find_all("img"),
-			attribute_transform("src", fix_relative_path),
-			composer),
-		action(
-			"iframes",
-			lambda soup: soup.find_all("iframe"),
+			"all_src_paths", # stylesheets, scripts, images, iframes, ...
+			lambda soup: soup.find_all(attrs={"src": True}),
 			attribute_transform("src", fix_relative_path),
 			composer),
 		action(
