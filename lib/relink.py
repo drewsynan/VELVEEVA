@@ -271,7 +271,7 @@ def share_assets(globals_dir, composer, src):
 		action(
 			"all_tags_with_src",
 			lambda soup: soup.find_all(attrs={"src": True}),
-			attribute_transform("src"), fix_shared_asset_path(globals_dir), 
+			attribute_transform("src", fix_shared_asset_path(globals_dir)), 
 			composer),
 		# action(
 		# 	"scripts",
