@@ -269,29 +269,34 @@ def share_assets(globals_dir, composer, src):
 			attribute_transform("href", fix_shared_asset_path(globals_dir)),
 			composer),
 		action(
-			"scripts",
-			lambda soup: soup.find_all("script", src=True),
-			attribute_transform("src", fix_shared_asset_path(globals_dir)),
+			"all_tags_with_src",
+			lambda soup: soup.find_all(attrs={"src": True}),
+			attribute_transform("src"), fix_shared_asset_path(globals_dir), 
 			composer),
-		action(
-			"images",
-			lambda soup: soup.find_all("img"),
-			attribute_transform("src", fix_shared_asset_path(globals_dir)),
-			composer),
+		# action(
+		# 	"scripts",
+		# 	lambda soup: soup.find_all("script", src=True),
+		# 	attribute_transform("src", fix_shared_asset_path(globals_dir)),
+		# 	composer),
+		# action(
+		# 	"images",
+		# 	lambda soup: soup.find_all("img"),
+		# 	attribute_transform("src", fix_shared_asset_path(globals_dir)),
+		# 	composer),
+		# action(
+		# 	"iframes",
+		# 	lambda soup: soup.find_all("iframe"),
+		# 	attribute_transform("src", fix_shared_asset_path(globals_dir)),
+		# 	composer),
+		# action(
+		# 	"videos",
+		# 	lambda soup: soup.find_all("video", src=True),
+		# 	attribute_transform("src", fix_shared_asset_path(globals_dir)),
+		# 	composer),
 		action(
 			"inline background images",
 			lambda soup: soup.find_all(style=True),
 			attribute_transform("style", fix_shared_asset_path(globals_dir)),
-			composer),
-		action(
-			"iframes",
-			lambda soup: soup.find_all("iframe"),
-			attribute_transform("src", fix_shared_asset_path(globals_dir)),
-			composer),
-		action(
-			"videos",
-			lambda soup: soup.find_all("video", src=True),
-			attribute_transform("src", fix_shared_asset_path(globals_dir)),
 			composer),
 		action(
 			"hyperlink_paths",
