@@ -106,7 +106,7 @@ def fix_relative_path(composer, path):
 @curry
 def fix_shared_asset_path(globals_dir, composer, path):
 	new_path = os.path.relpath(os.path.join('shared',globals_dir))
-	patched = re.sub("(?<=\.\./)" + os.path.relpath(globals_dir) + "(?=/)", new_path, path)
+	patched = re.sub("(?<=\.\./)" + os.path.relpath(globals_dir) + "(?=(/|$))", new_path, path)
 	return patched
 
 @curry
@@ -188,7 +188,7 @@ def integrate_all(composer, src):
 		# 	attribute_transform("src", fix_relative_path),
 		# 	composer),
 		action(
-			"all_src_paths", # stylesheets, scripts, images, iframes, ...
+			"all tags with src attributes", # stylesheets, scripts, images, iframes, ...
 			lambda soup: soup.find_all(attrs={"src": True}),
 			attribute_transform("src", fix_relative_path),
 			composer),
@@ -269,7 +269,7 @@ def share_assets(globals_dir, composer, src):
 			attribute_transform("href", fix_shared_asset_path(globals_dir)),
 			composer),
 		action(
-			"all_tags_with_src",
+			"all tags with src attributes",
 			lambda soup: soup.find_all(attrs={"src": True}),
 			attribute_transform("src", fix_shared_asset_path(globals_dir)), 
 			composer),
