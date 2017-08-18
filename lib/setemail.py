@@ -20,10 +20,10 @@ def main():
 	else:
 		email = sys.argv[1]
 		
-	updated = config['VEEVA']['email'] = email;
+	config['VEEVA']['email'] = email
 
 	with open(CONFIG_FILENAME, 'w') as f:
-		config = f.write(json.dumps(updated))
+		config = f.write(json.dumps(config))
 
 	return 0
 
