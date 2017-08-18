@@ -22,7 +22,7 @@ def main():
 		
 	updated = config['VEEVA']['email'] = email;
 
-	with open(CONFIG_FILENAME) as f:
+	with open(CONFIG_FILENAME, 'w') as f:
 		config = f.write(json.dumps(updated))
 
 	return 0
