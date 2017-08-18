@@ -12,11 +12,16 @@ def main():
 	else:
 		raise IOError(CONFIG_FILENAME + " does not exist")
 
+	currentEmail = config['VEEVA']['email']
+
+	if currentEmail:
+		currentEmail = " [" + currentEmail + "]"
+
 	if len(sys.argv) < 2:
 		# no email specified, prompt for one
-		email = input("Veeva notification email? ").strip("\r").strip("\n")
+		email = input("Veeva notification email" + currentEmail + "? ").strip("\r").strip("\n")
 		if email == '':
-			raise RuntimeError("Please specify an email address")
+			return 0
 	else:
 		email = sys.argv[1]
 		
