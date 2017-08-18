@@ -14,7 +14,7 @@ def main():
 
 	if len(sys.argv) < 2:
 		# no email specified, prompt for one
-		var email = prompt("Veeva notification email? ").strip("\r").strip("\n")
+		email = prompt("Veeva notification email? ").strip("\r").strip("\n")
 		if email = '':
 			raise RuntimeError("Please specify an email address")
 	else:
