@@ -415,7 +415,7 @@ def doScript():
 	def run_build(build_plan, env):
 		STEPS = len(build_plan)
 
-		if env['PREFLIGHT_HOOK'] is not None: 
+		if env['PREFLIGHT_HOOK'] and os.path.exists(env['PREFLIGHT_HOOK']): 
 			for out in execute([ENV['PREFLIGHT_HOOK']]):
 				print(out)
 
@@ -451,7 +451,7 @@ def doScript():
 
 				# progress.update(STEPS) # finish up
 
-			if env['POSTFLIGHT_HOOK'] is not None: 
+			if env['POSTFLIGHT_HOOK'] and os.path.exists(env['POSTFLIGHT_HOOK']): 
 				for out in execute([ENV['POSTFLIGHT_HOOK']]):
 					print(out)
 				
