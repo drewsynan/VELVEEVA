@@ -14,9 +14,6 @@ RUN apt-get update && apt-get install -y \
 	libxslt-dev \
 	libjpeg-dev \
 	libexempi-dev \
-	libblas-dev \
-	liblapack-dev \
-	gfortran \
 	&& pip3 install --upgrade pip && \
 	pip install numpy scipy
-RUN git clone -b master --single-branch https://github.com/drewsynan/VELVEEVA.git && VELVEEVA/install
+RUN git clone -b bump-phantomjs-dep --single-branch https://github.com/drewsynan/VELVEEVA.git && VELVEEVA/install

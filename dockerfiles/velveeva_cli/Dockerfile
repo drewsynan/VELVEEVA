@@ -1,4 +1,4 @@
-FROM drewsynan/velveeva_base
+FROM drewsynan/velveeva_base:1.1.0
 MAINTAINER Drew Synan "dsynan@gmail.com"
 
 RUN cd /VELVEEVA && git pull
