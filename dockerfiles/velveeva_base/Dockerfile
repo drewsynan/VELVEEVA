@@ -1,4 +1,4 @@
-FROM ubuntu:15.10
+FROM ubuntu:16.04
 MAINTAINER Drew Synan "dsynan@gmail.com"
 
 RUN apt-get update && apt-get install -y \
@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
 	zlib1g-dev\
 	build-essential \
 	git \
-	nodejs-legacy \
+	nodejs \
 	phantomjs \
 	python3-pip \
 	virtualenv \
@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
 	libexempi-dev \
 	libblas-dev \
 	liblapack-dev \
-	python-numpy \
-	python-scipy \
-	gfortran
+	gfortran \
+	&& pip3 install --upgrade pip && \
+	pip install numpy scipy
 RUN git clone -b master --single-branch https://github.com/drewsynan/VELVEEVA.git && VELVEEVA/install
