@@ -19,4 +19,6 @@ RUN apt-get update && apt-get install -y \
 	lsb-release \
 	&& pip3 install --upgrade pip && \
 	pip install numpy scipy
+# tell phantomjs's QT bindings not to look for a screen
+RUN echo "QT_QPA_PLATFORM=offscreen" >> /etc/environment
 RUN git clone -b bump-phantomjs-dep --single-branch https://github.com/drewsynan/VELVEEVA.git && VELVEEVA/install
