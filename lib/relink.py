@@ -167,11 +167,11 @@ def run_actions(actions, src):
 @curry
 def integrate_all(composer, src):
 	actions = [
-		# action(
-		# 	"stylesheets",
-		# 	lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
-		# 	attribute_transform("href", fix_relative_path),
-		# 	composer),
+		action(
+			"stylesheets",
+			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
+			attribute_transform("href", fix_relative_path),
+			composer),
 		# action(
 		# 	"scripts",
 		# 	lambda soup: soup.find_all("script", src=True),
