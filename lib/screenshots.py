@@ -50,7 +50,6 @@ def ss_(url, dest, sizes, filename, driver, verbose=False):
 			if not os.path.exists(new_fname): # don't override user provided thumbs
 				bg.save(new_fname, 'jpeg')
 		except Exception as e:
-			print(e)
 			raise e
 	
 	[__snap(driver, x['width'], x['height'], filename, x.get('suffix', None)) for x in sizes]
@@ -63,17 +62,19 @@ def ss_q(q, verbose=False):
 			job = q.get()
 			if job is None: break
 
-			try:
-				ss_(job[0], job[1], job[2], job[3], driver, verbose)
-			except Exception as e:
-				print('ss_q exception')
-				print(e)
-				
+			ss_(job[0], job[1], job[2], job[3], driver, verbose)
 			q.task_done()
 
 		driver.quit()
 	
 	except Exception as e:
+		#empty the queue so it doesn't deadlock
+		while True:
+			job = q.get()
+			if job is None: break
+
+			q.task_done()
+		
 		raise e
 
 def ss(url, dest, sizes, filename, verbose=False):
