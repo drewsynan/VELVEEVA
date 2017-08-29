@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
 	build-essential \
 	git \
 	nodejs \
+	nodejs-legacy \
 	phantomjs \
 	python3-pip \
 	virtualenv \
@@ -14,6 +15,8 @@ RUN apt-get update && apt-get install -y \
 	libxslt-dev \
 	libjpeg-dev \
 	libexempi-dev \
+	locales \
+	lsb-release \
 	&& pip3 install --upgrade pip && \
 	pip install numpy scipy
 RUN git clone -b bump-phantomjs-dep --single-branch https://github.com/drewsynan/VELVEEVA.git && VELVEEVA/install
