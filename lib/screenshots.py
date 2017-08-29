@@ -55,7 +55,11 @@ def ss_(url, dest, sizes, filename, driver, verbose=False):
 	[__snap(driver, x['width'], x['height'], filename, x.get('suffix', None)) for x in sizes]
 
 def ss_q(q, verbose=False):
-	driver = webdriver.PhantomJS()
+	try:
+		driver = webdriver.PhantomJS()
+	except exception as e:
+
+
 
 	while True:
 		job = q.get()
@@ -184,7 +188,9 @@ def take_screenshots_async(source_folder, config_path, verbose=False):
 	for i in range(mp.cpu_count()*2):
 		q.put(None)
 
-	for proc in procs: proc.join()
+	for proc in procs: 
+		if not proc.join():
+			raise Exception("Error taking screenshots")
 
 def fake_shared_assets(config_path, root_dir):
 	if not os.path.exists(config_path): raise Exception('Config file not found!')
