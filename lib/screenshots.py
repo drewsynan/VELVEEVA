@@ -63,7 +63,12 @@ def ss_q(q, verbose=False):
 			job = q.get()
 			if job is None: break
 
-			ss_(job[0], job[1], job[2], job[3], driver, verbose)
+			try:
+				ss_(job[0], job[1], job[2], job[3], driver, verbose)
+			except Exception as e:
+				print('ss_q exception')
+				print(e)
+				
 			q.task_done()
 
 		driver.quit()
