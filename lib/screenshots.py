@@ -57,19 +57,18 @@ def ss_(url, dest, sizes, filename, driver, verbose=False):
 def ss_q(q, verbose=False):
 	try:
 		driver = webdriver.PhantomJS()
-	except exception as e:
 
+		while True:
+			job = q.get()
+			if job is None: break
 
+			ss_(job[0], job[1], job[2], job[3], driver, verbose)
+			q.task_done()
 
-	while True:
-		job = q.get()
-		if job is None: break
-
-		ss_(job[0], job[1], job[2], job[3], driver, verbose)
-		q.task_done()
-
-	driver.quit()
-
+		driver.quit()
+	
+	except Exception as e:
+		raise e
 
 def ss(url, dest, sizes, filename, verbose=False):
 	driver = webdriver.PhantomJS()
