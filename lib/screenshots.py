@@ -64,6 +64,7 @@ def ss_q(q, verbose=False):
 
 			try:
 				ss_(job[0], job[1], job[2], job[3], driver, verbose)
+				q.task_done()
 			except exception as e:
 				q.task_done()
 				raise e
@@ -197,9 +198,7 @@ def take_screenshots_async(source_folder, config_path, verbose=False):
 	for i in range(mp.cpu_count()*2):
 		q.put(None)
 
-	for proc in procs: 
-		if not proc.join():
-			raise Exception("Error taking screenshots")
+	for proc in procs: proc.join()
 
 def fake_shared_assets(config_path, root_dir):
 	if not os.path.exists(config_path): raise Exception('Config file not found!')

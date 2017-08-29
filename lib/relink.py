@@ -113,7 +113,14 @@ def fix_shared_asset_path(globals_dir, composer, path):
 def fix_hyperlink_protocol(composer, href):
 	if urlparse(href).netloc != '': return href
 	
-	match = parse_slide_name_from_href(href)
+	def index_to_slide(path_string):
+		# replace any index.html refs with a veeva name
+		slide_name = re.match("(?:.*/)*([^/]+)/index.htm(?:l)?$", path_string)
+		if slide_name:
+			path_string = re.sub("index.htm(?:l)$", slide_name.group(1)+".html", path_string)
+		return path_string
+
+	match = parse_slide_name_from_href(index_to_slide(href))
 
 	if match is None:
 		return href
