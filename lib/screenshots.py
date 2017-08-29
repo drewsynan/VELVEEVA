@@ -51,6 +51,7 @@ def ss_(url, dest, sizes, filename, driver, verbose=False):
 				bg.save(new_fname, 'jpeg')
 		except Exception as e:
 			print(e)
+			raise e
 	
 	[__snap(driver, x['width'], x['height'], filename, x.get('suffix', None)) for x in sizes]
 
