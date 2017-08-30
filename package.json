@@ -31,7 +31,7 @@
     "mode": "^0.3.2",
     "multimatch": "^2.0.0",
     "phantom": "^0.7.2",
-    "phantomjs": "^1.9.17",
+    "phantomjs": "^2.1.7",
     "q": "^1.4.1",
     "recursive-readdir": "^1.2.1",
     "rimraf": "^2.4.1",

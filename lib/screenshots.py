@@ -50,22 +50,36 @@ def ss_(url, dest, sizes, filename, driver, verbose=False):
 			if not os.path.exists(new_fname): # don't override user provided thumbs
 				bg.save(new_fname, 'jpeg')
 		except Exception as e:
-			print(e)
+			raise e
 	
 	[__snap(driver, x['width'], x['height'], filename, x.get('suffix', None)) for x in sizes]
 
 def ss_q(q, verbose=False):
-	driver = webdriver.PhantomJS()
+	try:
+		driver = webdriver.PhantomJS()
 
-	while True:
-		job = q.get()
-		if job is None: break
+		while True:
+			job = q.get()
+			if job is None: break
 
-		ss_(job[0], job[1], job[2], job[3], driver, verbose)
-		q.task_done()
+			try:
+				ss_(job[0], job[1], job[2], job[3], driver, verbose)
+				q.task_done()
+			except exception as e:
+				q.task_done()
+				raise e
 
-	driver.quit()
+		driver.quit()
+	
+	except Exception as e:
+		#empty the queue so it doesn't deadlock
+		while True:
+			job = q.get()
+			if job is None: break
 
+			q.task_done()
+		
+		raise e
 
 def ss(url, dest, sizes, filename, verbose=False):
 	driver = webdriver.PhantomJS()
