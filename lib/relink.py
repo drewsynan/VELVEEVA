@@ -176,7 +176,7 @@ def integrate_all(composer, src):
 	actions = [
 		action(
 			"stylesheets",
-			lambda soup: soup.find_all("link", {"rel": "stylesheet"}),
+			lambda soup: soup.find_all("link", rel="stylesheet"),
 			attribute_transform("href", fix_relative_path),
 			composer),
 		# action(
