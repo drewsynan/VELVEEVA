@@ -1,7 +1,7 @@
 FROM drewsynan/velveeva_base:2.0.0
 MAINTAINER Drew Synan "dsynan@gmail.com"
 
-ENV VELVEEVA_VERSION 2.0.0
+ENV VELVEEVA_VERSION 2.0.1
 
 RUN cd /VELVEEVA && git pull
 RUN locale-gen en_US.UTF-8 && update-locale

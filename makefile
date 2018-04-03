@@ -3,7 +3,7 @@ BASEDOCKERFILE = dockerfiles/velveeva_base
 BASEVERSION = 2.0.0
 CLIIMAGENAME = drewsynan/velveeva
 CLIDOCKERFILE = dockerfiles/velveeva_cli
-CLIVERSION = 2.0.0
+CLIVERSION = 2.0.1
 
 .PHONY : install
 install :
