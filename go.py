@@ -48,6 +48,10 @@ def action(banner=""):
 def parse_config(config_file="VELVEEVA-config.json"):
 	return json.load(open(config_file))
 
+def clean(root, config, verbose=False):
+	folders = config["MAIN"]
+	shutil.rmtree(folders["temp_dir"])
+
 def scaffold(root, config, verbose=False):
 	folders = config["MAIN"]
 
@@ -145,7 +149,7 @@ def create_parser():
 	parser.add_argument("--clean",			action="store_true", help="Clean up the mess (mom would be proud!)")
 	parser.add_argument("--controls",		action="store_true", help="Generate slide control files (gonna have something already baked)")
 	parser.add_argument("--controlsonly", 	action="store_true", help="Generate slide control files (no other steps)")
-	parser.add_argument("--dev",			action="store_true", help="Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using --nuke --bake --watch --veev2rel")
+	parser.add_argument("--dev",			action="store_true", help="Use the quick-bake test kitchen environment (no screenshots, no packaging). This is a shortcut to using --nuke --bake --veev2rel")
 	parser.add_argument("--go", 			action="store_true", help="Use a quick-bake recipe -> nuke, bake, screenshots, package, clean")
 	parser.add_argument("--init",			action="store_true", help="Initialize a new VELVEEVA project")
 	parser.add_argument("--inline", 		action="store_true", help="Inline globals")
@@ -163,7 +167,6 @@ def create_parser():
 	parser.add_argument("--veev2rel",		action="store_true", help="Convert veeva: hrefs to relative links")
 	parser.add_argument("--verbose",		action="store_true", help="Chatty Cathy")
 	parser.add_argument("--notparallel", 	action="store_true", help="Only run things one after another")
-	parser.add_argument("--watch",			action="store_true", help="Watch for changes and re-build on change")
 	parser.add_argument("--packageonly",	action="store_true", help="Zip as-is")
 	parser.add_argument("--share-assets",	action="store_true", help="Use Veeva's shared asset feature for globals")
 	parser.add_argument("--globals", 		action="store_true", help="Inline globals")
@@ -177,6 +180,10 @@ def create_parser():
 def ACTION_nuke(env, i):
 	# env['progress'].update(i)
 	nuke(env['ROOT_DIR'], env['config'])
+
+@action("🛀  %s" % paint.gray("Cleaning leftovers.."))
+def ACTION_clean(env, i):
+	clean(env['ROOT_DIR'], env['config'])
 
 @action("🗄  %s" % paint.gray("Creating directories..."))
 def ACTION_scaffold(env, i):
@@ -300,6 +307,16 @@ def ACTION_rel_2_veev(env, i):
 		, "--rel2veev", env['DEST_DIR'] ]):
 		print(out)
 
+@action("⚖️  %s " % paint.gray("Converting Veeva links to Relative links..."))
+def ACTION_veev_2_rel(env, i):
+	# env['progress'].update(i)
+
+	cmd = os.path.join(env['VELVEEVA_DIR'],"lib","relink.py")
+	for out in execute(["python3", cmd 
+		, "--root", env['ROOT_DIR']
+		, "--veev2rel", env['DEST_DIR'] ]):
+		print(out)
+
 @action("➿  %s " % paint.gray("Integrating assets and links..."))
 def ACTION_integrate_all(env, i):
 	#env['progress'].update(i)
@@ -326,6 +343,7 @@ def doScript():
 	### build planner ###
 	def build_planner(flags):
 		idx = {
+			"clean": ACTION_clean,
 			"nuke": ACTION_nuke,
 			"scaffold": ACTION_scaffold,
 			"locals": ACTION_inline_local,
@@ -341,6 +359,7 @@ def doScript():
 			"controls": ACTION_generate_ctls,
 			"publish": ACTION_ftp_upload,
 			"rel2veev": ACTION_rel_2_veev,
+			"veev2rel": ACTION_veev_2_rel,
 			"integrate": ACTION_integrate_all,
 			"share_assets": ACTION_share_assets,
 			"render_slides": ACTION_render_templates,
@@ -361,7 +380,10 @@ def doScript():
 		}
 
 		plans = {
+			"go": ["nuke", "bake", "screenshots", "clean"],
+			"clean": ["clean"],
 			"nuke": ["nuke"],
+			"dev": ["nuke", "bake", "screenshots", "veev2rel"],
 			"scaffold": ["nuke", "scaffold", "locals"],
 			"integrate": ["integrate"],
 			"inline": ["scaffold","globals","templates"],
@@ -373,7 +395,7 @@ def doScript():
 			"controls": ["controls"],
 			"publish": ["publish"],
 			"relink": ["rel2veev"],
-			"veev2rel": [],
+			"veev2rel": ["veev2rel"],
 			"rel2veev": ["rel2veev"],
 			"share_assets": ["share_assets"],
 			"locals": ["localsonly"],
