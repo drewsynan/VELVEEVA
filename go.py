@@ -50,7 +50,10 @@ def parse_config(config_file="VELVEEVA-config.json"):
 
 def clean(root, config, verbose=False):
 	folders = config["MAIN"]
-	shutil.rmtree(folders["temp_dir"])
+	try:
+		shutil.rmtree(folders["temp_dir"])
+	except FileNotFoundError:
+		pass
 
 def scaffold(root, config, verbose=False):
 	folders = config["MAIN"]
